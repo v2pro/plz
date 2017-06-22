@@ -12,11 +12,11 @@ type Routine struct {
 }
 
 func (cfg Routine) Go() context.CancelFunc {
-	ctx := cfg.ParentContext
-	cancel := func() {}
-	if ctx != nil {
-		ctx, cancel = context.WithCancel(ctx)
+	parent := cfg.ParentContext
+	if parent == nil {
+		parent = context.TODO()
 	}
+	ctx, cancel := context.WithCancel(parent)
 	if cfg.OneOff != nil {
 		cfg.goOneOff()
 	} else {

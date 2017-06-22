@@ -5,6 +5,7 @@ import (
 	"github.com/json-iterator/go/require"
 	"sync"
 	"context"
+	"time"
 )
 
 func Test_one_off_goroutine_long_version(t *testing.T) {
@@ -68,4 +69,27 @@ func Test_long_running_goroutine_should_be_restarted(t *testing.T) {
 	}}.Go()
 	lock.Lock()
 	should.Equal(4, counter)
+}
+
+func Test_long_running_goroutine_cancel(t *testing.T) {
+	should := require.New(t)
+	called := false
+	lock := &sync.Mutex{}
+	lock.Lock()
+	cancel := Routine{LongRunning: func(ctx context.Context) bool {
+		for {
+			select {
+			case <-ctx.Done():
+				lock.Unlock()
+				called = true
+				return false
+			default:
+				time.Sleep(time.Second)
+			}
+		}
+		return true
+	}}.Go()
+	cancel()
+	lock.Lock()
+	should.True(called)
 }
