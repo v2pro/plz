@@ -6,6 +6,7 @@ import (
 	"sync"
 	"context"
 	"time"
+	"errors"
 )
 
 func Test_one_off_goroutine_long_version(t *testing.T) {
@@ -39,12 +40,13 @@ func Test_one_off_goroutine_panic(t *testing.T) {
 	called := false
 	lock := &sync.Mutex{}
 	lock.Lock()
-	RegisterPanicHandler(func(routine *Routine, recovered interface{}) {
+	RoutineSpi.AfterPanic = func(routine *Routine, recovered interface{}) {
 		lock.Unlock()
 		called = true
-	})
+	}
 	defer func() {
-		panicHandlers = []HandlePanic{}
+		RoutineSpi.AfterPanic = func(routine *Routine, recovered interface{}) {
+		}
 	}()
 	Go(func() {
 		panic("hello")
@@ -76,7 +78,7 @@ func Test_long_running_goroutine_cancel(t *testing.T) {
 	called := false
 	lock := &sync.Mutex{}
 	lock.Lock()
-	cancel := Routine{LongRunning: func(ctx context.Context) bool {
+	cancel, _ := Routine{LongRunning: func(ctx context.Context) bool {
 		for {
 			select {
 			case <-ctx.Done():
@@ -92,4 +94,56 @@ func Test_long_running_goroutine_cancel(t *testing.T) {
 	cancel()
 	lock.Lock()
 	should.True(called)
+}
+
+func Test_routine_spi_before_start(t *testing.T) {
+	should := require.New(t)
+	RoutineSpi.BeforeStart = func(routine *Routine) error {
+		return errors.New("exceed limit")
+	}
+	defer func() {
+		RoutineSpi.BeforeStart = func(routine *Routine) error {
+			return nil
+		}
+	}()
+	should.NotNil(Go(func() {}))
+}
+
+func Test_routine_spi_after_finish(t *testing.T) {
+	should := require.New(t)
+	called := false
+	lock := &sync.Mutex{}
+	RoutineSpi.AfterFinish = func(routine *Routine) {
+		called = true
+		lock.Unlock()
+	}
+	defer func() {
+		RoutineSpi.AfterFinish = func(routine *Routine) {
+		}
+	}()
+	lock.Lock()
+	Go(func() {})
+	lock.Lock()
+	should.True(called)
+}
+
+func Test_routine_spi_composition(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	RoutineSpi.Append(RoutineSpiConfig{
+		AfterFinish: func(routine *Routine) {
+			wg.Done()
+		},
+	})
+	RoutineSpi.Append(RoutineSpiConfig{
+		AfterFinish: func(routine *Routine) {
+			wg.Done()
+		},
+	})
+	defer func() {
+		RoutineSpi.AfterFinish = func(routine *Routine) {
+		}
+	}()
+	Go(func() {})
+	wg.Wait()
 }
