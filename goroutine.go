@@ -2,6 +2,7 @@ package plz
 
 import (
 	"context"
+	"time"
 )
 
 type Routine struct {
@@ -23,35 +24,40 @@ func (cfg Routine) Go() context.CancelFunc {
 	}
 	return cancel
 }
-func (cfg *Routine) goLongRunning(ctx context.Context) {
+
+func (r *Routine) goLongRunning(ctx context.Context) {
 	go func() {
-		for cfg.goLongRunningOnce(ctx) {
+		for restartedTimes := 0; r.goLongRunningOnce(ctx); restartedTimes++ {
+			shouldRestartAgain := OnGoroutineRestarted(r, restartedTimes)
+			if !shouldRestartAgain {
+				break
+			}
 		}
 	}()
 }
 
-func (cfg *Routine) goLongRunningOnce(ctx context.Context) (notDone bool) {
+func (r *Routine) goLongRunningOnce(ctx context.Context) (notDone bool) {
 	defer func() {
 		recovered := recover()
 		if recovered != nil {
 			for _, handlePanic := range panicHandlers {
-				handlePanic(cfg, recovered)
+				handlePanic(r, recovered)
 			}
 			notDone = true
 		}
 	}()
-	return cfg.LongRunning(ctx)
+	return r.LongRunning(ctx)
 }
 
-func (cfg *Routine) goOneOff() {
+func (r *Routine) goOneOff() {
 	go func() {
 		defer func() {
 			recovered := recover()
 			for _, handlePanic := range panicHandlers {
-				handlePanic(cfg, recovered)
+				handlePanic(r, recovered)
 			}
 		}()
-		cfg.OneOff()
+		r.OneOff()
 	}()
 }
 
@@ -62,6 +68,10 @@ func Go(oneOff func()) {
 type HandlePanic func(routine *Routine, recovered interface{})
 
 var panicHandlers = []HandlePanic{}
+var OnGoroutineRestarted = func(routine *Routine, restartedTimes int) bool {
+	time.Sleep(100 * time.Microsecond)
+	return true
+}
 
 func RegisterPanicHandler(handlePanic HandlePanic) {
 	panicHandlers = append(panicHandlers, handlePanic)
