@@ -10,6 +10,8 @@ type Logger interface {
 	ShouldLog(level Level) bool
 }
 
+var GetLogger func(name string) Logger
+
 type Level struct {
 	Severity  int32
 	LevelName string
