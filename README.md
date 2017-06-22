@@ -1,2 +1,3 @@
 # plz
-functional gateway to the go language
+
+oh, please...
