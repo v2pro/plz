@@ -16,9 +16,32 @@ var LEVEL_DEBUG = Level{20, "DEBUG"}
 var LEVEL_TRACE = Level{10, "TRACE"}
 
 type Logger interface {
-	Log(level Level, msg string, kv ...interface{})
+	Log(kv ...interface{})
+	LogMessage(level Level, msg string, kv ...interface{})
 	Error(msg string, kv ...interface{})
 	Info(msg string, kv ...interface{})
 	Debug(msg string, kv ...interface{})
 	ShouldLog(level Level) bool
+}
+
+type DummyLogger struct {
+}
+
+func (logger *DummyLogger) Log(kv ...interface{}) {
+}
+
+func (logger *DummyLogger) LogMessage(level Level, msg string, kv ...interface{}) {
+}
+
+func (logger *DummyLogger) Error(msg string, kv ...interface{}) {
+}
+
+func (logger *DummyLogger) Info(msg string, kv ...interface{}) {
+}
+
+func (logger *DummyLogger) Debug(msg string, kv ...interface{}) {
+}
+
+func (logger *DummyLogger) ShouldLog(level Level) bool {
+	return false
 }

@@ -1,97 +1,73 @@
 package routine
 
 import (
-	"context"
 	"time"
 )
 
-func Go(oneOff func()) error {
-	_, err := Of{OneOff: oneOff}.Go()
-	return err
-}
-
-func GoLongRunning(longRunning func(ctx context.Context)) (context.CancelFunc, error) {
-	return Of{LongRunning: longRunning}.Go()
-}
-
-type Of struct {
-	ParentContext context.Context
-	OneOff        func()
-	LongRunning   func(ctx context.Context)
-}
-
-func (r Of) Go() (context.CancelFunc, error) {
-	err := Spi.BeforeStart(&r)
+func Go(oneOff func(), kv ...interface{}) error {
+	err := Spi.BeforeStart(kv)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	parent := r.ParentContext
-	if parent == nil {
-		parent = context.TODO()
-	}
-	ctx, cancel := context.WithCancel(parent)
-	if r.OneOff != nil {
-		r.goOneOff()
-	} else {
-		r.goLongRunning(ctx)
-	}
-	return cancel, nil
+	go func() {
+		defer func() {
+			recovered := recover()
+			Spi.AfterPanic(recovered, kv)
+		}()
+		oneOff()
+		Spi.AfterFinish(kv)
+	}()
+	return nil
 }
 
-func (r *Of) goLongRunning(ctx context.Context) {
+func GoLongRunning(longRunning func(), kv ...interface{}) error {
+	err := Spi.BeforeStart(kv)
+	if err != nil {
+		return err
+	}
 	go func() {
-		for restartedTimes := 0; r.goLongRunningOnce(ctx); restartedTimes++ {
-			shouldRestartAgain := Spi.BeforeRestart(r, restartedTimes)
+		for restartedTimes := 0; goLongRunningOnce(longRunning, kv); restartedTimes++ {
+			shouldRestartAgain := Spi.BeforeRestart(restartedTimes, kv)
 			if !shouldRestartAgain {
 				break
 			}
 		}
-		Spi.AfterFinish(r)
+		Spi.AfterFinish(kv)
 	}()
+	return nil
 }
 
-func (r *Of) goLongRunningOnce(ctx context.Context) (notDone bool) {
+func goLongRunningOnce(longRunning func(), kv []interface{}) (notDone bool) {
 	defer func() {
 		recovered := recover()
 		if recovered != nil {
-			Spi.AfterPanic(r, recovered)
+			Spi.AfterPanic(recovered, kv)
 			notDone = true
 		}
 	}()
-	r.LongRunning(ctx)
+	longRunning()
 	return false
 }
 
-func (r *Of) goOneOff() {
-	go func() {
-		defer func() {
-			recovered := recover()
-			Spi.AfterPanic(r, recovered)
-		}()
-		r.OneOff()
-		Spi.AfterFinish(r)
-	}()
-}
-
 type Config struct {
-	AfterPanic    func(routine *Of, recovered interface{})
-	BeforeRestart func(routine *Of, restartedTimes int) bool
-	BeforeStart   func(routine *Of) error
-	AfterFinish   func(routine *Of)
+	AfterPanic    func(recovered interface{}, kv []interface{})
+	BeforeRestart func(restartedTimes int, kv []interface{}) bool
+	BeforeStart   func(kv []interface{}) error
+	AfterFinish   func(kv []interface{})
 }
 
 var Spi = Config{
-	AfterPanic: func(routine *Of, recovered interface{}) {
+	AfterPanic: func(recovered interface{}, kv []interface{}) {
 		// no op
 	},
-	BeforeRestart: func(routine *Of, restartedTimes int) bool {
+	BeforeRestart: func(restartedTimes int, kv []interface{}) bool {
 		time.Sleep(100 * time.Microsecond)
 		return true
 	},
-	BeforeStart: func(routine *Of) error {
+	BeforeStart: func(kv []interface{}) error {
 		return nil
 	},
-	AfterFinish: func(routine *Of) {
+	AfterFinish: func(kv []interface{}) {
 		// no op
 	},
 }
@@ -99,35 +75,35 @@ var Spi = Config{
 func (cfg *Config) Append(newCfg Config) {
 	if newCfg.AfterPanic != nil {
 		oldAfterPanic := cfg.AfterPanic
-		cfg.AfterPanic = func(routine *Of, recovered interface{}) {
-			oldAfterPanic(routine, recovered)
-			newCfg.AfterPanic(routine, recovered)
+		cfg.AfterPanic = func(recovered interface{}, kv []interface{}) {
+			oldAfterPanic(recovered, kv)
+			newCfg.AfterPanic(recovered, kv)
 		}
 	}
 	if newCfg.BeforeRestart != nil {
 		oldBeforeRestart := cfg.BeforeRestart
-		cfg.BeforeRestart = func(routine *Of, restartedTimes int) bool {
-			if !oldBeforeRestart(routine, restartedTimes) {
+		cfg.BeforeRestart = func(restartedTimes int, kv []interface{}) bool {
+			if !oldBeforeRestart(restartedTimes, kv) {
 				return false
 			}
-			return newCfg.BeforeRestart(routine, restartedTimes)
+			return newCfg.BeforeRestart(restartedTimes, kv)
 		}
 	}
 	if newCfg.BeforeStart != nil {
 		oldBeforeStart := cfg.BeforeStart
-		cfg.BeforeStart = func(routine *Of) error {
-			err := oldBeforeStart(routine)
+		cfg.BeforeStart = func(kv []interface{}) error {
+			err := oldBeforeStart(kv)
 			if err != nil {
 				return err
 			}
-			return newCfg.BeforeStart(routine)
+			return newCfg.BeforeStart(kv)
 		}
 	}
 	if newCfg.AfterFinish != nil {
 		oldAfterFinish := cfg.AfterFinish
-		cfg.AfterFinish = func(routine *Of) {
-			oldAfterFinish(routine)
-			newCfg.AfterFinish(routine)
+		cfg.AfterFinish = func(kv []interface{}) {
+			oldAfterFinish(kv)
+			newCfg.AfterFinish(kv)
 		}
 	}
 }
