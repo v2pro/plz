@@ -17,18 +17,18 @@ func Example_go() {
 }
 
 func Example_long_running_goroutine() {
-	cancel, _ := plz.Routine{LongRunning: func(ctx context.Context) bool {
+	cancel, _ := plz.GoLongRunning(func(ctx context.Context) {
 		timer := time.NewTimer(time.Second).C
 		for {
 			select {
 			case <-ctx.Done(): // to support cancel
-				return false // return false, goroutine will not be restarted
+				return
 			case <-timer:
 				fmt.Println("hello from running goroutine")
+				return
 			}
 		}
-		return true // if return true, goroutine will be restarted
-	}}.Go()
+	})
 	time.Sleep(time.Second * 2)
 	cancel()
 	// Output: hello from running goroutine

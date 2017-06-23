@@ -1,4 +1,4 @@
-package plz
+package routine
 
 import (
 	"context"
@@ -10,10 +10,14 @@ func Go(oneOff func()) error {
 	return err
 }
 
+func GoLongRunning(longRunning func(ctx context.Context)) (context.CancelFunc, error) {
+	return Routine{LongRunning: longRunning}.Go()
+}
+
 type Routine struct {
 	ParentContext context.Context
 	OneOff        func()
-	LongRunning   func(ctx context.Context) bool
+	LongRunning   func(ctx context.Context)
 }
 
 func (r Routine) Go() (context.CancelFunc, error) {
@@ -54,7 +58,8 @@ func (r *Routine) goLongRunningOnce(ctx context.Context) (notDone bool) {
 			notDone = true
 		}
 	}()
-	return r.LongRunning(ctx)
+	r.LongRunning(ctx)
+	return false
 }
 
 func (r *Routine) goOneOff() {

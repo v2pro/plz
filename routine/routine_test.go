@@ -1,4 +1,4 @@
-package plz
+package routine
 
 import (
 	"testing"
@@ -60,14 +60,12 @@ func Test_long_running_goroutine_should_be_restarted(t *testing.T) {
 	counter := 0
 	lock := &sync.Mutex{}
 	lock.Lock()
-	Routine{LongRunning: func(ctx context.Context) bool {
+	Routine{LongRunning: func(ctx context.Context) {
 		counter++
 		if counter > 3 {
 			lock.Unlock()
-			return false
 		}
 		panic("hello")
-		return true
 	}}.Go()
 	lock.Lock()
 	should.Equal(4, counter)
@@ -78,18 +76,16 @@ func Test_long_running_goroutine_cancel(t *testing.T) {
 	called := false
 	lock := &sync.Mutex{}
 	lock.Lock()
-	cancel, _ := Routine{LongRunning: func(ctx context.Context) bool {
+	cancel, _ := Routine{LongRunning: func(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
 				lock.Unlock()
 				called = true
-				return false
 			default:
 				time.Sleep(time.Second)
 			}
 		}
-		return true
 	}}.Go()
 	cancel()
 	lock.Lock()
