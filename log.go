@@ -2,6 +2,6 @@ package plz
 
 import "github.com/v2pro/plz/log"
 
-var Logger = func(path ...string) log.Logger {
-	return &log.DummyLogger{}
+func Logger(path ...string) log.Logger {
+	return log.GetLogger(path...)
 }

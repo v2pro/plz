@@ -9,7 +9,7 @@ import (
 
 func Example_app_finish_hook() {
 	app.Spi.Append(app.Config{
-		AfterFinish: func() {
+		AfterFinish: func(kv []interface{}) {
 			ioutil.WriteFile("/tmp/hello", []byte("world"), os.ModeAppend|0666)
 		},
 	})

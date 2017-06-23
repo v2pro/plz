@@ -2,7 +2,10 @@ package routine
 
 import (
 	"time"
+	"github.com/v2pro/plz/log"
 )
+
+var panicLogger log.Logger
 
 func Go(oneOff func(), kv ...interface{}) error {
 	err := Spi.BeforeStart(kv)
@@ -58,7 +61,10 @@ type Config struct {
 
 var Spi = Config{
 	AfterPanic: func(recovered interface{}, kv []interface{}) {
-		// no op
+		if panicLogger == nil {
+			panicLogger = log.GetLogger("metric", "counter", "panic", "routine")
+		}
+		panicLogger.Log(append(kv, "recovered", recovered)...)
 	},
 	BeforeRestart: func(restartedTimes int, kv []interface{}) bool {
 		time.Sleep(100 * time.Microsecond)
