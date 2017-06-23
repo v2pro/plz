@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 	"context"
+	"github.com/v2pro/plz/routine"
 )
 
 func Example_go() {
@@ -32,4 +33,22 @@ func Example_long_running_goroutine() {
 	time.Sleep(time.Second * 2)
 	cancel()
 	// Output: hello from running goroutine
+}
+
+func Example_log_goroutine_panic() {
+	routine.Spi.Append(routine.Config{
+		AfterPanic: func(routine *routine.Of, recovered interface{}) {
+			fmt.Println(recovered)
+		},
+	})
+	defer func() {
+		// restore back, after test
+		routine.Spi.AfterPanic = func(routine *routine.Of, recovered interface{}) {
+		}
+	}()
+	routine.Of{OneOff: func() { // same as plz.Go()
+		panic("hello")
+	}}.Go()
+	time.Sleep(time.Second)
+	// Output: hello
 }

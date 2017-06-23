@@ -14,7 +14,7 @@ func Test_one_off_goroutine_long_version(t *testing.T) {
 	called := false
 	lock := &sync.Mutex{}
 	lock.Lock()
-	Routine{OneOff: func() {
+	Of{OneOff: func() {
 		lock.Unlock()
 		called = true
 	}}.Go()
@@ -40,12 +40,12 @@ func Test_one_off_goroutine_panic(t *testing.T) {
 	called := false
 	lock := &sync.Mutex{}
 	lock.Lock()
-	RoutineSpi.AfterPanic = func(routine *Routine, recovered interface{}) {
+	Spi.AfterPanic = func(routine *Of, recovered interface{}) {
 		lock.Unlock()
 		called = true
 	}
 	defer func() {
-		RoutineSpi.AfterPanic = func(routine *Routine, recovered interface{}) {
+		Spi.AfterPanic = func(routine *Of, recovered interface{}) {
 		}
 	}()
 	Go(func() {
@@ -60,7 +60,7 @@ func Test_long_running_goroutine_should_be_restarted(t *testing.T) {
 	counter := 0
 	lock := &sync.Mutex{}
 	lock.Lock()
-	Routine{LongRunning: func(ctx context.Context) {
+	Of{LongRunning: func(ctx context.Context) {
 		counter++
 		if counter > 3 {
 			lock.Unlock()
@@ -76,7 +76,7 @@ func Test_long_running_goroutine_cancel(t *testing.T) {
 	called := false
 	lock := &sync.Mutex{}
 	lock.Lock()
-	cancel, _ := Routine{LongRunning: func(ctx context.Context) {
+	cancel, _ := Of{LongRunning: func(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
@@ -94,11 +94,11 @@ func Test_long_running_goroutine_cancel(t *testing.T) {
 
 func Test_routine_spi_before_start(t *testing.T) {
 	should := require.New(t)
-	RoutineSpi.BeforeStart = func(routine *Routine) error {
+	Spi.BeforeStart = func(routine *Of) error {
 		return errors.New("exceed limit")
 	}
 	defer func() {
-		RoutineSpi.BeforeStart = func(routine *Routine) error {
+		Spi.BeforeStart = func(routine *Of) error {
 			return nil
 		}
 	}()
@@ -109,12 +109,12 @@ func Test_routine_spi_after_finish(t *testing.T) {
 	should := require.New(t)
 	called := false
 	lock := &sync.Mutex{}
-	RoutineSpi.AfterFinish = func(routine *Routine) {
+	Spi.AfterFinish = func(routine *Of) {
 		called = true
 		lock.Unlock()
 	}
 	defer func() {
-		RoutineSpi.AfterFinish = func(routine *Routine) {
+		Spi.AfterFinish = func(routine *Of) {
 		}
 	}()
 	lock.Lock()
@@ -126,18 +126,18 @@ func Test_routine_spi_after_finish(t *testing.T) {
 func Test_routine_spi_composition(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
-	RoutineSpi.Append(RoutineSpiConfig{
-		AfterFinish: func(routine *Routine) {
+	Spi.Append(Config{
+		AfterFinish: func(routine *Of) {
 			wg.Done()
 		},
 	})
-	RoutineSpi.Append(RoutineSpiConfig{
-		AfterFinish: func(routine *Routine) {
+	Spi.Append(Config{
+		AfterFinish: func(routine *Of) {
 			wg.Done()
 		},
 	})
 	defer func() {
-		RoutineSpi.AfterFinish = func(routine *Routine) {
+		Spi.AfterFinish = func(routine *Of) {
 		}
 	}()
 	Go(func() {})

@@ -6,22 +6,22 @@ import (
 )
 
 func Go(oneOff func()) error {
-	_, err := Routine{OneOff: oneOff}.Go()
+	_, err := Of{OneOff: oneOff}.Go()
 	return err
 }
 
 func GoLongRunning(longRunning func(ctx context.Context)) (context.CancelFunc, error) {
-	return Routine{LongRunning: longRunning}.Go()
+	return Of{LongRunning: longRunning}.Go()
 }
 
-type Routine struct {
+type Of struct {
 	ParentContext context.Context
 	OneOff        func()
 	LongRunning   func(ctx context.Context)
 }
 
-func (r Routine) Go() (context.CancelFunc, error) {
-	err := RoutineSpi.BeforeStart(&r)
+func (r Of) Go() (context.CancelFunc, error) {
+	err := Spi.BeforeStart(&r)
 	if err != nil {
 		return nil, err
 	}
@@ -38,23 +38,23 @@ func (r Routine) Go() (context.CancelFunc, error) {
 	return cancel, nil
 }
 
-func (r *Routine) goLongRunning(ctx context.Context) {
+func (r *Of) goLongRunning(ctx context.Context) {
 	go func() {
 		for restartedTimes := 0; r.goLongRunningOnce(ctx); restartedTimes++ {
-			shouldRestartAgain := RoutineSpi.BeforeRestart(r, restartedTimes)
+			shouldRestartAgain := Spi.BeforeRestart(r, restartedTimes)
 			if !shouldRestartAgain {
 				break
 			}
 		}
-		RoutineSpi.AfterFinish(r)
+		Spi.AfterFinish(r)
 	}()
 }
 
-func (r *Routine) goLongRunningOnce(ctx context.Context) (notDone bool) {
+func (r *Of) goLongRunningOnce(ctx context.Context) (notDone bool) {
 	defer func() {
 		recovered := recover()
 		if recovered != nil {
-			RoutineSpi.AfterPanic(r, recovered)
+			Spi.AfterPanic(r, recovered)
 			notDone = true
 		}
 	}()
@@ -62,51 +62,51 @@ func (r *Routine) goLongRunningOnce(ctx context.Context) (notDone bool) {
 	return false
 }
 
-func (r *Routine) goOneOff() {
+func (r *Of) goOneOff() {
 	go func() {
 		defer func() {
 			recovered := recover()
-			RoutineSpi.AfterPanic(r, recovered)
+			Spi.AfterPanic(r, recovered)
 		}()
 		r.OneOff()
-		RoutineSpi.AfterFinish(r)
+		Spi.AfterFinish(r)
 	}()
 }
 
-type RoutineSpiConfig struct {
-	AfterPanic    func(routine *Routine, recovered interface{})
-	BeforeRestart func(routine *Routine, restartedTimes int) bool
-	BeforeStart   func(routine *Routine) error
-	AfterFinish   func(routine *Routine)
+type Config struct {
+	AfterPanic    func(routine *Of, recovered interface{})
+	BeforeRestart func(routine *Of, restartedTimes int) bool
+	BeforeStart   func(routine *Of) error
+	AfterFinish   func(routine *Of)
 }
 
-var RoutineSpi = RoutineSpiConfig{
-	AfterPanic: func(routine *Routine, recovered interface{}) {
+var Spi = Config{
+	AfterPanic: func(routine *Of, recovered interface{}) {
 		// no op
 	},
-	BeforeRestart: func(routine *Routine, restartedTimes int) bool {
+	BeforeRestart: func(routine *Of, restartedTimes int) bool {
 		time.Sleep(100 * time.Microsecond)
 		return true
 	},
-	BeforeStart: func(routine *Routine) error {
+	BeforeStart: func(routine *Of) error {
 		return nil
 	},
-	AfterFinish: func(routine *Routine) {
+	AfterFinish: func(routine *Of) {
 		// no op
 	},
 }
 
-func (cfg *RoutineSpiConfig) Append(newCfg RoutineSpiConfig) {
+func (cfg *Config) Append(newCfg Config) {
 	if newCfg.AfterPanic != nil {
 		oldAfterPanic := cfg.AfterPanic
-		cfg.AfterPanic = func(routine *Routine, recovered interface{}) {
+		cfg.AfterPanic = func(routine *Of, recovered interface{}) {
 			oldAfterPanic(routine, recovered)
 			newCfg.AfterPanic(routine, recovered)
 		}
 	}
 	if newCfg.BeforeRestart != nil {
 		oldBeforeRestart := cfg.BeforeRestart
-		cfg.BeforeRestart = func(routine *Routine, restartedTimes int) bool {
+		cfg.BeforeRestart = func(routine *Of, restartedTimes int) bool {
 			if !oldBeforeRestart(routine, restartedTimes) {
 				return false
 			}
@@ -115,7 +115,7 @@ func (cfg *RoutineSpiConfig) Append(newCfg RoutineSpiConfig) {
 	}
 	if newCfg.BeforeStart != nil {
 		oldBeforeStart := cfg.BeforeStart
-		cfg.BeforeStart = func(routine *Routine) error {
+		cfg.BeforeStart = func(routine *Of) error {
 			err := oldBeforeStart(routine)
 			if err != nil {
 				return err
@@ -125,7 +125,7 @@ func (cfg *RoutineSpiConfig) Append(newCfg RoutineSpiConfig) {
 	}
 	if newCfg.AfterFinish != nil {
 		oldAfterFinish := cfg.AfterFinish
-		cfg.AfterFinish = func(routine *Routine) {
+		cfg.AfterFinish = func(routine *Of) {
 			oldAfterFinish(routine)
 			newCfg.AfterFinish(routine)
 		}
