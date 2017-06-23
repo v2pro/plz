@@ -1,4 +1,4 @@
-package plz
+package any
 
 type Any interface {
 	LastError() error

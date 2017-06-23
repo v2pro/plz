@@ -1,11 +1,7 @@
 package plz
 
-type Codec interface {
-	MarshalToString(v interface{}) (string, error)
-	Marshal(v interface{}) ([]byte, error)
-	UnmarshalFromString(str string, v interface{}) error
-	Unmarshal(data []byte, v interface{}) error
-	Get(data []byte, path ...interface{}) Any
-}
+import "github.com/v2pro/plz/codec"
 
-var CodecOf = map[string]Codec{}
+func Codec(name string) codec.Codec {
+	return codec.CodecMap[name]
+}
