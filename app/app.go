@@ -1,23 +1,23 @@
-package plz
+package app
 
 import "os"
 
-func RunMain(f func() int) {
+func Run(f func() int) {
 	defer func() {
 		recovered := recover()
 		if recovered != nil {
-			code := MainSpi.AfterPanic(recovered)
-			MainSpi.AfterFinish()
+			code := Spi.AfterPanic(recovered)
+			Spi.AfterFinish()
 			os.Exit(code)
 			return
 		}
 	}()
 	code := f()
-	MainSpi.AfterFinish()
+	Spi.AfterFinish()
 	os.Exit(code)
 }
 
-var MainSpi = MainSpiConfig{
+var Spi = Config{
 	AfterPanic: func(recovered interface{}) int {
 		return 1
 	},
@@ -25,12 +25,12 @@ var MainSpi = MainSpiConfig{
 	},
 }
 
-type MainSpiConfig struct {
+type Config struct {
 	AfterPanic  func(recovered interface{}) int
 	AfterFinish func()
 }
 
-func (cfg *MainSpiConfig) Append(newCfg MainSpiConfig) {
+func (cfg *Config) Append(newCfg Config) {
 	if newCfg.AfterPanic != nil {
 		oldAfterPanic := cfg.AfterPanic
 		cfg.AfterPanic = func(recovered interface{}) int {
