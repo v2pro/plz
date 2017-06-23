@@ -3,7 +3,7 @@ package example
 import "github.com/v2pro/plz/log"
 
 func init() {
-	log.AddLoggerProvider(func(path []string) log.Logger {
-		return log.NewStderrLogger(path, log.LEVEL_DEBUG)
+	log.AddLoggerProvider(func(loggerKv []interface{}) log.Logger {
+		return log.NewStderrLogger(loggerKv, log.LEVEL_DEBUG)
 	})
 }

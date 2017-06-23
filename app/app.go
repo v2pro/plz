@@ -7,7 +7,7 @@ import (
 
 func Run(f func() int, kv ...interface{}) {
 	log.GetLogger("metric", "counter", "begin", "app").
-		Log(kv...)
+		Info("app begin", kv...)
 	defer func() {
 		recovered := recover()
 		if recovered != nil {
@@ -25,12 +25,12 @@ func Run(f func() int, kv ...interface{}) {
 var Spi = Config{
 	AfterPanic: func(recovered interface{}, kv []interface{}) int {
 		log.GetLogger("metric", "counter", "panic", "app").
-			Log(append(kv, "recovered", recovered)...)
+			Error("app panic", append(kv, "recovered", recovered)...)
 		return 1
 	},
 	AfterFinish: func(kv []interface{}) {
 		log.GetLogger("metric", "counter", "finish", "app").
-			Log(kv...)
+			Info("app finish", kv...)
 	},
 }
 

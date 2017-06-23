@@ -4,15 +4,14 @@ import (
 	"math"
 	"fmt"
 	"os"
-	"strings"
 )
 
-var providers = []func(path []string) Logger{}
+var providers = []func(loggerKv []interface{}) Logger{}
 
-var GetLogger = func(path ...string) Logger {
+var GetLogger = func(loggerKv ...interface{}) Logger {
 	var logger Logger
 	for _, provider := range providers {
-		provided := provider(path)
+		provided := provider(loggerKv)
 		if provided == nil {
 			continue
 		}
@@ -27,7 +26,7 @@ var GetLogger = func(path ...string) Logger {
 	return logger
 }
 
-func AddLoggerProvider(provider func(path []string) Logger) {
+func AddLoggerProvider(provider func(loggerKv []interface{}) Logger) {
 	providers = append(providers, provider)
 }
 
@@ -57,8 +56,7 @@ var LEVEL_DEBUG = Level{20, "DEBUG"}
 var LEVEL_TRACE = Level{10, "TRACE"}
 
 type Logger interface {
-	Log(kv ...interface{})
-	LogMessage(level Level, msg string, kv ...interface{})
+	Log(level Level, msg string, kv ...interface{})
 	Error(msg string, kv ...interface{})
 	Info(msg string, kv ...interface{})
 	Debug(msg string, kv ...interface{})
@@ -67,9 +65,7 @@ type Logger interface {
 
 type dummyLogger struct{}
 
-func (logger *dummyLogger) Log(kv ...interface{}) {
-}
-func (logger *dummyLogger) LogMessage(level Level, msg string, kv ...interface{}) {
+func (logger *dummyLogger) Log(level Level, msg string, kv ...interface{}) {
 }
 func (logger *dummyLogger) Error(msg string, kv ...interface{}) {
 }
@@ -85,14 +81,9 @@ type combinedLogger struct {
 	loggers []Logger
 }
 
-func (logger *combinedLogger) Log(kv ...interface{}) {
+func (logger *combinedLogger) Log(level Level, msg string, kv ...interface{}) {
 	for _, logger := range logger.loggers {
-		logger.Log(kv...)
-	}
-}
-func (logger *combinedLogger) LogMessage(level Level, msg string, kv ...interface{}) {
-	for _, logger := range logger.loggers {
-		logger.LogMessage(level, msg, kv...)
+		logger.Log(level, msg, kv...)
 	}
 }
 func (logger *combinedLogger) Error(msg string, kv ...interface{}) {
@@ -131,29 +122,26 @@ func combineLoggers(oldLogger Logger, newLogger Logger) Logger {
 }
 
 type stderrLogger struct {
-	loggerName string
+	loggerKv string
 	minLevel   Level
 }
 
-func (logger *stderrLogger) Log(kv ...interface{}) {
-	logger.LogMessage(LEVEL_UNDEF, "", kv...)
-}
-func (logger *stderrLogger) LogMessage(level Level, msg string, kv ...interface{}) {
-	fmt.Fprintln(os.Stderr, append([]interface{}{logger.loggerName, level.LevelName, msg}, kv...)...)
+func (logger *stderrLogger) Log(level Level, msg string, kv ...interface{}) {
+	fmt.Fprintln(os.Stderr, append([]interface{}{logger.loggerKv, level.LevelName, msg}, kv...)...)
 }
 func (logger *stderrLogger) Error(msg string, kv ...interface{}) {
-	logger.LogMessage(LEVEL_ERROR, msg, kv...)
+	logger.Log(LEVEL_ERROR, msg, kv...)
 }
 func (logger *stderrLogger) Info(msg string, kv ...interface{}) {
-	logger.LogMessage(LEVEL_INFO, msg, kv...)
+	logger.Log(LEVEL_INFO, msg, kv...)
 }
 func (logger *stderrLogger) Debug(msg string, kv ...interface{}) {
-	logger.LogMessage(LEVEL_DEBUG, msg, kv...)
+	logger.Log(LEVEL_DEBUG, msg, kv...)
 }
 func (logger *stderrLogger) ShouldLog(level Level) bool {
 	return level.Severity >= logger.minLevel.Severity
 }
 
-func NewStderrLogger(path []string, minLevel Level) Logger {
-	return &stderrLogger{strings.Join(path, "."), minLevel}
+func NewStderrLogger(loggerKv []interface{}, minLevel Level) Logger {
+	return &stderrLogger{fmt.Sprintf("%v", loggerKv), minLevel}
 }

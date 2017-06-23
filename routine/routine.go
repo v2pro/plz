@@ -64,7 +64,7 @@ var Spi = Config{
 		if panicLogger == nil {
 			panicLogger = log.GetLogger("metric", "counter", "panic", "routine")
 		}
-		panicLogger.Log(append(kv, "recovered", recovered)...)
+		panicLogger.Error("goroutine panic", append(kv, "recovered", recovered)...)
 	},
 	BeforeRestart: func(restartedTimes int, kv []interface{}) bool {
 		time.Sleep(100 * time.Microsecond)
