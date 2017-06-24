@@ -3,19 +3,25 @@ package routine
 import (
 	"time"
 	"github.com/v2pro/plz/log"
+	"runtime/debug"
+	"runtime"
+	"fmt"
 )
 
-var panicLogger log.Logger
+var panicLogger = log.GetLogger("metric", "counter", "panic", "routine")
 
 func Go(oneOff func(), kv ...interface{}) error {
 	err := Spi.BeforeStart(kv)
 	if err != nil {
 		return err
 	}
+	_, callerFile, callerLine, _ := runtime.Caller(2)
 	go func() {
 		defer func() {
 			recovered := recover()
-			Spi.AfterPanic(recovered, kv)
+			if recovered != nil {
+				Spi.AfterPanic(recovered, append(kv, "caller", fmt.Sprintf("%s:%d", callerFile, callerLine)))
+			}
 		}()
 		oneOff()
 		Spi.AfterFinish(kv)
@@ -61,10 +67,7 @@ type Config struct {
 
 var Spi = Config{
 	AfterPanic: func(recovered interface{}, kv []interface{}) {
-		if panicLogger == nil {
-			panicLogger = log.GetLogger("metric", "counter", "panic", "routine")
-		}
-		panicLogger.Error("goroutine panic", append(kv, "recovered", recovered)...)
+		panicLogger.Error("goroutine panic", append(kv, "recovered", recovered, "stack", string(debug.Stack()))...)
 	},
 	BeforeRestart: func(restartedTimes int, kv []interface{}) bool {
 		time.Sleep(100 * time.Microsecond)

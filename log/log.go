@@ -18,7 +18,7 @@ var GetLogger = func(loggerKv ...interface{}) Logger {
 		logger = combineLoggers(logger, provided)
 	}
 	if len(providers) == 0 {
-		panic("logger not defined yet, please AddLoggerProvider")
+		return &placeholder{loggerKv, nil}
 	}
 	if logger == nil {
 		logger = &dummyLogger{}
@@ -61,6 +61,39 @@ type Logger interface {
 	Info(msg string, kv ...interface{})
 	Debug(msg string, kv ...interface{})
 	ShouldLog(level Level) bool
+}
+
+type placeholder struct{
+	loggerKv []interface{}
+	realLoggerCache Logger
+}
+
+func (logger *placeholder) Log(level Level, msg string, kv ...interface{}) {
+	logger.realLogger().Log(level, msg, kv...)
+}
+func (logger *placeholder) Error(msg string, kv ...interface{}) {
+	logger.realLogger().Error(msg, kv...)
+}
+func (logger *placeholder) Info(msg string, kv ...interface{}) {
+	logger.realLogger().Info(msg, kv...)
+}
+func (logger *placeholder) Debug(msg string, kv ...interface{}) {
+	logger.realLogger().Debug(msg, kv...)
+}
+func (logger *placeholder) ShouldLog(level Level) bool {
+	return logger.realLogger().ShouldLog(level)
+}
+func (logger *placeholder) realLogger() Logger {
+	if logger.realLoggerCache != nil {
+		return logger.realLoggerCache
+	}
+	got := GetLogger(logger.loggerKv...)
+	if _, stillPlaceholder := got.(*placeholder); stillPlaceholder {
+		fmt.Fprintln(os.Stderr, "logger not defined yet, please AddLoggerProvider")
+		return &dummyLogger{}
+	}
+	logger.realLoggerCache = got
+	return got
 }
 
 type dummyLogger struct{}
@@ -123,7 +156,7 @@ func combineLoggers(oldLogger Logger, newLogger Logger) Logger {
 
 type stderrLogger struct {
 	loggerKv string
-	minLevel   Level
+	minLevel Level
 }
 
 func (logger *stderrLogger) Log(level Level, msg string, kv ...interface{}) {
