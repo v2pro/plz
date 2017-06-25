@@ -12,8 +12,8 @@ func Test_define_externally(t *testing.T) {
 	}
 	Define(func(obj *TestObject) Tags {
 		return D(
-			D("k", "v"),
-			D(&obj.a, "k2", "v2"),
+			S("k", "v"),
+			F(&obj.a, "k2", "v2"),
 		)
 	})
 	should := require.New(t)
@@ -30,9 +30,9 @@ type TestObject1 struct {
 
 func (obj *TestObject1) DefineTags() Tags {
 	return D(
-		D("k", "v"),
-		D(&obj.a, "k2", "v2"),
-		D(&obj.b, "k3", "v3"),
+		S("k", "v"),
+		F(&obj.a, "k2", "v2"),
+		F(&obj.b, "k3", "v3"),
 	)
 }
 
@@ -51,8 +51,8 @@ func Test_merge_with_string_defined_tags(t *testing.T) {
 	}
 	Define(func(obj *TestObject) Tags {
 		return D(
-			D("k", "v"),
-			D(&obj.Hello, "k2", "v2"),
+			S("k", "v"),
+			F(&obj.Hello, "k2", "v2"),
 		)
 	})
 	should := require.New(t)

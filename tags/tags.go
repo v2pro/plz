@@ -13,6 +13,8 @@ type Protocol interface {
 }
 
 type Tags []interface{}
+type TagsForStruct Tags
+type TagsForField Tags
 
 type StructTags struct {
 	Struct map[string]interface{}
@@ -37,7 +39,19 @@ func Get(typ reflect.Type) *StructTags {
 	return register(typ, fakeStructPtrVal, allDef)
 }
 
-func D(kv ...interface{}) Tags {
+func D(_struct TagsForStruct, fields ...TagsForField) Tags {
+	tags := []interface{}{Tags(_struct)}
+	for _, field := range fields {
+		tags = append(tags, Tags(field))
+	}
+	return tags
+}
+
+func F(kv ...interface{}) TagsForField {
+	return kv
+}
+
+func S(kv ...interface{}) TagsForStruct {
 	return kv
 }
 
