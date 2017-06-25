@@ -40,6 +40,9 @@ func Example_tags_defined_externally() {
 	})
 	structTags := tags.Get(reflect.TypeOf(Product{}))
 	fieldTags, _ := json.Marshal(structTags.Fields["ProductId"])
+	fmt.Println(structTags.Struct["comment"])
 	fmt.Println(string(fieldTags))
-	// Output: {"json":"product_id","tag_is_not_only_string":100,"validation":"required"}
+	// Output:
+	// some more info about the struct itself
+	// {"json":"product_id","tag_is_not_only_string":100,"validation":"required"}
 }
