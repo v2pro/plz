@@ -2,11 +2,11 @@ package app
 
 import (
 	"os"
-	"github.com/v2pro/plz/log"
+	"github.com/v2pro/plz/logger"
 )
 
 func Run(f func() int, kv ...interface{}) {
-	logger.GetLogger("metric", "counter", "begin", "app").
+	logger.Of("metric", "counter", "begin", "app").
 		Info("app begin", kv...)
 	defer func() {
 		recovered := recover()
@@ -24,12 +24,12 @@ func Run(f func() int, kv ...interface{}) {
 
 var Spi = Config{
 	AfterPanic: func(recovered interface{}, kv []interface{}) int {
-		logger.GetLogger("metric", "counter", "panic", "app").
+		logger.Of("metric", "counter", "panic", "app").
 			Error("app panic", append(kv, "recovered", recovered)...)
 		return 1
 	},
 	AfterFinish: func(kv []interface{}) {
-		logger.GetLogger("metric", "counter", "finish", "app").
+		logger.Of("metric", "counter", "finish", "app").
 			Info("app finish", kv...)
 	},
 }

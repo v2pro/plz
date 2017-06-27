@@ -2,13 +2,13 @@ package routine
 
 import (
 	"time"
-	"github.com/v2pro/plz/log"
+	"github.com/v2pro/plz/logger"
 	"runtime/debug"
 	"runtime"
 	"fmt"
 )
 
-var panicLogger = logger.GetLogger("metric", "counter", "panic", "routine")
+var panicLogger = logger.Of("metric", "counter", "panic", "routine")
 
 func Go(oneOff func(), kv ...interface{}) error {
 	err := Spi.BeforeStart(kv)

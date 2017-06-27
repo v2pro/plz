@@ -87,7 +87,7 @@ func (logger *placeholder) realLogger() Logger {
 	if logger.realLoggerCache != nil {
 		return logger.realLoggerCache
 	}
-	got := GetLogger(logger.loggerKv...)
+	got := Of(logger.loggerKv...)
 	if _, stillPlaceholder := got.(*placeholder); stillPlaceholder {
 		fmt.Fprintln(os.Stderr, "logger not defined yet, please AddLoggerProvider")
 		return &dummyLogger{}
