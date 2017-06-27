@@ -16,19 +16,21 @@ func accessorOf(typ reflect.Type) accessor.Accessor {
 			typ: typ,
 		}
 	}
-	if typ.Kind() != reflect.Ptr {
-		if typ.Kind() == reflect.Int {
-			return &intAccessor{}
-		}
-		return nil
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
 	}
-	typ = typ.Elem()
 	switch typ.Kind() {
 	case reflect.Int:
 		return &intAccessor{}
 	case reflect.Struct:
 		return &structAccessor{
 			typ: typ,
+		}
+	case reflect.Slice:
+		return &sliceAccessor{
+			typ: typ,
+			templateSliceObj: castToEmptyInterface(reflect.New(typ).Elem().Interface()),
+			templateElemObj: castToEmptyInterface(reflect.New(typ.Elem()).Interface()),
 		}
 	}
 	panic(fmt.Sprintf("do not support: %v", typ.Kind()))

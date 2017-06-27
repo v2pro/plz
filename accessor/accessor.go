@@ -23,10 +23,12 @@ type Accessor interface {
 	SetInt(obj interface{}, val int)
 	NumField() int
 	Field(index int) StructField
-	IterateMap(obj interface{}, cb func(key interface{}, value interface{}) bool)
-	SetMapIndex(obj interface{}, key interface{}, value interface{})
+	IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool)
+	SetMapIndex(obj interface{}, key interface{}, elem interface{})
 	Key() Accessor
 	Elem() Accessor
+	IterateArray(obj interface{}, cb func(elem interface{}) bool)
+	GrowOne(obj interface{}, elem interface{}) (interface{}, interface{})
 }
 
 type StructField struct {
@@ -53,11 +55,11 @@ func (acc *NoopAccessor) Field(index int) StructField {
 	panic("unsupported operation")
 }
 
-func (acc *NoopAccessor) IterateMap(obj interface{}, cb func(key interface{}, value interface{}) bool) {
+func (acc *NoopAccessor) IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool) {
 	panic("unsupported operation")
 }
 
-func (acc *NoopAccessor) SetMapIndex(obj interface{}, key interface{}, value interface{}) {
+func (acc *NoopAccessor) SetMapIndex(obj interface{}, key interface{}, elem interface{}) {
 	panic("unsupported operation")
 }
 
@@ -66,5 +68,13 @@ func (acc *NoopAccessor) Key() Accessor {
 }
 
 func (acc *NoopAccessor) Elem() Accessor {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) IterateArray(obj interface{}, cb func(elem interface{}) bool) {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) GrowOne(obj interface{}, elem interface{}) (interface{}, interface{}) {
 	panic("unsupported operation")
 }
