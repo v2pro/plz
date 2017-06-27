@@ -1,7 +1,11 @@
 package plz
 
-import "github.com/v2pro/plz/accessor"
+import (
+	"github.com/v2pro/plz/accessor"
+	"reflect"
+)
 
-func AccessorOf(obj interface{}) accessor.Accessor {
-	return accessor.Of(obj)
+func AccessorOf(typ reflect.Type) accessor.Accessor {
+	return accessor.Of(typ)
 }
+

@@ -1,17 +1,20 @@
 package accessor
 
-import "reflect"
+import (
+	"reflect"
+	"fmt"
+)
 
-var Providers = []func(interface{}) Accessor{}
+var Providers = []func(reflect.Type) Accessor{}
 
-func Of(obj interface{}) Accessor {
+func Of(typ reflect.Type) Accessor {
 	for _, provider := range Providers {
-		asor := provider(obj)
+		asor := provider(typ)
 		if asor != nil {
 			return asor
 		}
 	}
-	panic("no accessor provider for this object")
+	panic(fmt.Sprintf("no accessor provider for: %v", typ))
 }
 
 type Accessor interface {
@@ -19,4 +22,11 @@ type Accessor interface {
 	Kind() reflect.Kind
 	Int(obj interface{}) int
 	SetInt(obj interface{}, val int)
+	NumField() int
+	Field(index int) StructField
+}
+
+type StructField struct {
+	Name     string
+	Accessor Accessor
 }
