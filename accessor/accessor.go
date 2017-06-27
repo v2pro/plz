@@ -18,7 +18,6 @@ func Of(typ reflect.Type) Accessor {
 }
 
 type Accessor interface {
-	// Kind returns the specific kind of this type.
 	Kind() reflect.Kind
 	Int(obj interface{}) int
 	SetInt(obj interface{}, val int)
@@ -26,6 +25,8 @@ type Accessor interface {
 	Field(index int) StructField
 	IterateMap(obj interface{}, cb func(key interface{}, value interface{}) bool)
 	SetMapIndex(obj interface{}, key interface{}, value interface{})
+	Key() Accessor
+	Elem() Accessor
 }
 
 type StructField struct {
@@ -57,5 +58,13 @@ func (acc *NoopAccessor) IterateMap(obj interface{}, cb func(key interface{}, va
 }
 
 func (acc *NoopAccessor) SetMapIndex(obj interface{}, key interface{}, value interface{}) {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) Key() Accessor {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) Elem() Accessor {
 	panic("unsupported operation")
 }
