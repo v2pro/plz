@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func Test_slice_iterate(t *testing.T) {
+func Test_slice(t *testing.T) {
 	should := require.New(t)
 	var v interface{} = []int{}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))

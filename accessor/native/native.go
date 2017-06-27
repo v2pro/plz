@@ -22,6 +22,8 @@ func accessorOf(typ reflect.Type) accessor.Accessor {
 	switch typ.Kind() {
 	case reflect.Int:
 		return &intAccessor{}
+	case reflect.String:
+		return &stringAccessor{}
 	case reflect.Struct:
 		return &structAccessor{
 			typ: typ,
@@ -34,23 +36,4 @@ func accessorOf(typ reflect.Type) accessor.Accessor {
 		}
 	}
 	panic(fmt.Sprintf("do not support: %v", typ.Kind()))
-}
-
-type intAccessor struct {
-	accessor.NoopAccessor
-}
-
-func (acc *intAccessor) Kind() reflect.Kind {
-	return reflect.Int
-}
-
-func (acc *intAccessor) Int(obj interface{}) int {
-	return *((*int)(extractPtrFromEmptyInterface(obj)))
-}
-
-func (acc *intAccessor) SetInt(obj interface{}, val int) {
-	if reflect.TypeOf(obj).Kind() != reflect.Ptr {
-		panic("can only SetInt on pointer")
-	}
-	*((*int)(extractPtrFromEmptyInterface(obj))) = val
 }

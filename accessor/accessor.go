@@ -19,8 +19,6 @@ func Of(typ reflect.Type) Accessor {
 
 type Accessor interface {
 	Kind() reflect.Kind
-	Int(obj interface{}) int
-	SetInt(obj interface{}, val int)
 	NumField() int
 	Field(index int) StructField
 	IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool)
@@ -29,6 +27,10 @@ type Accessor interface {
 	Elem() Accessor
 	IterateArray(obj interface{}, cb func(elem interface{}) bool)
 	GrowOne(obj interface{}, elem interface{}) (interface{}, interface{})
+	Int(obj interface{}) int
+	SetInt(obj interface{}, val int)
+	String(obj interface{}) string
+	SetString(obj interface{}, val string)
 }
 
 type StructField struct {
@@ -37,14 +39,6 @@ type StructField struct {
 }
 
 type NoopAccessor struct {
-}
-
-func (acc *NoopAccessor) Int(obj interface{}) int {
-	panic("unsupported operation")
-}
-
-func (acc *NoopAccessor) SetInt(obj interface{}, val int) {
-	panic("unsupported operation")
 }
 
 func (acc *NoopAccessor) NumField() int {
@@ -76,5 +70,21 @@ func (acc *NoopAccessor) IterateArray(obj interface{}, cb func(elem interface{})
 }
 
 func (acc *NoopAccessor) GrowOne(obj interface{}, elem interface{}) (interface{}, interface{}) {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) Int(obj interface{}) int {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) SetInt(obj interface{}, val int) {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) String(obj interface{}) string {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) SetString(obj interface{}, val string) {
 	panic("unsupported operation")
 }
