@@ -1,4 +1,4 @@
-package log
+package logger
 
 import (
 	"math"
@@ -8,7 +8,7 @@ import (
 
 var providers = []func(loggerKv []interface{}) Logger{}
 
-var GetLogger = func(loggerKv ...interface{}) Logger {
+func Of(loggerKv ...interface{}) Logger {
 	var logger Logger
 	for _, provider := range providers {
 		provided := provider(loggerKv)

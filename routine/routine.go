@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-var panicLogger = log.GetLogger("metric", "counter", "panic", "routine")
+var panicLogger = logger.GetLogger("metric", "counter", "panic", "routine")
 
 func Go(oneOff func(), kv ...interface{}) error {
 	err := Spi.BeforeStart(kv)
