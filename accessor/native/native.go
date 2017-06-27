@@ -13,6 +13,9 @@ func init() {
 }
 
 func accessorOf(typ reflect.Type) accessor.Accessor {
+	if typ.Kind() == reflect.Map {
+		return &mapAccessor{}
+	}
 	if typ.Kind() != reflect.Ptr {
 		return nil
 	}
@@ -28,27 +31,8 @@ func accessorOf(typ reflect.Type) accessor.Accessor {
 	panic(fmt.Sprintf("do not support: %v", typ.Kind()))
 }
 
-type noop struct {
-}
-
-func (acc *noop) Int(obj interface{}) int {
-	panic("unsupported operation")
-}
-
-func (acc *noop) SetInt(obj interface{}, val int) {
-	panic("unsupported operation")
-}
-
-func (acc *noop) NumField() int {
-	panic("unsupported operation")
-}
-
-func (acc *noop) Field(index int) accessor.StructField {
-	panic("unsupported operation")
-}
-
 type intAccessor struct {
-	noop
+	accessor.NoopAccessor
 }
 
 func (acc *intAccessor) Kind() reflect.Kind {
@@ -65,7 +49,7 @@ func (acc *intAccessor) SetInt(obj interface{}, val int) {
 }
 
 type structAccessor struct {
-	noop
+	accessor.NoopAccessor
 	typ reflect.Type
 }
 
@@ -93,7 +77,7 @@ func (acc *structAccessor) Field(index int) accessor.StructField {
 }
 
 type structFieldAccessor struct {
-	noop
+	accessor.NoopAccessor
 	field       reflect.StructField
 	templateObj emptyInterface
 	accessor    accessor.Accessor
@@ -119,20 +103,24 @@ func (acc *structFieldAccessor) fieldOf(obj interface{}) interface{} {
 	return castBackEmptyInterface(objEmptyInterface)
 }
 
-func castToEmptyInterface(val interface{}) emptyInterface {
-	return *((*emptyInterface)(unsafe.Pointer(&val)))
+type mapAccessor struct {
+	accessor.NoopAccessor
 }
 
-func castBackEmptyInterface(ei emptyInterface) interface{} {
-	return *((*interface{})(unsafe.Pointer(&ei)))
+func (acc *mapAccessor) Kind() reflect.Kind {
+	return reflect.Map
 }
 
-func extractPtrFromEmptyInterface(val interface{}) unsafe.Pointer {
-	return castToEmptyInterface(val).word
+func (acc *mapAccessor) IterateMap(obj interface{}, cb func(key interface{}, value interface{}) bool) {
+	reflectVal := reflect.ValueOf(obj)
+	for _, key := range reflectVal.MapKeys() {
+		value := reflectVal.MapIndex(key)
+		if !cb(key.Interface(), value.Interface()) {
+			return
+		}
+	}
 }
 
-// emptyInterface is the header for an interface{} value.
-type emptyInterface struct {
-	typ  unsafe.Pointer
-	word unsafe.Pointer
+func (acc *mapAccessor) SetMapIndex(obj interface{}, key interface{}, value interface{}) {
+	reflect.ValueOf(obj).SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(value))
 }

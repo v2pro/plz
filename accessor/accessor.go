@@ -24,9 +24,38 @@ type Accessor interface {
 	SetInt(obj interface{}, val int)
 	NumField() int
 	Field(index int) StructField
+	IterateMap(obj interface{}, cb func(key interface{}, value interface{}) bool)
+	SetMapIndex(obj interface{}, key interface{}, value interface{})
 }
 
 type StructField struct {
 	Name     string
 	Accessor Accessor
+}
+
+type NoopAccessor struct {
+}
+
+func (acc *NoopAccessor) Int(obj interface{}) int {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) SetInt(obj interface{}, val int) {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) NumField() int {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) Field(index int) StructField {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) IterateMap(obj interface{}, cb func(key interface{}, value interface{}) bool) {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) SetMapIndex(obj interface{}, key interface{}, value interface{}) {
+	panic("unsupported operation")
 }
