@@ -1,9 +1,9 @@
 package tags
 
 import (
-	"testing"
 	"github.com/json-iterator/go/require"
 	"reflect"
+	"testing"
 )
 
 func Test_define_externally(t *testing.T) {

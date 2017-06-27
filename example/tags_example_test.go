@@ -1,14 +1,14 @@
 package example
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/v2pro/plz/tags"
 	"reflect"
-	"fmt"
-	"encoding/json"
 )
 
 type Order struct {
-	OrderId int `json:"order_id"`
+	OrderId   int `json:"order_id"`
 	ProductId int `json:"product_id"`
 }
 

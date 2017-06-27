@@ -1,10 +1,10 @@
 package native
 
 import (
+	"github.com/v2pro/plz"
 	"github.com/v2pro/plz/accessor"
 	"reflect"
 	"unsafe"
-	"github.com/v2pro/plz"
 )
 
 type sliceAccessor struct {

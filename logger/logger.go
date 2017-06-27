@@ -1,8 +1,8 @@
 package logger
 
 import (
-	"math"
 	"fmt"
+	"math"
 	"os"
 )
 
@@ -63,8 +63,8 @@ type Logger interface {
 	ShouldLog(level Level) bool
 }
 
-type placeholder struct{
-	loggerKv []interface{}
+type placeholder struct {
+	loggerKv        []interface{}
 	realLoggerCache Logger
 }
 

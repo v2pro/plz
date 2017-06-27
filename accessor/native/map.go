@@ -1,9 +1,9 @@
 package native
 
 import (
-	"reflect"
-	"github.com/v2pro/plz/accessor"
 	"github.com/v2pro/plz"
+	"github.com/v2pro/plz/accessor"
+	"reflect"
 )
 
 type mapAccessor struct {

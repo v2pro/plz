@@ -1,9 +1,9 @@
 package tags
 
 import (
-	"unsafe"
 	"reflect"
 	"strconv"
+	"unsafe"
 )
 
 var registry = map[reflect.Type]interface{}{}

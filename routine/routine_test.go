@@ -1,10 +1,10 @@
 package routine
 
 import (
-	"testing"
+	"errors"
 	"github.com/json-iterator/go/require"
 	"sync"
-	"errors"
+	"testing"
 )
 
 func Test_one_off_goroutine_long_version(t *testing.T) {

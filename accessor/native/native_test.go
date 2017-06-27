@@ -1,10 +1,10 @@
 package native
 
 import (
-	"testing"
-	"reflect"
 	"github.com/json-iterator/go/require"
 	"github.com/v2pro/plz"
+	"reflect"
+	"testing"
 )
 
 func Test_int(t *testing.T) {

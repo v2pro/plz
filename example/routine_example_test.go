@@ -1,10 +1,10 @@
 package example
 
 import (
-	"github.com/v2pro/plz"
 	"fmt"
-	"time"
+	"github.com/v2pro/plz"
 	"github.com/v2pro/plz/routine"
+	"time"
 )
 
 func Example_go() {

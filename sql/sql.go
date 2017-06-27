@@ -1,8 +1,8 @@
 package sql
 
 import (
-	"time"
 	"database/sql/driver"
+	"time"
 )
 
 type Translated interface {

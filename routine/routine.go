@@ -1,11 +1,11 @@
 package routine
 
 import (
-	"time"
-	"github.com/v2pro/plz/logger"
-	"runtime/debug"
-	"runtime"
 	"fmt"
+	"github.com/v2pro/plz/logger"
+	"runtime"
+	"runtime/debug"
+	"time"
 )
 
 var panicLogger = logger.Of("metric", "counter", "panic", "routine")

@@ -1,8 +1,8 @@
 package app
 
 import (
-	"os"
 	"github.com/v2pro/plz/logger"
+	"os"
 )
 
 func Run(f func() int, kv ...interface{}) {

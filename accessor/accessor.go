@@ -1,8 +1,8 @@
 package accessor
 
 import (
-	"reflect"
 	"fmt"
+	"reflect"
 )
 
 var Providers = []func(reflect.Type) Accessor{}

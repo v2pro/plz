@@ -1,10 +1,10 @@
 package native
 
 import (
-	"unsafe"
+	"github.com/v2pro/plz"
 	"github.com/v2pro/plz/accessor"
 	"reflect"
-	"github.com/v2pro/plz"
+	"unsafe"
 )
 
 type structAccessor struct {
@@ -61,4 +61,3 @@ func (acc *structFieldAccessor) fieldOf(obj interface{}) interface{} {
 	objEmptyInterface.word = unsafe.Pointer(structFieldPtr)
 	return castBackEmptyInterface(objEmptyInterface)
 }
-

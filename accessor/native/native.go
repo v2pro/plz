@@ -1,9 +1,9 @@
 package native
 
 import (
+	"fmt"
 	"github.com/v2pro/plz/accessor"
 	"reflect"
-	"fmt"
 )
 
 func init() {
@@ -28,9 +28,9 @@ func accessorOf(typ reflect.Type) accessor.Accessor {
 		}
 	case reflect.Slice:
 		return &sliceAccessor{
-			typ: typ,
+			typ:              typ,
 			templateSliceObj: castToEmptyInterface(reflect.New(typ).Elem().Interface()),
-			templateElemObj: castToEmptyInterface(reflect.New(typ.Elem()).Interface()),
+			templateElemObj:  castToEmptyInterface(reflect.New(typ.Elem()).Interface()),
 		}
 	}
 	panic(fmt.Sprintf("do not support: %v", typ.Kind()))

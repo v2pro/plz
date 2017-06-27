@@ -1,10 +1,10 @@
 package native
 
 import (
-	"testing"
+	"github.com/stretchr/testify/require"
 	"github.com/v2pro/plz"
 	"reflect"
-	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func Test_map_iterate(t *testing.T) {

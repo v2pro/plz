@@ -8,4 +8,3 @@ import (
 func AccessorOf(typ reflect.Type) accessor.Accessor {
 	return accessor.Of(typ)
 }
-

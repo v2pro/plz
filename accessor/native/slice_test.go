@@ -1,10 +1,10 @@
 package native
 
 import (
-	"testing"
 	"github.com/stretchr/testify/require"
 	"github.com/v2pro/plz"
 	"reflect"
+	"testing"
 )
 
 func Test_slice_iterate(t *testing.T) {
