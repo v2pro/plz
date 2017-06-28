@@ -7,10 +7,15 @@ import (
 
 type intAccessor struct {
 	accessor.NoopAccessor
+	typ reflect.Type
 }
 
 func (acc *intAccessor) Kind() reflect.Kind {
 	return reflect.Int
+}
+
+func (acc *intAccessor) GoString() string {
+	return acc.typ.Name()
 }
 
 func (acc *intAccessor) Int(obj interface{}) int {

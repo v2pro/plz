@@ -5,6 +5,7 @@ import (
 	"github.com/v2pro/plz/accessor"
 	"reflect"
 	"unsafe"
+	"fmt"
 )
 
 type structAccessor struct {
@@ -14,6 +15,10 @@ type structAccessor struct {
 
 func (acc *structAccessor) Kind() reflect.Kind {
 	return reflect.Struct
+}
+
+func (acc *structAccessor) GoString() string {
+	return acc.typ.Name()
 }
 
 func (acc *structAccessor) NumField() int {
@@ -28,18 +33,20 @@ func (acc *structAccessor) Field(index int) accessor.StructField {
 	return accessor.StructField{
 		Name: field.Name,
 		Accessor: &structFieldAccessor{
-			field:       field,
-			templateObj: templateObj,
-			accessor:    fieldAcc,
+			structAccessor: acc,
+			field:          field,
+			templateObj:    templateObj,
+			accessor:       fieldAcc,
 		},
 	}
 }
 
 type structFieldAccessor struct {
 	accessor.NoopAccessor
-	field       reflect.StructField
-	templateObj emptyInterface
-	accessor    accessor.Accessor
+	structAccessor accessor.Accessor
+	field          reflect.StructField
+	templateObj    emptyInterface
+	accessor       accessor.Accessor
 }
 
 func (acc *structFieldAccessor) Kind() reflect.Kind {
@@ -54,10 +61,22 @@ func (acc *structFieldAccessor) SetInt(obj interface{}, val int) {
 	acc.accessor.SetInt(acc.fieldOf(obj), val)
 }
 
+func (acc *structFieldAccessor) String(obj interface{}) string {
+	return acc.accessor.String(acc.fieldOf(obj))
+}
+
+func (acc *structFieldAccessor) SetString(obj interface{}, val string) {
+	acc.accessor.SetString(acc.fieldOf(obj), val)
+}
+
 func (acc *structFieldAccessor) fieldOf(obj interface{}) interface{} {
 	structPtr := uintptr(extractPtrFromEmptyInterface(obj))
 	structFieldPtr := structPtr + acc.field.Offset
 	objEmptyInterface := acc.templateObj
 	objEmptyInterface.word = unsafe.Pointer(structFieldPtr)
 	return castBackEmptyInterface(objEmptyInterface)
+}
+
+func (acc *structFieldAccessor) GoString() string {
+	return fmt.Sprintf("%#v/%s %#v", acc.structAccessor.GoString(), acc.field.Name, acc.accessor.GoString())
 }

@@ -21,9 +21,9 @@ func accessorOf(typ reflect.Type) accessor.Accessor {
 	}
 	switch typ.Kind() {
 	case reflect.Int:
-		return &intAccessor{}
+		return &intAccessor{typ:typ}
 	case reflect.String:
-		return &stringAccessor{}
+		return &stringAccessor{typ:typ}
 	case reflect.Struct:
 		return &structAccessor{
 			typ: typ,

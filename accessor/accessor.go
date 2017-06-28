@@ -18,6 +18,7 @@ func Of(typ reflect.Type) Accessor {
 }
 
 type Accessor interface {
+	fmt.GoStringer
 	Kind() reflect.Kind
 	// map
 	Key() Accessor

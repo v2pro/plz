@@ -15,6 +15,11 @@ func (acc *mapAccessor) Kind() reflect.Kind {
 	return reflect.Map
 }
 
+
+func (acc *mapAccessor) GoString() string {
+	return acc.typ.String()
+}
+
 func (acc *mapAccessor) IterateMap(obj interface{}, cb func(key interface{}, value interface{}) bool) {
 	reflectVal := reflect.ValueOf(obj)
 	for _, key := range reflectVal.MapKeys() {

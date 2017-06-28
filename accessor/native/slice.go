@@ -18,6 +18,10 @@ func (acc *sliceAccessor) Kind() reflect.Kind {
 	return reflect.Slice
 }
 
+func (acc *sliceAccessor) GoString() string {
+	return acc.typ.String()
+}
+
 func (acc *sliceAccessor) Elem() accessor.Accessor {
 	return plz.AccessorOf(reflect.PtrTo(acc.typ.Elem()))
 }
