@@ -19,14 +19,20 @@ func Of(typ reflect.Type) Accessor {
 
 type Accessor interface {
 	Kind() reflect.Kind
+	// map
+	Key() Accessor
+	// array/map
+	Elem() Accessor
+	// struct
 	NumField() int
 	Field(index int) StructField
+	// map
 	IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool)
-	SetMapIndex(obj interface{}, key interface{}, elem interface{})
-	Key() Accessor
-	Elem() Accessor
+	SetMap(obj interface{}, setKey func(key interface{}), setElem func(elem interface{}))
+	// array
 	IterateArray(obj interface{}, cb func(elem interface{}) bool)
-	GrowOne(obj interface{}, elem interface{}) (interface{}, interface{})
+	AppendArray(obj interface{}, setElem func(elem interface{})) interface{}
+	// primitives
 	Int(obj interface{}) int
 	SetInt(obj interface{}, val int)
 	String(obj interface{}) string
@@ -53,7 +59,7 @@ func (acc *NoopAccessor) IterateMap(obj interface{}, cb func(key interface{}, el
 	panic("unsupported operation")
 }
 
-func (acc *NoopAccessor) SetMapIndex(obj interface{}, key interface{}, elem interface{}) {
+func (acc *NoopAccessor) SetMap(obj interface{}, setKey func(key interface{}), setElem func(elem interface{})) {
 	panic("unsupported operation")
 }
 
@@ -69,7 +75,7 @@ func (acc *NoopAccessor) IterateArray(obj interface{}, cb func(elem interface{})
 	panic("unsupported operation")
 }
 
-func (acc *NoopAccessor) GrowOne(obj interface{}, elem interface{}) (interface{}, interface{}) {
+func (acc *NoopAccessor) AppendArray(obj interface{}, setElem func(elem interface{})) interface{} {
 	panic("unsupported operation")
 }
 

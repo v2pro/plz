@@ -35,7 +35,7 @@ func (acc *sliceAccessor) IterateArray(obj interface{}, cb func(elem interface{}
 	}
 }
 
-func (acc *sliceAccessor) GrowOne(obj interface{}, elem interface{}) (interface{}, interface{}) {
+func (acc *sliceAccessor) AppendArray(obj interface{}, setElem func(elem interface{})) interface{} {
 	sliceHeader := extractSliceHeaderFromEmptyInterface(obj)
 	at := sliceHeader.Len
 	elemType := acc.typ.Elem()
@@ -45,7 +45,8 @@ func (acc *sliceAccessor) GrowOne(obj interface{}, elem interface{}) (interface{
 	elemPtr := uintptr(sliceHeader.Data) + uintptr(at)*elemType.Size()
 	elemObj := acc.templateElemObj
 	elemObj.word = unsafe.Pointer(elemPtr)
-	return castBackEmptyInterface(sliceObj), castBackEmptyInterface(elemObj)
+	setElem(castBackEmptyInterface(elemObj))
+	return castBackEmptyInterface(sliceObj)
 }
 
 // grow grows the slice s so that it can hold extra more values, allocating
