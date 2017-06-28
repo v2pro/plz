@@ -1,9 +1,9 @@
 package plz
 
 import (
-	"github.com/v2pro/plz/logger"
+	"github.com/v2pro/plz/logging"
 )
 
-func LoggerOf(loggerKv ...interface{}) logger.Logger {
-	return logger.Of(loggerKv...)
+func LoggerOf(loggerKv ...interface{}) logging.Logger {
+	return logging.LoggerOf(loggerKv...)
 }

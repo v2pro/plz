@@ -2,11 +2,11 @@ package native
 
 import (
 	"reflect"
-	"github.com/v2pro/plz/accessor"
+	"github.com/v2pro/plz/acc"
 )
 
 type intAccessor struct {
-	accessor.NoopAccessor
+	acc.NoopAccessor
 	typ reflect.Type
 }
 

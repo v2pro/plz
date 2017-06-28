@@ -1,7 +1,9 @@
 package plz
 
-import "github.com/v2pro/plz/server"
+import (
+	"github.com/v2pro/plz/srv"
+)
 
-func Server(kv ...interface{}) *server.Server {
-	return server.BuildServer(kv...)
+func Server(kv ...interface{}) *srv.Server {
+	return srv.BuildServer(kv...)
 }

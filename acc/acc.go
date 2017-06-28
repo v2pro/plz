@@ -1,4 +1,4 @@
-package accessor
+package acc
 
 import (
 	"fmt"

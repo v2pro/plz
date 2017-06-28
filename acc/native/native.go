@@ -2,15 +2,15 @@ package native
 
 import (
 	"fmt"
-	"github.com/v2pro/plz/accessor"
+	"github.com/v2pro/plz/acc"
 	"reflect"
 )
 
 func init() {
-	accessor.Providers = append(accessor.Providers, accessorOf)
+	acc.Providers = append(acc.Providers, accessorOf)
 }
 
-func accessorOf(typ reflect.Type) accessor.Accessor {
+func accessorOf(typ reflect.Type) acc.Accessor {
 	if typ.Kind() == reflect.Map {
 		return &mapAccessor{
 			typ: typ,

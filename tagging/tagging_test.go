@@ -1,4 +1,4 @@
-package tags
+package tagging
 
 import (
 	"github.com/json-iterator/go/require"

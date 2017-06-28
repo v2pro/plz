@@ -2,12 +2,12 @@ package native
 
 import (
 	"github.com/v2pro/plz"
-	"github.com/v2pro/plz/accessor"
+	"github.com/v2pro/plz/acc"
 	"reflect"
 )
 
 type mapAccessor struct {
-	accessor.NoopAccessor
+	acc.NoopAccessor
 	typ reflect.Type
 }
 
@@ -38,10 +38,10 @@ func (acc *mapAccessor) SetMap(obj interface{}, setKey func(key interface{}), se
 	reflect.ValueOf(obj).SetMapIndex(key.Elem(), elem.Elem())
 }
 
-func (acc *mapAccessor) Key() accessor.Accessor {
+func (acc *mapAccessor) Key() acc.Accessor {
 	return plz.AccessorOf(acc.typ.Key())
 }
 
-func (acc *mapAccessor) Elem() accessor.Accessor {
+func (acc *mapAccessor) Elem() acc.Accessor {
 	return plz.AccessorOf(acc.typ.Elem())
 }

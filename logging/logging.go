@@ -1,4 +1,4 @@
-package logger
+package logging
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 
 var providers = []func(loggerKv []interface{}) Logger{}
 
-func Of(loggerKv ...interface{}) Logger {
+func LoggerOf(loggerKv ...interface{}) Logger {
 	var logger Logger
 	for _, provider := range providers {
 		provided := provider(loggerKv)
@@ -87,7 +87,7 @@ func (logger *placeholder) realLogger() Logger {
 	if logger.realLoggerCache != nil {
 		return logger.realLoggerCache
 	}
-	got := Of(logger.loggerKv...)
+	got := LoggerOf(logger.loggerKv...)
 	if _, stillPlaceholder := got.(*placeholder); stillPlaceholder {
 		fmt.Fprintln(os.Stderr, "logger not defined yet, please AddLoggerProvider")
 		return &dummyLogger{}

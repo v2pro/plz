@@ -1,10 +1,10 @@
 package plz
 
 import (
-	"github.com/v2pro/plz/accessor"
 	"reflect"
+	"github.com/v2pro/plz/acc"
 )
 
-func AccessorOf(typ reflect.Type) accessor.Accessor {
-	return accessor.Of(typ)
+func AccessorOf(typ reflect.Type) acc.Accessor {
+	return acc.Of(typ)
 }

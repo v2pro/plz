@@ -2,38 +2,38 @@ package native
 
 import (
 	"github.com/v2pro/plz"
-	"github.com/v2pro/plz/accessor"
+	"github.com/v2pro/plz/acc"
 	"reflect"
 	"unsafe"
 	"fmt"
 )
 
 type structAccessor struct {
-	accessor.NoopAccessor
+	acc.NoopAccessor
 	typ reflect.Type
 }
 
-func (acc *structAccessor) Kind() reflect.Kind {
+func (accessor *structAccessor) Kind() reflect.Kind {
 	return reflect.Struct
 }
 
-func (acc *structAccessor) GoString() string {
-	return acc.typ.Name()
+func (accessor *structAccessor) GoString() string {
+	return accessor.typ.Name()
 }
 
-func (acc *structAccessor) NumField() int {
-	return acc.typ.NumField()
+func (accessor *structAccessor) NumField() int {
+	return accessor.typ.NumField()
 }
 
-func (acc *structAccessor) Field(index int) accessor.StructField {
-	field := acc.typ.Field(index)
+func (accessor *structAccessor) Field(index int) acc.StructField {
+	field := accessor.typ.Field(index)
 	ptrType := reflect.PtrTo(field.Type)
 	fieldAcc := plz.AccessorOf(ptrType)
 	templateObj := castToEmptyInterface(reflect.New(field.Type).Interface())
-	return accessor.StructField{
+	return acc.StructField{
 		Name: field.Name,
 		Accessor: &structFieldAccessor{
-			structAccessor: acc,
+			structAccessor: accessor,
 			field:          field,
 			templateObj:    templateObj,
 			accessor:       fieldAcc,
@@ -42,11 +42,11 @@ func (acc *structAccessor) Field(index int) accessor.StructField {
 }
 
 type structFieldAccessor struct {
-	accessor.NoopAccessor
-	structAccessor accessor.Accessor
+	acc.NoopAccessor
+	structAccessor acc.Accessor
 	field          reflect.StructField
 	templateObj    emptyInterface
-	accessor       accessor.Accessor
+	accessor       acc.Accessor
 }
 
 func (acc *structFieldAccessor) Kind() reflect.Kind {

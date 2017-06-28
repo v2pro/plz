@@ -2,36 +2,36 @@ package native
 
 import (
 	"github.com/v2pro/plz"
-	"github.com/v2pro/plz/accessor"
+	"github.com/v2pro/plz/acc"
 	"reflect"
 	"unsafe"
 )
 
 type sliceAccessor struct {
-	accessor.NoopAccessor
+	acc.NoopAccessor
 	typ              reflect.Type
 	templateSliceObj emptyInterface
 	templateElemObj  emptyInterface
 }
 
-func (acc *sliceAccessor) Kind() reflect.Kind {
+func (accessor *sliceAccessor) Kind() reflect.Kind {
 	return reflect.Slice
 }
 
-func (acc *sliceAccessor) GoString() string {
-	return acc.typ.String()
+func (accessor *sliceAccessor) GoString() string {
+	return accessor.typ.String()
 }
 
-func (acc *sliceAccessor) Elem() accessor.Accessor {
-	return plz.AccessorOf(reflect.PtrTo(acc.typ.Elem()))
+func (accessor *sliceAccessor) Elem() acc.Accessor {
+	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
 }
 
-func (acc *sliceAccessor) IterateArray(obj interface{}, cb func(elem interface{}) bool) {
+func (accessor *sliceAccessor) IterateArray(obj interface{}, cb func(elem interface{}) bool) {
 	sliceHeader := extractSliceHeaderFromEmptyInterface(obj)
-	elemSize := acc.typ.Elem().Size()
+	elemSize := accessor.typ.Elem().Size()
 	for i := 0; i < sliceHeader.Len; i++ {
 		elemPtr := uintptr(sliceHeader.Data) + uintptr(i)*elemSize
-		elemObj := acc.templateElemObj
+		elemObj := accessor.templateElemObj
 		elemObj.word = unsafe.Pointer(elemPtr)
 		if !cb(castBackEmptyInterface(elemObj)) {
 			return
@@ -39,15 +39,15 @@ func (acc *sliceAccessor) IterateArray(obj interface{}, cb func(elem interface{}
 	}
 }
 
-func (acc *sliceAccessor) AppendArray(obj interface{}, setElem func(elem interface{})) interface{} {
+func (accessor *sliceAccessor) AppendArray(obj interface{}, setElem func(elem interface{})) interface{} {
 	sliceHeader := extractSliceHeaderFromEmptyInterface(obj)
 	at := sliceHeader.Len
-	elemType := acc.typ.Elem()
-	sliceHeader = growOne(sliceHeader, acc.typ, elemType)
-	sliceObj := acc.templateSliceObj
+	elemType := accessor.typ.Elem()
+	sliceHeader = growOne(sliceHeader, accessor.typ, elemType)
+	sliceObj := accessor.templateSliceObj
 	sliceObj.word = unsafe.Pointer(sliceHeader)
 	elemPtr := uintptr(sliceHeader.Data) + uintptr(at)*elemType.Size()
-	elemObj := acc.templateElemObj
+	elemObj := accessor.templateElemObj
 	elemObj.word = unsafe.Pointer(elemPtr)
 	setElem(castBackEmptyInterface(elemObj))
 	return castBackEmptyInterface(sliceObj)
