@@ -6,5 +6,5 @@ import (
 )
 
 func AccessorOf(typ reflect.Type) acc.Accessor {
-	return acc.Of(typ)
+	return acc.AccessorOf(typ)
 }

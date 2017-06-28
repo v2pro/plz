@@ -22,3 +22,13 @@ func Test_struct(t *testing.T) {
 	field.Accessor.SetInt(v, 2)
 	should.Equal(2, field.Accessor.Int(v))
 }
+
+func Test_struct_tags(t *testing.T) {
+	type TestObject struct {
+		Field int `json:"field"`
+	}
+	should := require.New(t)
+	v := &TestObject{}
+	accessor := plz.AccessorOf(reflect.TypeOf(v))
+	should.Equal(map[string]interface{}{"json": "field"}, accessor.Field(0).Tags)
+}

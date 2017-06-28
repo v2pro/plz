@@ -6,11 +6,13 @@ import (
 	"reflect"
 	"unsafe"
 	"fmt"
+	"github.com/v2pro/plz/tagging"
 )
 
 type structAccessor struct {
 	acc.NoopAccessor
 	typ reflect.Type
+	tags *tagging.StructTags
 }
 
 func (accessor *structAccessor) Kind() reflect.Kind {
@@ -30,8 +32,13 @@ func (accessor *structAccessor) Field(index int) acc.StructField {
 	ptrType := reflect.PtrTo(field.Type)
 	fieldAcc := plz.AccessorOf(ptrType)
 	templateObj := castToEmptyInterface(reflect.New(field.Type).Interface())
+	fieldTags := accessor.tags.Fields[field.Name]
+	if fieldTags == nil {
+		fieldTags = map[string]interface{}{}
+	}
 	return acc.StructField{
 		Name: field.Name,
+		Tags: fieldTags,
 		Accessor: &structFieldAccessor{
 			structAccessor: accessor,
 			field:          field,

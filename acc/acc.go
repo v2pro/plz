@@ -7,7 +7,7 @@ import (
 
 var Providers = []func(reflect.Type) Accessor{}
 
-func Of(typ reflect.Type) Accessor {
+func AccessorOf(typ reflect.Type) Accessor {
 	for _, provider := range Providers {
 		asor := provider(typ)
 		if asor != nil {
@@ -43,6 +43,7 @@ type Accessor interface {
 type StructField struct {
 	Name     string
 	Accessor Accessor
+	Tags     map[string]interface{}
 }
 
 type NoopAccessor struct {

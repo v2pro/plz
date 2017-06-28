@@ -30,13 +30,15 @@ func Get(typ reflect.Type) *StructTags {
 	if found {
 		return structTags
 	}
-	if !reflect.PtrTo(typ).ConvertibleTo(protocolType) {
-		return nil
+	fakeStructPtr := uintptr(0)
+	var allDef Tags
+	if reflect.PtrTo(typ).ConvertibleTo(protocolType) {
+		fakeStructPtrVal := reflect.New(typ)
+		fakeStructPtr = extractPtr(fakeStructPtrVal.Interface())
+		proto := fakeStructPtrVal.Interface().(Protocol)
+		allDef = proto.DefineTags()
 	}
-	fakeStructPtrVal := reflect.New(typ)
-	proto := fakeStructPtrVal.Interface().(Protocol)
-	allDef := proto.DefineTags()
-	return register(typ, fakeStructPtrVal, allDef)
+	return register(typ, fakeStructPtr, allDef)
 }
 
 func D(_struct TagsForStruct, fields ...TagsForField) Tags {
@@ -65,11 +67,10 @@ func Define(callback interface{}) {
 	fakeStructPtrVal := reflect.New(structType)
 	ret := reflect.ValueOf(callback).Call([]reflect.Value{fakeStructPtrVal})
 	allDef := ret[0].Interface().(Tags)
-	register(structType, fakeStructPtrVal, allDef)
+	register(structType, extractPtr(fakeStructPtrVal.Interface()), allDef)
 }
 
-func register(structType reflect.Type, fakeStructPtrVal reflect.Value, allDef Tags) *StructTags {
-	fakeStructPtr := extractPtr(fakeStructPtrVal.Interface())
+func register(structType reflect.Type, fakeStructPtr uintptr, allDef Tags) *StructTags {
 	structTags := &StructTags{
 		Fields: map[string]FieldTags{},
 	}
@@ -81,17 +82,19 @@ func register(structType reflect.Type, fakeStructPtrVal reflect.Value, allDef Ta
 		fakeFieldsMap[fakeFieldPtr] = fieldName
 		structTags.Fields[fieldName] = parseFieldTag(field.Tag)
 	}
-	structTags.Struct = toMap(allDef[0].(Tags))
-	for _, fieldDefObj := range allDef[1:] {
-		fieldDef := fieldDefObj.(Tags)
-		fieldPtr := extractPtr(fieldDef[0])
-		fieldName := fakeFieldsMap[fieldPtr]
-		if fieldName == "" {
-			panic("field not found")
-		}
-		fieldTags := structTags.Fields[fieldName]
-		for i := 1; i < len(fieldDef); i += 2 {
-			fieldTags[fieldDef[i].(string)] = fieldDef[i+1]
+	if len(allDef) > 0 {
+		structTags.Struct = toMap(allDef[0].(Tags))
+		for _, fieldDefObj := range allDef[1:] {
+			fieldDef := fieldDefObj.(Tags)
+			fieldPtr := extractPtr(fieldDef[0])
+			fieldName := fakeFieldsMap[fieldPtr]
+			if fieldName == "" {
+				panic("field not found")
+			}
+			fieldTags := structTags.Fields[fieldName]
+			for i := 1; i < len(fieldDef); i += 2 {
+				fieldTags[fieldDef[i].(string)] = fieldDef[i+1]
+			}
 		}
 	}
 	registry[structType] = structTags
