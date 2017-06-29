@@ -60,6 +60,12 @@ func (acc *structFieldAccessor) Kind() reflect.Kind {
 	return acc.accessor.Kind()
 }
 
+func (acc *structFieldAccessor) Uintptr(obj interface{}) uintptr {
+	structPtr := uintptr(extractPtrFromEmptyInterface(obj))
+	structFieldPtr := structPtr + acc.field.Offset
+	return structFieldPtr
+}
+
 func (acc *structFieldAccessor) Int(obj interface{}) int {
 	return acc.accessor.Int(acc.fieldOf(obj))
 }

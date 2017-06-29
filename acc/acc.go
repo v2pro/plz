@@ -5,16 +5,16 @@ import (
 	"reflect"
 )
 
-var Providers = []func(reflect.Type) Accessor{}
+var Providers = []func(dstType reflect.Type, srcType reflect.Type) Accessor{}
 
-func AccessorOf(typ reflect.Type) Accessor {
+func AccessorOf(dstType reflect.Type, srcType reflect.Type) Accessor {
 	for _, provider := range Providers {
-		asor := provider(typ)
+		asor := provider(dstType, srcType)
 		if asor != nil {
 			return asor
 		}
 	}
-	panic(fmt.Sprintf("no accessor provider for: %v", typ))
+	panic(fmt.Sprintf("no accessor provider for: %v => %v", srcType, dstType))
 }
 
 type Accessor interface {
@@ -38,6 +38,7 @@ type Accessor interface {
 	SetInt(obj interface{}, val int)
 	String(obj interface{}) string
 	SetString(obj interface{}, val string)
+	Uintptr(obj interface{}) uintptr
 }
 
 type StructField struct {
@@ -94,5 +95,9 @@ func (acc *NoopAccessor) String(obj interface{}) string {
 }
 
 func (acc *NoopAccessor) SetString(obj interface{}, val string) {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) Uintptr(obj interface{}) uintptr {
 	panic("unsupported operation")
 }

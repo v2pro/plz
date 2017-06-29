@@ -11,7 +11,7 @@ func init() {
 	acc.Providers = append(acc.Providers, accessorOf)
 }
 
-func accessorOf(typ reflect.Type) acc.Accessor {
+func accessorOf(typ reflect.Type, profile string) acc.Accessor {
 	if typ.Kind() == reflect.Map {
 		return &mapAccessor{
 			typ: typ,
