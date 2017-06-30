@@ -57,7 +57,7 @@ func (accessor *structAccessor) Key() acc.Accessor {
 }
 
 func (accessor *structAccessor) Elem() acc.Accessor {
-	return &emptyInterfaceAccessor{}
+	return &structValueAccessor{}
 }
 
 func (accessor *structAccessor) IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool) {
@@ -124,3 +124,27 @@ func (accessor *structFieldAccessor) fieldOf(obj interface{}) interface{} {
 func (accessor *structFieldAccessor) GoString() string {
 	return fmt.Sprintf("%#v/%s %#v", accessor.structName, accessor.field.Name, accessor.accessor.GoString())
 }
+
+type structValueAccessor struct {
+	acc.NoopAccessor
+}
+
+func (accessor *structValueAccessor) Kind() acc.Kind {
+	return acc.Interface
+}
+
+func (accessor *structValueAccessor) GoString() string {
+	return "interface{}"
+}
+
+func (accessor *structValueAccessor) String(obj interface{}) string {
+	return *((*string)(extractPtrFromEmptyInterface(obj)))
+}
+
+func (accessor *structValueAccessor) SetString(obj interface{}, val string) {
+	if reflect.TypeOf(obj).Kind() != reflect.Ptr {
+		panic("can only SetString on pointer")
+	}
+	*((*string)(extractPtrFromEmptyInterface(obj))) = val
+}
+

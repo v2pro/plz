@@ -24,13 +24,16 @@ func accessorOf(typ reflect.Type) acc.Accessor {
 		return &intAccessor{typ:typ}
 	case reflect.String:
 		return &stringAccessor{typ:typ}
+	case reflect.Interface:
+		return &emptyInterfaceAccessor{}
 	case reflect.Struct:
 		return accessorOfStruct(typ)
 	case reflect.Slice:
+		templateElemObj := castToEmptyInterface(reflect.New(typ.Elem()).Interface())
 		return &sliceAccessor{
 			typ:              typ,
 			templateSliceObj: castToEmptyInterface(reflect.New(typ).Elem().Interface()),
-			templateElemObj:  castToEmptyInterface(reflect.New(typ.Elem()).Interface()),
+			templateElemObj:  templateElemObj,
 		}
 	}
 	panic(fmt.Sprintf("do not support: %v", typ.Kind()))

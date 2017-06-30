@@ -45,6 +45,7 @@ const (
 type Accessor interface {
 	fmt.GoStringer
 	Kind() Kind
+	KindOf(obj interface{}) Kind
 	// map
 	Key() Accessor
 	// array/map
@@ -75,6 +76,10 @@ type StructField struct {
 }
 
 type NoopAccessor struct {
+}
+
+func (acc *NoopAccessor) KindOf(obj interface{}) Kind {
+	panic("unsupported operation")
 }
 
 func (acc *NoopAccessor) NumField() int {
