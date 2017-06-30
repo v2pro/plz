@@ -42,6 +42,98 @@ const (
 	Struct
 )
 
+func (kind Kind) IsSingleValue() bool {
+	switch kind {
+	case Invalid:
+		return true
+	case Bool:
+		return true
+	case Int:
+		return true
+	case Int8:
+		return true
+	case Int16:
+		return true
+	case Int32:
+		return true
+	case Int64:
+		return true
+	case Uint:
+		return true
+	case Uint8:
+		return true
+	case Uint16:
+		return true
+	case Uint32:
+		return true
+	case Uint64:
+		return true
+	case Uintptr:
+		return true
+	case Float32:
+		return true
+	case Float64:
+		return true
+	case Array:
+		return false
+	case Interface:
+		return false
+	case Map:
+		return false
+	case String:
+		return true
+	case Struct:
+		return false
+	}
+	return false
+}
+
+func (kind Kind) GoString() string {
+	switch kind {
+	case Invalid:
+		return "Invalid"
+	case Bool:
+		return "Bool"
+	case Int:
+		return "Int"
+	case Int8:
+		return "Int8"
+	case Int16:
+		return "Int16"
+	case Int32:
+		return "Int32"
+	case Int64:
+		return "Int64"
+	case Uint:
+		return "Uint"
+	case Uint8:
+		return "Uint8"
+	case Uint16:
+		return "Uint16"
+	case Uint32:
+		return "Uint32"
+	case Uint64:
+		return "Uint64"
+	case Uintptr:
+		return "Uintptr"
+	case Float32:
+		return "Float32"
+	case Float64:
+		return "Float64"
+	case Array:
+		return "Array"
+	case Interface:
+		return "Interface"
+	case Map:
+		return "Map"
+	case String:
+		return "String"
+	case Struct:
+		return "Struct"
+	}
+	return "<unknown>"
+}
+
 type Accessor interface {
 	fmt.GoStringer
 	Kind() Kind

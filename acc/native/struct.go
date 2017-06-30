@@ -87,6 +87,14 @@ func (accessor *structFieldAccessor) Kind() acc.Kind {
 	return accessor.accessor.Kind()
 }
 
+func (accessor *structFieldAccessor) Key() acc.Accessor {
+	return accessor.accessor.Key()
+}
+
+func (accessor *structFieldAccessor) Elem() acc.Accessor {
+	return accessor.accessor.Elem()
+}
+
 func (accessor *structFieldAccessor) NumField() int {
 	return accessor.accessor.NumField()
 }
@@ -155,4 +163,3 @@ func (accessor *structValueAccessor) SetString(obj interface{}, val string) {
 	}
 	*((*string)(extractPtrFromEmptyInterface(obj))) = val
 }
-
