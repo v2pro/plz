@@ -20,7 +20,7 @@ func Test_slice(t *testing.T) {
 	})
 	should.Equal([]int{}, elems)
 	// grow one
-	v = accessor.AppendArray(v, func(elem interface{}) {
+	accessor.AppendArray(v, func(elem interface{}) {
 		accessor.Elem().SetInt(elem, 1)
 	})
 	// check again

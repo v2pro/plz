@@ -32,7 +32,7 @@ type Accessor interface {
 	SetMap(obj interface{}, setKey func(key interface{}), setElem func(elem interface{}))
 	// array
 	IterateArray(obj interface{}, cb func(elem interface{}) bool)
-	AppendArray(obj interface{}, setElem func(elem interface{})) interface{}
+	AppendArray(obj interface{}, setElem func(elem interface{}))
 	// primitives
 	Skip(obj interface{})
 	Int(obj interface{}) int
@@ -80,7 +80,7 @@ func (acc *NoopAccessor) IterateArray(obj interface{}, cb func(elem interface{})
 	panic("unsupported operation")
 }
 
-func (acc *NoopAccessor) AppendArray(obj interface{}, setElem func(elem interface{})) interface{} {
+func (acc *NoopAccessor) AppendArray(obj interface{}, setElem func(elem interface{})) {
 	panic("unsupported operation")
 }
 

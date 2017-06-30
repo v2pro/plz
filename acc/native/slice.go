@@ -39,27 +39,26 @@ func (accessor *sliceAccessor) IterateArray(obj interface{}, cb func(elem interf
 	}
 }
 
-func (accessor *sliceAccessor) AppendArray(obj interface{}, setElem func(elem interface{})) interface{} {
+func (accessor *sliceAccessor) AppendArray(obj interface{}, setElem func(elem interface{})) {
 	sliceHeader := extractSliceHeaderFromEmptyInterface(obj)
 	at := sliceHeader.Len
 	elemType := accessor.typ.Elem()
-	sliceHeader = growOne(sliceHeader, accessor.typ, elemType)
+	growOne(sliceHeader, accessor.typ, elemType)
 	sliceObj := accessor.templateSliceObj
 	sliceObj.word = unsafe.Pointer(sliceHeader)
 	elemPtr := uintptr(sliceHeader.Data) + uintptr(at)*elemType.Size()
 	elemObj := accessor.templateElemObj
 	elemObj.word = unsafe.Pointer(elemPtr)
 	setElem(castBackEmptyInterface(elemObj))
-	return castBackEmptyInterface(sliceObj)
 }
 
 // grow grows the slice s so that it can hold extra more values, allocating
 // more capacity if needed. It also returns the old and new slice lengths.
-func growOne(slice *sliceHeader, sliceType reflect.Type, elementType reflect.Type) *sliceHeader {
+func growOne(slice *sliceHeader, sliceType reflect.Type, elementType reflect.Type) {
 	newLen := slice.Len + 1
 	if newLen <= slice.Cap {
 		slice.Len = newLen
-		return slice
+		return
 	}
 	newCap := slice.Cap
 	if newCap == 0 {
@@ -81,11 +80,9 @@ func growOne(slice *sliceHeader, sliceType reflect.Type, elementType reflect.Typ
 	for i := uintptr(0); i < originalBytesCount; i++ {
 		dstPtr[i] = srcPtr[i]
 	}
-	return &sliceHeader{
-		Len:  newLen,
-		Cap:  newCap,
-		Data: dst,
-	}
+	slice.Len = newLen
+	slice.Cap = newCap
+	slice.Data = dst
 }
 
 // sliceHeader is a safe version of SliceHeader used within this package.
