@@ -5,13 +5,14 @@ import (
 	"github.com/v2pro/plz"
 	"reflect"
 	"testing"
+	"github.com/v2pro/plz/acc"
 )
 
 func Test_map(t *testing.T) {
 	should := require.New(t)
 	v := map[int]int{}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(reflect.Map, accessor.Kind())
+	should.Equal(acc.Map, accessor.Kind())
 	keys := []interface{}{}
 	accessor.IterateMap(v, func(key interface{}, value interface{}) bool {
 		keys = append(keys, key)

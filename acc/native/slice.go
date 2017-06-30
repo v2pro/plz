@@ -14,8 +14,8 @@ type sliceAccessor struct {
 	templateElemObj  emptyInterface
 }
 
-func (accessor *sliceAccessor) Kind() reflect.Kind {
-	return reflect.Slice
+func (accessor *sliceAccessor) Kind() acc.Kind {
+	return acc.Array
 }
 
 func (accessor *sliceAccessor) GoString() string {

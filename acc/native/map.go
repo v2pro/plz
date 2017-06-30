@@ -11,8 +11,8 @@ type mapAccessor struct {
 	typ reflect.Type
 }
 
-func (accessor *mapAccessor) Kind() reflect.Kind {
-	return reflect.Map
+func (accessor *mapAccessor) Kind() acc.Kind {
+	return acc.Map
 }
 
 

@@ -5,13 +5,14 @@ import (
 	"github.com/v2pro/plz"
 	"reflect"
 	"testing"
+	"github.com/v2pro/plz/acc"
 )
 
 func Test_slice(t *testing.T) {
 	should := require.New(t)
 	var v interface{} = []int{}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(reflect.Slice, accessor.Kind())
+	should.Equal(acc.Array, accessor.Kind())
 	elemAccessor := accessor.Elem()
 	elems := []int{}
 	accessor.IterateArray(v, func(elem interface{}) bool {

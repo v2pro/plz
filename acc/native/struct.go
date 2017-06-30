@@ -44,8 +44,8 @@ type structAccessor struct {
 	fields []acc.StructField
 }
 
-func (accessor *structAccessor) Kind() reflect.Kind {
-	return reflect.Struct
+func (accessor *structAccessor) Kind() acc.Kind {
+	return acc.Struct
 }
 
 func (accessor *structAccessor) GoString() string {
@@ -83,7 +83,7 @@ type structFieldAccessor struct {
 	accessor    acc.Accessor
 }
 
-func (accessor *structFieldAccessor) Kind() reflect.Kind {
+func (accessor *structFieldAccessor) Kind() acc.Kind {
 	return accessor.accessor.Kind()
 }
 

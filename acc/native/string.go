@@ -10,8 +10,8 @@ type stringAccessor struct {
 	typ reflect.Type
 }
 
-func (accessor *stringAccessor) Kind() reflect.Kind {
-	return reflect.String
+func (accessor *stringAccessor) Kind() acc.Kind {
+	return acc.String
 }
 
 func (accessor *stringAccessor) GoString() string {

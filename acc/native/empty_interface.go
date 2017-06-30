@@ -3,7 +3,6 @@ package native
 import (
 	"unsafe"
 	"github.com/v2pro/plz/acc"
-	"reflect"
 )
 
 func castToEmptyInterface(val interface{}) emptyInterface {
@@ -28,8 +27,8 @@ type emptyInterfaceAccessor struct {
 	acc.NoopAccessor
 }
 
-func (accessor *emptyInterfaceAccessor) Kind() reflect.Kind {
-	return reflect.Interface
+func (accessor *emptyInterfaceAccessor) Kind() acc.Kind {
+	return acc.Interface
 }
 
 func (accessor *emptyInterfaceAccessor) GoString() string {

@@ -5,6 +5,7 @@ import (
 	"github.com/v2pro/plz"
 	"reflect"
 	"testing"
+	"github.com/v2pro/plz/acc"
 )
 
 func Test_struct(t *testing.T) {
@@ -14,7 +15,7 @@ func Test_struct(t *testing.T) {
 	should := require.New(t)
 	v := &TestObject{}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(reflect.Struct, accessor.Kind())
+	should.Equal(acc.Struct, accessor.Kind())
 	should.Equal(1, accessor.NumField())
 	field := accessor.Field(0)
 	should.Equal("Field", field.Name)
@@ -40,8 +41,8 @@ func Test_struct_iterate_map(t *testing.T) {
 	should := require.New(t)
 	v := &TestObject{}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(reflect.String, accessor.Key().Kind())
-	should.Equal(reflect.Interface, accessor.Elem().Kind())
+	should.Equal(acc.String, accessor.Key().Kind())
+	should.Equal(acc.Interface, accessor.Elem().Kind())
 	keys := []string{}
 	elems := []int{}
 	accessor.IterateMap(v, func(key interface{}, elem interface{}) bool {

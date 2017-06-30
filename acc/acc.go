@@ -17,9 +17,34 @@ func AccessorOf(typ reflect.Type) Accessor {
 	panic(fmt.Sprintf("no accessor provider for: %v", typ))
 }
 
+type Kind uint
+
+const (
+	Invalid Kind = iota
+	Bool
+	Int
+	Int8
+	Int16
+	Int32
+	Int64
+	Uint
+	Uint8
+	Uint16
+	Uint32
+	Uint64
+	Uintptr
+	Float32
+	Float64
+	Array
+	Interface
+	Map
+	String
+	Struct
+)
+
 type Accessor interface {
 	fmt.GoStringer
-	Kind() reflect.Kind
+	Kind() Kind
 	// map
 	Key() Accessor
 	// array/map
