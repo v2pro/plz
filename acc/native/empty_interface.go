@@ -39,3 +39,7 @@ func (accessor *emptyInterfaceAccessor) GoString() string {
 func (accessor *emptyInterfaceAccessor) Int(obj interface{}) int {
 	return *((*int)(extractPtrFromEmptyInterface(obj)))
 }
+
+func (accessor *emptyInterfaceAccessor) String(obj interface{}) string {
+	return *((*string)(extractPtrFromEmptyInterface(obj)))
+}
