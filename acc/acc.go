@@ -5,16 +5,16 @@ import (
 	"reflect"
 )
 
-var Providers = []func(dstType reflect.Type, srcType reflect.Type) Accessor{}
+var Providers = []func(typ reflect.Type) Accessor{}
 
-func AccessorOf(dstType reflect.Type, srcType reflect.Type) Accessor {
+func AccessorOf(typ reflect.Type) Accessor {
 	for _, provider := range Providers {
-		asor := provider(dstType, srcType)
+		asor := provider(typ)
 		if asor != nil {
 			return asor
 		}
 	}
-	panic(fmt.Sprintf("no accessor provider for: %v => %v", srcType, dstType))
+	panic(fmt.Sprintf("no accessor provider for: %v", typ))
 }
 
 type Accessor interface {
