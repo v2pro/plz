@@ -87,6 +87,14 @@ func (accessor *structFieldAccessor) Kind() acc.Kind {
 	return accessor.accessor.Kind()
 }
 
+func (accessor *structFieldAccessor) NumField() int {
+	return accessor.accessor.NumField()
+}
+
+func (accessor *structFieldAccessor) Field(index int) acc.StructField {
+	return accessor.accessor.Field(index)
+}
+
 func (accessor *structFieldAccessor) Uintptr(obj interface{}) uintptr {
 	structPtr := uintptr(extractPtrFromEmptyInterface(obj))
 	structFieldPtr := structPtr + accessor.field.Offset
