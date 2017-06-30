@@ -10,19 +10,19 @@ type intAccessor struct {
 	typ reflect.Type
 }
 
-func (acc *intAccessor) Kind() reflect.Kind {
+func (accessor *intAccessor) Kind() reflect.Kind {
 	return reflect.Int
 }
 
-func (acc *intAccessor) GoString() string {
-	return acc.typ.Name()
+func (accessor *intAccessor) GoString() string {
+	return accessor.typ.Name()
 }
 
-func (acc *intAccessor) Int(obj interface{}) int {
+func (accessor *intAccessor) Int(obj interface{}) int {
 	return *((*int)(extractPtrFromEmptyInterface(obj)))
 }
 
-func (acc *intAccessor) SetInt(obj interface{}, val int) {
+func (accessor *intAccessor) SetInt(obj interface{}, val int) {
 	if reflect.TypeOf(obj).Kind() != reflect.Ptr {
 		panic("can only SetInt on pointer")
 	}

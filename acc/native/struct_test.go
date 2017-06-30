@@ -32,3 +32,23 @@ func Test_struct_tags(t *testing.T) {
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
 	should.Equal(map[string]interface{}{"json": "field"}, accessor.Field(0).Tags)
 }
+
+func Test_struct_iterate_map(t *testing.T) {
+	type TestObject struct {
+		Field int
+	}
+	should := require.New(t)
+	v := &TestObject{}
+	accessor := plz.AccessorOf(reflect.TypeOf(v))
+	should.Equal(reflect.String, accessor.Key().Kind())
+	should.Equal(reflect.Interface, accessor.Elem().Kind())
+	keys := []string{}
+	elems := []int{}
+	accessor.IterateMap(v, func(key interface{}, elem interface{}) bool {
+		keys = append(keys, accessor.Key().String(key))
+		elems = append(elems, accessor.Elem().Int(elem))
+		return true
+	})
+	should.Equal([]string{"Field"}, keys)
+	should.Equal([]int{0}, elems)
+}

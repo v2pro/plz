@@ -11,16 +11,16 @@ type mapAccessor struct {
 	typ reflect.Type
 }
 
-func (acc *mapAccessor) Kind() reflect.Kind {
+func (accessor *mapAccessor) Kind() reflect.Kind {
 	return reflect.Map
 }
 
 
-func (acc *mapAccessor) GoString() string {
-	return acc.typ.String()
+func (accessor *mapAccessor) GoString() string {
+	return accessor.typ.String()
 }
 
-func (acc *mapAccessor) IterateMap(obj interface{}, cb func(key interface{}, value interface{}) bool) {
+func (accessor *mapAccessor) IterateMap(obj interface{}, cb func(key interface{}, value interface{}) bool) {
 	reflectVal := reflect.ValueOf(obj)
 	for _, key := range reflectVal.MapKeys() {
 		value := reflectVal.MapIndex(key)
@@ -30,18 +30,18 @@ func (acc *mapAccessor) IterateMap(obj interface{}, cb func(key interface{}, val
 	}
 }
 
-func (acc *mapAccessor) SetMap(obj interface{}, setKey func(key interface{}), setElem func(elem interface{})) {
-	key := reflect.New(acc.typ.Key())
+func (accessor *mapAccessor) SetMap(obj interface{}, setKey func(key interface{}), setElem func(elem interface{})) {
+	key := reflect.New(accessor.typ.Key())
 	setKey(key.Interface())
-	elem := reflect.New(acc.typ.Elem())
+	elem := reflect.New(accessor.typ.Elem())
 	setElem(elem.Interface())
 	reflect.ValueOf(obj).SetMapIndex(key.Elem(), elem.Elem())
 }
 
-func (acc *mapAccessor) Key() acc.Accessor {
-	return plz.AccessorOf(acc.typ.Key())
+func (accessor *mapAccessor) Key() acc.Accessor {
+	return plz.AccessorOf(accessor.typ.Key())
 }
 
-func (acc *mapAccessor) Elem() acc.Accessor {
-	return plz.AccessorOf(acc.typ.Elem())
+func (accessor *mapAccessor) Elem() acc.Accessor {
+	return plz.AccessorOf(accessor.typ.Elem())
 }

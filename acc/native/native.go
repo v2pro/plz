@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/v2pro/plz/acc"
 	"reflect"
-	"github.com/v2pro/plz/tagging"
 )
 
 func init() {
@@ -26,11 +25,7 @@ func accessorOf(typ reflect.Type) acc.Accessor {
 	case reflect.String:
 		return &stringAccessor{typ:typ}
 	case reflect.Struct:
-		tags := tagging.Get(typ)
-		return &structAccessor{
-			typ: typ,
-			tags: tags,
-		}
+		return accessorOfStruct(typ)
 	case reflect.Slice:
 		return &sliceAccessor{
 			typ:              typ,

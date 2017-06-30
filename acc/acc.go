@@ -34,11 +34,13 @@ type Accessor interface {
 	IterateArray(obj interface{}, cb func(elem interface{}) bool)
 	AppendArray(obj interface{}, setElem func(elem interface{})) interface{}
 	// primitives
+	Skip(obj interface{})
 	Int(obj interface{}) int
 	SetInt(obj interface{}, val int)
 	String(obj interface{}) string
 	SetString(obj interface{}, val string)
 	Uintptr(obj interface{}) uintptr
+	Interface(obj interface{}) interface{}
 }
 
 type StructField struct {
@@ -99,5 +101,12 @@ func (acc *NoopAccessor) SetString(obj interface{}, val string) {
 }
 
 func (acc *NoopAccessor) Uintptr(obj interface{}) uintptr {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) Skip(obj interface{}) {
+}
+
+func (acc *NoopAccessor) Interface(obj interface{}) interface{} {
 	panic("unsupported operation")
 }
