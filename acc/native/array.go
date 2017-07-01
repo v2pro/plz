@@ -26,14 +26,30 @@ func (accessor *arrayAccessor) Elem() acc.Accessor {
 }
 
 func (accessor *arrayAccessor) IterateArray(obj interface{}, cb func(elem interface{}) bool) {
-	ptr := uintptr(extractPtrFromEmptyInterface(obj))
 	elemSize := accessor.typ.Elem().Size()
-	for i := 0; i < accessor.typ.Len(); i++ {
-		elemPtr := ptr + uintptr(i)*elemSize
+	head := uintptr(extractPtrFromEmptyInterface(obj))
+	tail := head + uintptr(accessor.typ.Len())*elemSize
+	for elemPtr := head; elemPtr < tail; elemPtr += elemSize {
 		elemObj := accessor.templateElemObj
 		elemObj.word = unsafe.Pointer(elemPtr)
 		if !cb(castBackEmptyInterface(elemObj)) {
 			return
 		}
 	}
+}
+func (accessor *arrayAccessor) FillArray(obj interface{}) acc.ArrayFiller {
+	elemSize := accessor.typ.Elem().Size()
+	head := uintptr(extractPtrFromEmptyInterface(obj))
+	tail := head + uintptr(accessor.typ.Len())*elemSize
+	elemPtr := head
+	return acc.ArrayFiller(func() interface{} {
+		if elemPtr < tail {
+			elemObj := accessor.templateElemObj
+			elemObj.word = unsafe.Pointer(elemPtr)
+			elemPtr += elemSize
+			return castBackEmptyInterface(elemObj)
+		} else {
+			return nil
+		}
+	})
 }

@@ -57,7 +57,7 @@ func (accessor *emptyInterfaceAccessor) GoString() string {
 	return "interface{}"
 }
 
-func (accessor *emptyInterfaceAccessor) SetMap(obj interface{}, setKey func(key interface{}), setElem func(key interface{})) {
+func (accessor *emptyInterfaceAccessor) SetMap(obj interface{}, cb func(key interface{}, elem interface{})) {
 	realObj := obj.(*interface{})
 	if *realObj == nil {
 		*realObj = map[string]interface{}{}
@@ -65,8 +65,7 @@ func (accessor *emptyInterfaceAccessor) SetMap(obj interface{}, setKey func(key 
 	m := (*realObj).(map[string]interface{})
 	key := ""
 	var elem interface{}
-	setKey(&key)
-	setElem(&elem)
+	cb(&key, &elem)
 	m[key] = elem
 }
 

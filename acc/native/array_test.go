@@ -21,3 +21,24 @@ func Test_array(t *testing.T) {
 	})
 	should.Equal([]int{1, 2, 3}, elems)
 }
+
+func Test_array_append(t *testing.T) {
+	should := require.New(t)
+	v := [3]int{1, 2, 3}
+	accessor := plz.AccessorOf(reflect.TypeOf(v))
+	should.Equal(acc.Array, accessor.Kind())
+	elemAccessor := accessor.Elem()
+	fill := accessor.FillArray(&v)
+	elem := fill()
+	should.NotNil(elem)
+	elemAccessor.SetInt(elem, 3)
+	elem = fill()
+	should.NotNil(elem)
+	elemAccessor.SetInt(elem, 2)
+	elem = fill()
+	should.NotNil(elem)
+	elemAccessor.SetInt(elem, 1)
+	elem = fill()
+	should.Nil(elem)
+	should.Equal([]int{3, 2, 1}, v[:])
+}

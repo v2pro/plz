@@ -134,6 +134,9 @@ func (kind Kind) GoString() string {
 	return "<unknown>"
 }
 
+// when elem is nil, there is no more to fill
+type ArrayFiller func() (elem interface{})
+
 type Accessor interface {
 	fmt.GoStringer
 	Kind() Kind
@@ -147,10 +150,10 @@ type Accessor interface {
 	Field(index int) StructField
 	// map
 	IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool)
-	SetMap(obj interface{}, setKey func(key interface{}), setElem func(elem interface{}))
+	SetMap(obj interface{}, cb func(key interface{}, elem interface{}))
 	// array
 	IterateArray(obj interface{}, cb func(elem interface{}) bool)
-	AppendArray(obj interface{}, setElem func(elem interface{}))
+	FillArray(obj interface{}) ArrayFiller
 	// primitives
 	Skip(obj interface{})
 	Int(obj interface{}) int
@@ -186,7 +189,7 @@ func (acc *NoopAccessor) IterateMap(obj interface{}, cb func(key interface{}, el
 	panic("unsupported operation")
 }
 
-func (acc *NoopAccessor) SetMap(obj interface{}, setKey func(key interface{}), setElem func(elem interface{})) {
+func (acc *NoopAccessor) SetMap(obj interface{}, cb func(key interface{}, elem interface{})) {
 	panic("unsupported operation")
 }
 
@@ -202,7 +205,7 @@ func (acc *NoopAccessor) IterateArray(obj interface{}, cb func(elem interface{})
 	panic("unsupported operation")
 }
 
-func (acc *NoopAccessor) AppendArray(obj interface{}, setElem func(elem interface{})) {
+func (acc *NoopAccessor) FillArray(obj interface{}) ArrayFiller {
 	panic("unsupported operation")
 }
 

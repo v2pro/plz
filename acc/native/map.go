@@ -29,11 +29,10 @@ func (accessor *mapAccessor) IterateMap(obj interface{}, cb func(key interface{}
 	}
 }
 
-func (accessor *mapAccessor) SetMap(obj interface{}, setKey func(key interface{}), setElem func(elem interface{})) {
+func (accessor *mapAccessor) SetMap(obj interface{}, cb func(key interface{}, elem interface{})) {
 	key := reflect.New(accessor.typ.Key())
-	setKey(key.Interface())
 	elem := reflect.New(accessor.typ.Elem())
-	setElem(elem.Interface())
+	cb(key.Interface(), elem.Interface())
 	mapVal := reflect.ValueOf(obj)
 	mapVal.SetMapIndex(key.Elem(), elem.Elem())
 }

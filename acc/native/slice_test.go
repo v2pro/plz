@@ -17,13 +17,12 @@ func Test_slice(t *testing.T) {
 	elems := []int{}
 	accessor.IterateArray(v, func(elem interface{}) bool {
 		elems = append(elems, elemAccessor.Int(elem))
-		return false
+		return true
 	})
 	should.Equal([]int{}, elems)
 	// grow one
-	accessor.AppendArray(v, func(elem interface{}) {
-		accessor.Elem().SetInt(elem, 1)
-	})
+	fill := accessor.FillArray(v)
+	accessor.Elem().SetInt(fill(), 1)
 	// check again
 	accessor.IterateArray(v, func(elem interface{}) bool {
 		elems = append(elems, elemAccessor.Int(elem))

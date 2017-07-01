@@ -19,9 +19,8 @@ func Test_map(t *testing.T) {
 		return true
 	})
 	should.Equal([]interface{}{}, keys)
-	accessor.SetMap(v, func(key interface{}) {
+	accessor.SetMap(v, func(key interface{}, elem interface{}) {
 		accessor.Key().SetInt(key, 1)
-	}, func(elem interface{}) {
 		accessor.Elem().SetInt(elem, 2)
 	})
 	accessor.IterateMap(v, func(key interface{}, value interface{}) bool {

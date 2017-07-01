@@ -9,8 +9,8 @@ import (
 
 type sliceAccessor struct {
 	acc.NoopAccessor
-	typ              reflect.Type
-	templateElemObj  emptyInterface
+	typ             reflect.Type
+	templateElemObj emptyInterface
 }
 
 func (accessor *sliceAccessor) Kind() acc.Kind {
@@ -28,8 +28,9 @@ func (accessor *sliceAccessor) Elem() acc.Accessor {
 func (accessor *sliceAccessor) IterateArray(obj interface{}, cb func(elem interface{}) bool) {
 	sliceHeader := extractSliceHeaderFromEmptyInterface(obj)
 	elemSize := accessor.typ.Elem().Size()
-	for i := 0; i < sliceHeader.Len; i++ {
-		elemPtr := uintptr(sliceHeader.Data) + uintptr(i)*elemSize
+	head := uintptr(sliceHeader.Data)
+	tail := head + uintptr(sliceHeader.Len)*elemSize
+	for elemPtr := head; elemPtr < tail; elemPtr += elemSize {
 		elemObj := accessor.templateElemObj
 		elemObj.word = unsafe.Pointer(elemPtr)
 		if !cb(castBackEmptyInterface(elemObj)) {
@@ -38,15 +39,18 @@ func (accessor *sliceAccessor) IterateArray(obj interface{}, cb func(elem interf
 	}
 }
 
-func (accessor *sliceAccessor) AppendArray(obj interface{}, setElem func(elem interface{})) {
+func (accessor *sliceAccessor) FillArray(obj interface{}) acc.ArrayFiller {
 	sliceHeader := extractSliceHeaderFromEmptyInterface(obj)
-	at := sliceHeader.Len
+	sliceHeader.Len = 0
 	elemType := accessor.typ.Elem()
-	growOne(sliceHeader, accessor.typ, elemType)
-	elemPtr := uintptr(sliceHeader.Data) + uintptr(at)*elemType.Size()
-	elemObj := accessor.templateElemObj
-	elemObj.word = unsafe.Pointer(elemPtr)
-	setElem(castBackEmptyInterface(elemObj))
+	return acc.ArrayFiller(func() interface{} {
+		at := sliceHeader.Len
+		growOne(sliceHeader, accessor.typ, elemType)
+		elemPtr := uintptr(sliceHeader.Data) + uintptr(at)*elemType.Size()
+		elemObj := accessor.templateElemObj
+		elemObj.word = unsafe.Pointer(elemPtr)
+		return castBackEmptyInterface(elemObj)
+	})
 }
 
 // grow grows the slice s so that it can hold extra more values, allocating
