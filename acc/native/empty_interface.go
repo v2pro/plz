@@ -4,7 +4,6 @@ import (
 	"unsafe"
 	"github.com/v2pro/plz/acc"
 	"reflect"
-	"fmt"
 )
 
 func castToEmptyInterface(val interface{}) emptyInterface {
@@ -29,16 +28,10 @@ type emptyInterfaceAccessor struct {
 	acc.NoopAccessor
 }
 
-func (accessor *emptyInterfaceAccessor) KindOf(obj interface{}) acc.Kind {
+func (accessor *emptyInterfaceAccessor) AccessorOf(obj interface{}) acc.Accessor {
 	obj = *(obj.(*interface{}))
 	typ := reflect.TypeOf(obj)
-	switch typ.Kind() {
-	case reflect.Int:
-		return acc.Int
-	case reflect.String:
-		return acc.String
-	}
-	panic(fmt.Sprintf("KindOf does not support: %v", typ))
+	return &deferenceAccessor{realAcc:acc.AccessorOf(typ)}
 }
 
 func (accessor *emptyInterfaceAccessor) Kind() acc.Kind {
@@ -55,6 +48,16 @@ func (accessor *emptyInterfaceAccessor) Elem() acc.Accessor {
 
 func (accessor *emptyInterfaceAccessor) GoString() string {
 	return "interface{}"
+}
+
+func (accessor *emptyInterfaceAccessor) SetInt(obj interface{}, val int) {
+	objPtr := obj.(*interface{})
+	*objPtr = val
+}
+
+func (accessor *emptyInterfaceAccessor) SetString(obj interface{}, val string) {
+	objPtr := obj.(*interface{})
+	*objPtr = val
 }
 
 func (accessor *emptyInterfaceAccessor) FillMap(obj interface{}, cb func(filler acc.MapFiller)) {
@@ -83,22 +86,28 @@ func (filler *genericMapFiller) Fill() {
 	filler.m[filler.lastKey] = filler.lastElem
 }
 
-func (accessor *emptyInterfaceAccessor) Int(obj interface{}) int {
-	obj = *(obj.(*interface{}))
-	return *((*int)(extractPtrFromEmptyInterface(obj)))
+func (accessor *emptyInterfaceAccessor) FillArray(obj interface{}, cb func(filler acc.ArrayFiller)) {
+	realObj := obj.(*interface{})
+	if *realObj == nil {
+		*realObj = []interface{}{}
+	}
+	arr := (*realObj).([]interface{})
+	filler := &genericArrayFiller{
+		arr: arr,
+	}
+	cb(filler)
+	*realObj = filler.arr
 }
 
-func (accessor *emptyInterfaceAccessor) SetInt(obj interface{}, val int) {
-	objPtr := obj.(*interface{})
-	*objPtr = val
+type genericArrayFiller struct {
+	arr      []interface{}
+	lastElem interface{}
 }
 
-func (accessor *emptyInterfaceAccessor) String(obj interface{}) string {
-	obj = *(obj.(*interface{}))
-	return *((*string)(extractPtrFromEmptyInterface(obj)))
+func (filler *genericArrayFiller) Next() interface{} {
+	return &filler.lastElem
 }
 
-func (accessor *emptyInterfaceAccessor) SetString(obj interface{}, val string) {
-	objPtr := obj.(*interface{})
-	*objPtr = val
+func (filler *genericArrayFiller) Fill() {
+	filler.arr = append(filler.arr, filler.lastElem)
 }
