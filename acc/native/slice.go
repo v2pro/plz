@@ -10,7 +10,6 @@ import (
 type sliceAccessor struct {
 	acc.NoopAccessor
 	typ              reflect.Type
-	templateSliceObj emptyInterface
 	templateElemObj  emptyInterface
 }
 
@@ -44,8 +43,6 @@ func (accessor *sliceAccessor) AppendArray(obj interface{}, setElem func(elem in
 	at := sliceHeader.Len
 	elemType := accessor.typ.Elem()
 	growOne(sliceHeader, accessor.typ, elemType)
-	sliceObj := accessor.templateSliceObj
-	sliceObj.word = unsafe.Pointer(sliceHeader)
 	elemPtr := uintptr(sliceHeader.Data) + uintptr(at)*elemType.Size()
 	elemObj := accessor.templateElemObj
 	elemObj.word = unsafe.Pointer(elemPtr)

@@ -32,7 +32,12 @@ func accessorOf(typ reflect.Type) acc.Accessor {
 		templateElemObj := castToEmptyInterface(reflect.New(typ.Elem()).Interface())
 		return &sliceAccessor{
 			typ:              typ,
-			templateSliceObj: castToEmptyInterface(reflect.New(typ).Elem().Interface()),
+			templateElemObj:  templateElemObj,
+		}
+	case reflect.Array:
+		templateElemObj := castToEmptyInterface(reflect.New(typ.Elem()).Interface())
+		return &arrayAccessor{
+			typ:              typ,
 			templateElemObj:  templateElemObj,
 		}
 	}
