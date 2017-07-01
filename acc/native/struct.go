@@ -52,21 +52,6 @@ func (accessor *structAccessor) GoString() string {
 	return accessor.typ.Name()
 }
 
-func (accessor *structAccessor) Key() acc.Accessor {
-	return &stringAccessor{}
-}
-
-func (accessor *structAccessor) Elem() acc.Accessor {
-	return &structValueAccessor{}
-}
-
-func (accessor *structAccessor) IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool) {
-	for i := 0; i < len(accessor.fields); i++ {
-		field := accessor.fields[i]
-		cb(field.Name, field.Accessor.Interface(obj))
-	}
-}
-
 func (accessor *structAccessor) NumField() int {
 	return len(accessor.fields)
 }
@@ -139,27 +124,4 @@ func (accessor *structFieldAccessor) fieldOf(obj interface{}) interface{} {
 
 func (accessor *structFieldAccessor) GoString() string {
 	return fmt.Sprintf("%#v/%s %#v", accessor.structName, accessor.field.Name, accessor.accessor.GoString())
-}
-
-type structValueAccessor struct {
-	acc.NoopAccessor
-}
-
-func (accessor *structValueAccessor) Kind() acc.Kind {
-	return acc.Interface
-}
-
-func (accessor *structValueAccessor) GoString() string {
-	return "interface{}"
-}
-
-func (accessor *structValueAccessor) String(obj interface{}) string {
-	return *((*string)(extractPtrFromEmptyInterface(obj)))
-}
-
-func (accessor *structValueAccessor) SetString(obj interface{}, val string) {
-	if reflect.TypeOf(obj).Kind() != reflect.Ptr {
-		panic("can only SetString on pointer")
-	}
-	*((*string)(extractPtrFromEmptyInterface(obj))) = val
 }

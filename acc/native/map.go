@@ -15,7 +15,6 @@ func (accessor *mapAccessor) Kind() acc.Kind {
 	return acc.Map
 }
 
-
 func (accessor *mapAccessor) GoString() string {
 	return accessor.typ.String()
 }
@@ -35,7 +34,8 @@ func (accessor *mapAccessor) SetMap(obj interface{}, setKey func(key interface{}
 	setKey(key.Interface())
 	elem := reflect.New(accessor.typ.Elem())
 	setElem(elem.Interface())
-	reflect.ValueOf(obj).SetMapIndex(key.Elem(), elem.Elem())
+	mapVal := reflect.ValueOf(obj)
+	mapVal.SetMapIndex(key.Elem(), elem.Elem())
 }
 
 func (accessor *mapAccessor) Key() acc.Accessor {

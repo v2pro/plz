@@ -45,8 +45,29 @@ func (accessor *emptyInterfaceAccessor) Kind() acc.Kind {
 	return acc.Interface
 }
 
+func (accessor *emptyInterfaceAccessor) Key() acc.Accessor {
+	return &stringAccessor{}
+}
+
+func (accessor *emptyInterfaceAccessor) Elem() acc.Accessor {
+	return accessor
+}
+
 func (accessor *emptyInterfaceAccessor) GoString() string {
 	return "interface{}"
+}
+
+func (accessor *emptyInterfaceAccessor) SetMap(obj interface{}, setKey func(key interface{}), setElem func(key interface{})) {
+	realObj := obj.(*interface{})
+	if *realObj == nil {
+		*realObj = map[string]interface{}{}
+	}
+	m := (*realObj).(map[string]interface{})
+	key := ""
+	var elem interface{}
+	setKey(&key)
+	setElem(&elem)
+	m[key] = elem
 }
 
 func (accessor *emptyInterfaceAccessor) Int(obj interface{}) int {
@@ -62,4 +83,9 @@ func (accessor *emptyInterfaceAccessor) SetInt(obj interface{}, val int) {
 func (accessor *emptyInterfaceAccessor) String(obj interface{}) string {
 	obj = *(obj.(*interface{}))
 	return *((*string)(extractPtrFromEmptyInterface(obj)))
+}
+
+func (accessor *emptyInterfaceAccessor) SetString(obj interface{}, val string) {
+	objPtr := obj.(*interface{})
+	*objPtr = val
 }
