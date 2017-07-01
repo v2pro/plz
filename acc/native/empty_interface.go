@@ -57,16 +57,30 @@ func (accessor *emptyInterfaceAccessor) GoString() string {
 	return "interface{}"
 }
 
-func (accessor *emptyInterfaceAccessor) SetMap(obj interface{}, cb func(key interface{}, elem interface{})) {
+func (accessor *emptyInterfaceAccessor) FillMap(obj interface{}, cb func(filler acc.MapFiller)) {
 	realObj := obj.(*interface{})
 	if *realObj == nil {
 		*realObj = map[string]interface{}{}
 	}
 	m := (*realObj).(map[string]interface{})
-	key := ""
-	var elem interface{}
-	cb(&key, &elem)
-	m[key] = elem
+	filler := &genericMapFiller{
+		m: m,
+	}
+	cb(filler)
+}
+
+type genericMapFiller struct {
+	m        map[string]interface{}
+	lastKey  string
+	lastElem interface{}
+}
+
+func (filler *genericMapFiller) Next() (interface{}, interface{}) {
+	return &filler.lastKey, &filler.lastElem
+}
+
+func (filler *genericMapFiller) Fill() {
+	filler.m[filler.lastKey] = filler.lastElem
 }
 
 func (accessor *emptyInterfaceAccessor) Int(obj interface{}) int {
