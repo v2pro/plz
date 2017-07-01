@@ -21,8 +21,9 @@ func Test_slice(t *testing.T) {
 	})
 	should.Equal([]int{}, elems)
 	// grow one
-	fill := accessor.FillArray(v)
-	accessor.Elem().SetInt(fill(), 1)
+	accessor.FillArray(v, func(filler acc.ArrayFiller) {
+		accessor.Elem().SetInt(filler.Next(), 1)
+	})
 	// check again
 	accessor.IterateArray(v, func(elem interface{}) bool {
 		elems = append(elems, elemAccessor.Int(elem))

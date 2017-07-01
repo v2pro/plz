@@ -39,18 +39,36 @@ func (accessor *sliceAccessor) IterateArray(obj interface{}, cb func(elem interf
 	}
 }
 
-func (accessor *sliceAccessor) FillArray(obj interface{}) acc.ArrayFiller {
+func (accessor *sliceAccessor) FillArray(obj interface{}, cb func(filler acc.ArrayFiller)) {
 	sliceHeader := extractSliceHeaderFromEmptyInterface(obj)
 	sliceHeader.Len = 0
-	elemType := accessor.typ.Elem()
-	return acc.ArrayFiller(func() interface{} {
-		at := sliceHeader.Len
-		growOne(sliceHeader, accessor.typ, elemType)
-		elemPtr := uintptr(sliceHeader.Data) + uintptr(at)*elemType.Size()
-		elemObj := accessor.templateElemObj
-		elemObj.word = unsafe.Pointer(elemPtr)
-		return castBackEmptyInterface(elemObj)
-	})
+	filler := &sliceFiller{
+		sliceTyp:        accessor.typ,
+		elemType:        accessor.typ.Elem(),
+		sliceHeader:     sliceHeader,
+		templateElemObj: accessor.templateElemObj,
+	}
+	cb(filler)
+}
+
+type sliceFiller struct {
+	sliceTyp        reflect.Type
+	elemType        reflect.Type
+	sliceHeader     *sliceHeader
+	templateElemObj emptyInterface
+}
+
+func (filler *sliceFiller) Next() interface{} {
+	header := filler.sliceHeader
+	at := uintptr(header.Len)
+	growOne(header, filler.sliceTyp, filler.elemType)
+	elemObj := filler.templateElemObj
+	elemPtr := uintptr(header.Data) + at*filler.elemType.Size()
+	elemObj.word = unsafe.Pointer(elemPtr)
+	return castBackEmptyInterface(elemObj)
+}
+
+func (filler *sliceFiller) Fill() {
 }
 
 // grow grows the slice s so that it can hold extra more values, allocating

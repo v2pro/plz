@@ -29,12 +29,29 @@ func (accessor *mapAccessor) IterateMap(obj interface{}, cb func(key interface{}
 	}
 }
 
-func (accessor *mapAccessor) SetMap(obj interface{}, cb func(key interface{}, elem interface{})) {
-	key := reflect.New(accessor.typ.Key())
-	elem := reflect.New(accessor.typ.Elem())
-	cb(key.Interface(), elem.Interface())
-	mapVal := reflect.ValueOf(obj)
-	mapVal.SetMapIndex(key.Elem(), elem.Elem())
+func (accessor *mapAccessor) FillMap(obj interface{}, cb func(filler acc.MapFiller)) {
+	filler := &mapFiller{
+		typ: accessor.typ,
+		value: reflect.ValueOf(obj),
+	}
+	cb(filler)
+}
+
+type mapFiller struct {
+	typ   reflect.Type
+	value reflect.Value
+	lastKey reflect.Value
+	lastElem reflect.Value
+}
+
+func (filler *mapFiller) Next() (interface{}, interface{}) {
+	filler.lastKey = reflect.New(filler.typ.Key())
+	filler.lastElem = reflect.New(filler.typ.Elem())
+	return filler.lastKey.Interface(), filler.lastElem.Interface()
+}
+
+func (filler *mapFiller) Fill() {
+	filler.value.SetMapIndex(filler.lastKey.Elem(), filler.lastElem.Elem())
 }
 
 func (accessor *mapAccessor) Key() acc.Accessor {

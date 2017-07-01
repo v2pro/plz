@@ -20,7 +20,7 @@ func AccessorOf(typ reflect.Type) Accessor {
 type Kind uint
 
 const (
-	Invalid Kind = iota
+	Invalid   Kind = iota
 	Bool
 	Int
 	Int8
@@ -134,8 +134,16 @@ func (kind Kind) GoString() string {
 	return "<unknown>"
 }
 
-// when elem is nil, there is no more to fill
-type ArrayFiller func() (elem interface{})
+type ArrayFiller interface {
+	// when elem is nil, there is no more to fill
+	Next() (elem interface{})
+	Fill()
+}
+
+type MapFiller interface {
+	Next() (key interface{}, elem interface{})
+	Fill()
+}
 
 type Accessor interface {
 	fmt.GoStringer
@@ -150,10 +158,10 @@ type Accessor interface {
 	Field(index int) StructField
 	// map
 	IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool)
-	SetMap(obj interface{}, cb func(key interface{}, elem interface{}))
+	FillMap(obj interface{}, cb func(filler MapFiller))
 	// array
 	IterateArray(obj interface{}, cb func(elem interface{}) bool)
-	FillArray(obj interface{}) ArrayFiller
+	FillArray(obj interface{}, cb func(filler ArrayFiller))
 	// primitives
 	Skip(obj interface{})
 	Int(obj interface{}) int
@@ -177,6 +185,14 @@ func (acc *NoopAccessor) KindOf(obj interface{}) Kind {
 	panic("unsupported operation")
 }
 
+func (acc *NoopAccessor) Key() Accessor {
+	panic("unsupported operation")
+}
+
+func (acc *NoopAccessor) Elem() Accessor {
+	panic("unsupported operation")
+}
+
 func (acc *NoopAccessor) NumField() int {
 	panic("unsupported operation")
 }
@@ -189,15 +205,7 @@ func (acc *NoopAccessor) IterateMap(obj interface{}, cb func(key interface{}, el
 	panic("unsupported operation")
 }
 
-func (acc *NoopAccessor) SetMap(obj interface{}, cb func(key interface{}, elem interface{})) {
-	panic("unsupported operation")
-}
-
-func (acc *NoopAccessor) Key() Accessor {
-	panic("unsupported operation")
-}
-
-func (acc *NoopAccessor) Elem() Accessor {
+func (acc *NoopAccessor) FillMap(obj interface{}, cb func(filler MapFiller)) {
 	panic("unsupported operation")
 }
 
@@ -205,7 +213,7 @@ func (acc *NoopAccessor) IterateArray(obj interface{}, cb func(elem interface{})
 	panic("unsupported operation")
 }
 
-func (acc *NoopAccessor) FillArray(obj interface{}) ArrayFiller {
+func (acc *NoopAccessor) FillArray(obj interface{}, cb func(filler ArrayFiller)) {
 	panic("unsupported operation")
 }
 

@@ -37,19 +37,38 @@ func (accessor *arrayAccessor) IterateArray(obj interface{}, cb func(elem interf
 		}
 	}
 }
-func (accessor *arrayAccessor) FillArray(obj interface{}) acc.ArrayFiller {
+
+func (accessor *arrayAccessor) FillArray(obj interface{}, cb func(filler acc.ArrayFiller)) {
 	elemSize := accessor.typ.Elem().Size()
 	head := uintptr(extractPtrFromEmptyInterface(obj))
 	tail := head + uintptr(accessor.typ.Len())*elemSize
 	elemPtr := head
-	return acc.ArrayFiller(func() interface{} {
-		if elemPtr < tail {
-			elemObj := accessor.templateElemObj
-			elemObj.word = unsafe.Pointer(elemPtr)
-			elemPtr += elemSize
-			return castBackEmptyInterface(elemObj)
-		} else {
-			return nil
-		}
-	})
+	filler := &arrayFiller{
+		elemSize:        elemSize,
+		elemPtr:         elemPtr,
+		tail:            tail,
+		templateElemObj: accessor.templateElemObj,
+	}
+	cb(filler)
+}
+
+type arrayFiller struct {
+	elemSize        uintptr
+	elemPtr         uintptr
+	tail            uintptr
+	templateElemObj emptyInterface
+}
+
+func (filler *arrayFiller) Next() interface{} {
+	if filler.elemPtr < filler.tail {
+		elemObj := filler.templateElemObj
+		elemObj.word = unsafe.Pointer(filler.elemPtr)
+		filler.elemPtr += filler.elemSize
+		return castBackEmptyInterface(elemObj)
+	} else {
+		return nil
+	}
+}
+
+func (filler *arrayFiller) Fill() {
 }
