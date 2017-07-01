@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"testing"
 	"github.com/v2pro/plz/acc"
-	"fmt"
 )
 
 func Test_map(t *testing.T) {
@@ -14,30 +13,43 @@ func Test_map(t *testing.T) {
 	v := map[int]int{}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
 	should.Equal(acc.Map, accessor.Kind())
-	keys := []interface{}{}
-	accessor.IterateMap(v, func(key interface{}, value interface{}) bool {
-		keys = append(keys, key)
+	keys := []int{}
+	elems := []int{}
+	accessor.IterateMap(v, func(key interface{}, elem interface{}) bool {
+		keys = append(keys, accessor.Key().Int(key))
+		elems = append(elems, accessor.Elem().Int(elem))
 		return true
 	})
-	should.Equal([]interface{}{}, keys)
+	should.Equal([]int{}, keys)
+	should.Equal([]int{}, elems)
 	accessor.FillMap(v, func(filler acc.MapFiller) {
 		key, elem := filler.Next()
 		accessor.Key().SetInt(key, 1)
 		accessor.Elem().SetInt(elem, 2)
 		filler.Fill()
 	})
-	accessor.IterateMap(v, func(key interface{}, value interface{}) bool {
-		keys = append(keys, key)
+	accessor.IterateMap(v, func(key interface{}, elem interface{}) bool {
+		keys = append(keys, accessor.Key().Int(key))
+		elems = append(elems, accessor.Elem().Int(elem))
 		return true
 	})
-	should.Equal([]interface{}{1}, keys)
+	should.Equal([]int{1}, keys)
+	should.Equal([]int{2}, elems)
 }
 
-func Test_map_reflect(t *testing.T) {
-	a := map[string]string{}
-	a["hello"] = "world"
-	b := reflect.ValueOf(&a).Elem().MapIndex(reflect.ValueOf("hello")).Interface()
-	ptr := extractPtrFromEmptyInterface(b)
-	*((*string)(ptr)) = "120"
-	fmt.Println(a)
+func Test_map_of_interface(t *testing.T) {
+	should := require.New(t)
+	v := map[string]interface{}{
+		"hello": "world",
+	}
+	accessor := plz.AccessorOf(reflect.TypeOf(v))
+	should.Equal(acc.Interface, accessor.Elem().Kind())
+	keys := []string{}
+	elems := []string{}
+	accessor.IterateMap(v, func(key interface{}, elem interface{}) bool {
+		keys = append(keys, accessor.Key().String(key))
+		elems = append(elems, accessor.Elem().String(elem))
+		return true
+	})
+	should.Equal([]string{"hello"}, keys)
 }

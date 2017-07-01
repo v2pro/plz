@@ -22,9 +22,15 @@ func (accessor *mapAccessor) GoString() string {
 func (accessor *mapAccessor) IterateMap(obj interface{}, cb func(key interface{}, value interface{}) bool) {
 	reflectVal := reflect.ValueOf(obj)
 	for _, key := range reflectVal.MapKeys() {
-		value := reflectVal.MapIndex(key)
-		if !cb(key.Interface(), value.Interface()) {
-			return
+		value := reflectVal.MapIndex(key).Interface()
+		if accessor.typ.Elem().Kind() == reflect.Interface {
+			if !cb(key.Interface(), &value) {
+				return
+			}
+		} else {
+			if !cb(key.Interface(), value) {
+				return
+			}
 		}
 	}
 }
