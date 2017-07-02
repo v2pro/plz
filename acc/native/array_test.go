@@ -15,7 +15,7 @@ func Test_array(t *testing.T) {
 	should.Equal(acc.Array, accessor.Kind())
 	elemAccessor := accessor.Elem()
 	elems := []int{}
-	accessor.IterateArray(v, func(elem interface{}) bool {
+	accessor.IterateArray(v, func(index int, elem interface{}) bool {
 		elems = append(elems, elemAccessor.Int(elem))
 		return true
 	})
@@ -29,16 +29,16 @@ func Test_array_append(t *testing.T) {
 	should.Equal(acc.Array, accessor.Kind())
 	elemAccessor := accessor.Elem()
 	accessor.FillArray(&v, func(filler acc.ArrayFiller) {
-		elem := filler.Next()
+		_, elem := filler.Next()
 		should.NotNil(elem)
 		elemAccessor.SetInt(elem, 3)
-		elem = filler.Next()
+		_, elem = filler.Next()
 		should.NotNil(elem)
 		elemAccessor.SetInt(elem, 2)
-		elem = filler.Next()
+		_, elem = filler.Next()
 		should.NotNil(elem)
 		elemAccessor.SetInt(elem, 1)
-		elem = filler.Next()
+		_, elem = filler.Next()
 		should.Nil(elem)
 	})
 	should.Equal([]int{3, 2, 1}, v[:])

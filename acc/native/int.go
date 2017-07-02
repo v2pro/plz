@@ -22,9 +22,14 @@ func (accessor *intAccessor) Int(obj interface{}) int {
 	return *((*int)(extractPtrFromEmptyInterface(obj)))
 }
 
-func (accessor *intAccessor) SetInt(obj interface{}, val int) {
-	if reflect.TypeOf(obj).Kind() != reflect.Ptr {
-		panic("can only SetInt on pointer")
-	}
+type ptrIntAccessor struct {
+	ptrAccessor
+}
+
+func (accessor *ptrIntAccessor) Int(obj interface{}) int {
+	return accessor.valueAccessor.Int(obj)
+}
+
+func (accessor *ptrIntAccessor) SetInt(obj interface{}, val int) {
 	*((*int)(extractPtrFromEmptyInterface(obj))) = val
 }

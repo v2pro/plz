@@ -17,5 +17,12 @@ func Test_string(t *testing.T) {
 	should.Equal("", accessor.String(v))
 	accessor.SetString(v, "hello")
 	should.Equal("hello", accessor.String(v))
+
+	accessor = plz.AccessorOf(reflect.TypeOf(directV))
+	should.Equal(acc.String, accessor.Kind())
+	should.Equal("hello", accessor.String(directV))
+	should.Panics(func() {
+		accessor.SetString(directV, "hello")
+	})
 }
 

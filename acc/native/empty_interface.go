@@ -4,6 +4,7 @@ import (
 	"unsafe"
 	"github.com/v2pro/plz/acc"
 	"reflect"
+	"github.com/v2pro/plz"
 )
 
 func castToEmptyInterface(val interface{}) emptyInterface {
@@ -24,90 +25,48 @@ type emptyInterface struct {
 	word unsafe.Pointer
 }
 
-type emptyInterfaceAccessor struct {
+type ptrEmptyInterfaceAccessor struct {
 	acc.NoopAccessor
 }
 
-func (accessor *emptyInterfaceAccessor) AccessorOf(obj interface{}) acc.Accessor {
-	obj = *(obj.(*interface{}))
-	typ := reflect.TypeOf(obj)
-	return &deferenceAccessor{realAcc:acc.AccessorOf(typ)}
-}
-
-func (accessor *emptyInterfaceAccessor) Kind() acc.Kind {
+func (accessor *ptrEmptyInterfaceAccessor) Kind() acc.Kind {
 	return acc.Interface
 }
 
-func (accessor *emptyInterfaceAccessor) Key() acc.Accessor {
-	return &stringAccessor{}
+func (accessor *ptrEmptyInterfaceAccessor) GoString() string {
+	return "*interface{}"
 }
 
-func (accessor *emptyInterfaceAccessor) Elem() acc.Accessor {
-	return accessor
+func (accessor *ptrEmptyInterfaceAccessor) SetInt(obj interface{}, val int) {
+	*(obj.(*interface{})) = val
 }
 
-func (accessor *emptyInterfaceAccessor) GoString() string {
-	return "interface{}"
+func (accessor *ptrEmptyInterfaceAccessor) SetString(obj interface{}, val string) {
+	*(obj.(*interface{})) = val
 }
 
-func (accessor *emptyInterfaceAccessor) SetInt(obj interface{}, val int) {
-	objPtr := obj.(*interface{})
-	*objPtr = val
+func (accessor *ptrEmptyInterfaceAccessor) Int(obj interface{}) int {
+	obj = *(obj.(*interface{}))
+	return plz.AccessorOf(reflect.TypeOf(obj)).Int(obj)
 }
 
-func (accessor *emptyInterfaceAccessor) SetString(obj interface{}, val string) {
-	objPtr := obj.(*interface{})
-	*objPtr = val
+func (accessor *ptrEmptyInterfaceAccessor) String(obj interface{}) string {
+	obj = *(obj.(*interface{}))
+	return plz.AccessorOf(reflect.TypeOf(obj)).String(obj)
 }
 
-func (accessor *emptyInterfaceAccessor) FillMap(obj interface{}, cb func(filler acc.MapFiller)) {
-	realObj := obj.(*interface{})
-	if *realObj == nil {
-		*realObj = map[string]interface{}{}
+func (accessor *ptrEmptyInterfaceAccessor) PtrElem(obj interface{}) (interface{}, acc.Accessor) {
+	obj = *(obj.(*interface{}))
+	if obj == nil {
+		return nil, nil
 	}
-	m := (*realObj).(map[string]interface{})
-	filler := &genericMapFiller{
-		m: m,
-	}
-	cb(filler)
+	typ := reflect.TypeOf(obj)
+	return obj, acc.AccessorOf(typ)
 }
 
-type genericMapFiller struct {
-	m        map[string]interface{}
-	lastKey  string
-	lastElem interface{}
-}
-
-func (filler *genericMapFiller) Next() (interface{}, interface{}) {
-	return &filler.lastKey, &filler.lastElem
-}
-
-func (filler *genericMapFiller) Fill() {
-	filler.m[filler.lastKey] = filler.lastElem
-}
-
-func (accessor *emptyInterfaceAccessor) FillArray(obj interface{}, cb func(filler acc.ArrayFiller)) {
-	realObj := obj.(*interface{})
-	if *realObj == nil {
-		*realObj = []interface{}{}
-	}
-	arr := (*realObj).([]interface{})
-	filler := &genericArrayFiller{
-		arr: arr,
-	}
-	cb(filler)
-	*realObj = filler.arr
-}
-
-type genericArrayFiller struct {
-	arr      []interface{}
-	lastElem interface{}
-}
-
-func (filler *genericArrayFiller) Next() interface{} {
-	return &filler.lastElem
-}
-
-func (filler *genericArrayFiller) Fill() {
-	filler.arr = append(filler.arr, filler.lastElem)
+func (accessor *ptrEmptyInterfaceAccessor) SetPtrElem(obj interface{}, template interface{}) (elem interface{}, elemAccessor acc.Accessor) {
+	typ := reflect.TypeOf(template)
+	newObj := reflect.New(typ).Elem().Interface()
+	*(obj.(*interface{})) = newObj
+	return newObj, acc.AccessorOf(typ)
 }

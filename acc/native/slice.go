@@ -25,15 +25,15 @@ func (accessor *sliceAccessor) Elem() acc.Accessor {
 	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
 }
 
-func (accessor *sliceAccessor) IterateArray(obj interface{}, cb func(elem interface{}) bool) {
+func (accessor *sliceAccessor) IterateArray(obj interface{}, cb func(index int, elem interface{}) bool) {
 	sliceHeader := extractSliceHeaderFromEmptyInterface(obj)
 	elemSize := accessor.typ.Elem().Size()
 	head := uintptr(sliceHeader.Data)
-	tail := head + uintptr(sliceHeader.Len)*elemSize
-	for elemPtr := head; elemPtr < tail; elemPtr += elemSize {
+	for index := 0; index < sliceHeader.Len; index++ {
+		elemPtr := head + uintptr(index)*elemSize
 		elemObj := accessor.templateElemObj
 		elemObj.word = unsafe.Pointer(elemPtr)
-		if !cb(castBackEmptyInterface(elemObj)) {
+		if !cb(index, castBackEmptyInterface(elemObj)) {
 			return
 		}
 	}
@@ -58,14 +58,14 @@ type sliceFiller struct {
 	templateElemObj emptyInterface
 }
 
-func (filler *sliceFiller) Next() interface{} {
+func (filler *sliceFiller) Next() (int, interface{}) {
 	header := filler.sliceHeader
-	at := uintptr(header.Len)
+	at := header.Len
 	growOne(header, filler.sliceTyp, filler.elemType)
 	elemObj := filler.templateElemObj
-	elemPtr := uintptr(header.Data) + at*filler.elemType.Size()
+	elemPtr := uintptr(header.Data) + uintptr(at)*filler.elemType.Size()
 	elemObj.word = unsafe.Pointer(elemPtr)
-	return castBackEmptyInterface(elemObj)
+	return at, castBackEmptyInterface(elemObj)
 }
 
 func (filler *sliceFiller) Fill() {

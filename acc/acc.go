@@ -136,7 +136,7 @@ func (kind Kind) GoString() string {
 
 type ArrayFiller interface {
 	// when elem is nil, there is no more to fill
-	Next() (elem interface{})
+	Next() (index int, elem interface{})
 	Fill()
 }
 
@@ -148,7 +148,9 @@ type MapFiller interface {
 type Accessor interface {
 	fmt.GoStringer
 	Kind() Kind
-	AccessorOf(obj interface{}) Accessor
+	// ptr
+	PtrElem(obj interface{}) (elem interface{}, elemAccessor Accessor)
+	SetPtrElem(obj interface{}, template interface{}) (elem interface{}, elemAccessor Accessor)
 	// map
 	Key() Accessor
 	// array/map
@@ -160,7 +162,7 @@ type Accessor interface {
 	IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool)
 	FillMap(obj interface{}, cb func(filler MapFiller))
 	// array
-	IterateArray(obj interface{}, cb func(elem interface{}) bool)
+	IterateArray(obj interface{}, cb func(index int, elem interface{}) bool)
 	FillArray(obj interface{}, cb func(filler ArrayFiller))
 	// primitives
 	Skip(obj interface{})
@@ -169,77 +171,81 @@ type Accessor interface {
 	String(obj interface{}) string
 	SetString(obj interface{}, val string)
 	Uintptr(obj interface{}) uintptr
-	Interface(obj interface{}) interface{}
 }
 
-type StructField struct {
-	Name     string
-	Accessor Accessor
-	Tags     map[string]interface{}
+type StructField interface {
+	Name() string
+	Accessor() Accessor
+	Tags() map[string]interface{}
 }
 
 type NoopAccessor struct {
+	AccessorTypeName string
 }
 
-func (accessor *NoopAccessor) AccessorOf(obj interface{}) Accessor {
-	panic("unsupported operation")
+func (accessor *NoopAccessor) reportError() string {
+	panic(fmt.Sprintf("%s: unsupported operation", accessor.AccessorTypeName))
+}
+
+func (accessor *NoopAccessor) PtrElem(obj interface{}) (elem interface{}, elemAccessor Accessor) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetPtrElem(obj interface{}, template interface{}) (elem interface{}, elemAccessor Accessor) {
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) Key() Accessor {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) Elem() Accessor {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) NumField() int {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) Field(index int) StructField {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool) {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) FillMap(obj interface{}, cb func(filler MapFiller)) {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) IterateArray(obj interface{}, cb func(elem interface{}) bool) {
-	panic("unsupported operation")
+func (accessor *NoopAccessor) IterateArray(obj interface{}, cb func(index int, elem interface{}) bool) {
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) FillArray(obj interface{}, cb func(filler ArrayFiller)) {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) Int(obj interface{}) int {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) SetInt(obj interface{}, val int) {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) String(obj interface{}) string {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) SetString(obj interface{}, val string) {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) Uintptr(obj interface{}) uintptr {
-	panic("unsupported operation")
+	panic(accessor.reportError())
 }
 
 func (accessor *NoopAccessor) Skip(obj interface{}) {
-}
-
-func (accessor *NoopAccessor) Interface(obj interface{}) interface{} {
-	panic("unsupported operation")
 }

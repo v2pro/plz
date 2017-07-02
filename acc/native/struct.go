@@ -1,47 +1,62 @@
 package native
 
 import (
-	"github.com/v2pro/plz"
 	"github.com/v2pro/plz/acc"
 	"reflect"
-	"unsafe"
-	"fmt"
 	"github.com/v2pro/plz/tagging"
+	"unsafe"
 )
 
 func accessorOfStruct(typ reflect.Type) acc.Accessor {
 	tags := tagging.Get(typ)
-	fields := []acc.StructField{}
+	fields := []*structField{}
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
-		ptrType := reflect.PtrTo(field.Type)
-		fieldAcc := plz.AccessorOf(ptrType)
-		templateObj := castToEmptyInterface(reflect.New(field.Type).Interface())
+		fieldAcc := acc.AccessorOf(reflect.PtrTo(field.Type))
 		fieldTags := tags.Fields[field.Name]
 		if fieldTags == nil {
 			fieldTags = map[string]interface{}{}
 		}
-		fields = append(fields, acc.StructField{
-			Name: field.Name,
-			Tags: fieldTags,
-			Accessor: &structFieldAccessor{
-				structName:  typ.Name(),
-				field:       field,
-				templateObj: templateObj,
-				accessor:    fieldAcc,
-			},
+		templateElemObj := castToEmptyInterface(reflect.New(field.Type).Interface())
+		fields = append(fields, &structField{
+			name:            field.Name,
+			tags:            fieldTags,
+			accessor:        fieldAcc,
+			size:            field.Type.Size(),
+			templateElemObj: templateElemObj,
 		})
 	}
 	return &structAccessor{
-		typ:    typ,
-		fields: fields,
+		NoopAccessor: acc.NoopAccessor{"structAccessor"},
+		typ:          typ,
+		fields:       fields,
 	}
+}
+
+type structField struct {
+	name            string
+	accessor        acc.Accessor
+	tags            map[string]interface{}
+	size            uintptr
+	templateElemObj emptyInterface
+}
+
+func (sf *structField) Name() string {
+	return sf.name
+}
+
+func (sf *structField) Accessor() acc.Accessor {
+	return sf.accessor
+}
+
+func (sf *structField) Tags() map[string]interface{} {
+	return sf.tags
 }
 
 type structAccessor struct {
 	acc.NoopAccessor
 	typ    reflect.Type
-	fields []acc.StructField
+	fields []*structField
 }
 
 func (accessor *structAccessor) Kind() acc.Kind {
@@ -60,68 +75,40 @@ func (accessor *structAccessor) Field(index int) acc.StructField {
 	return accessor.fields[index]
 }
 
-type structFieldAccessor struct {
-	acc.NoopAccessor
-	structName  string
-	field       reflect.StructField
-	templateObj emptyInterface
-	accessor    acc.Accessor
+func (accessor *structAccessor) IterateArray(obj interface{}, cb func(index int, elem interface{}) bool) {
+	currentPtr := uintptr(extractPtrFromEmptyInterface(obj))
+	for index := 0; index < len(accessor.fields); index++ {
+		field := accessor.fields[index]
+		currentObj := field.templateElemObj
+		currentObj.word = unsafe.Pointer(currentPtr)
+		cb(index, castBackEmptyInterface(currentObj))
+		currentPtr += field.size
+	}
 }
 
-func (accessor *structFieldAccessor) Kind() acc.Kind {
-	return accessor.accessor.Kind()
+func (accessor *structAccessor) FillArray(obj interface{}, cb func(filler acc.ArrayFiller)) {
+	filler := &structFiller{
+		fields:     accessor.fields,
+		currentPtr: uintptr(extractPtrFromEmptyInterface(obj)),
+	}
+	cb(filler)
 }
 
-func (accessor *structFieldAccessor) Key() acc.Accessor {
-	return accessor.accessor.Key()
+type structFiller struct {
+	fields     []*structField
+	index      int
+	currentPtr uintptr
 }
 
-func (accessor *structFieldAccessor) Elem() acc.Accessor {
-	return accessor.accessor.Elem()
+func (filler *structFiller) Next() (int, interface{}) {
+	field := filler.fields[filler.index]
+	currentObj := field.templateElemObj
+	currentObj.word = unsafe.Pointer(filler.currentPtr)
+	filler.currentPtr += field.size
+	currentIndex := filler.index
+	filler.index++
+	return currentIndex, castBackEmptyInterface(currentObj)
 }
 
-func (accessor *structFieldAccessor) NumField() int {
-	return accessor.accessor.NumField()
-}
-
-func (accessor *structFieldAccessor) Field(index int) acc.StructField {
-	return accessor.accessor.Field(index)
-}
-
-func (accessor *structFieldAccessor) Uintptr(obj interface{}) uintptr {
-	structPtr := uintptr(extractPtrFromEmptyInterface(obj))
-	structFieldPtr := structPtr + accessor.field.Offset
-	return structFieldPtr
-}
-
-func (accessor *structFieldAccessor) Int(obj interface{}) int {
-	return accessor.accessor.Int(accessor.fieldOf(obj))
-}
-
-func (accessor *structFieldAccessor) SetInt(obj interface{}, val int) {
-	accessor.accessor.SetInt(accessor.fieldOf(obj), val)
-}
-
-func (accessor *structFieldAccessor) String(obj interface{}) string {
-	return accessor.accessor.String(accessor.fieldOf(obj))
-}
-
-func (accessor *structFieldAccessor) SetString(obj interface{}, val string) {
-	accessor.accessor.SetString(accessor.fieldOf(obj), val)
-}
-
-func (accessor *structFieldAccessor) Interface(obj interface{}) interface{} {
-	return accessor.fieldOf(obj)
-}
-
-func (accessor *structFieldAccessor) fieldOf(obj interface{}) interface{} {
-	structPtr := uintptr(extractPtrFromEmptyInterface(obj))
-	structFieldPtr := structPtr + accessor.field.Offset
-	objEmptyInterface := accessor.templateObj
-	objEmptyInterface.word = unsafe.Pointer(structFieldPtr)
-	return castBackEmptyInterface(objEmptyInterface)
-}
-
-func (accessor *structFieldAccessor) GoString() string {
-	return fmt.Sprintf("%#v/%s %#v", accessor.structName, accessor.field.Name, accessor.accessor.GoString())
+func (filler *structFiller) Fill() {
 }

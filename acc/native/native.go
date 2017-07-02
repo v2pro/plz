@@ -16,29 +16,54 @@ func accessorOf(typ reflect.Type) acc.Accessor {
 			typ: typ,
 		}
 	}
-	if typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
 	switch typ.Kind() {
+	case reflect.Ptr:
+		elemType := typ.Elem()
+		switch elemType.Kind() {
+		case reflect.Int:
+			return &ptrIntAccessor{ptrAccessor{
+				NoopAccessor:  acc.NoopAccessor{"ptrIntAccessor"},
+				valueAccessor: acc.AccessorOf(elemType),
+			}}
+		case reflect.String:
+			return &ptrStringAccessor{ptrAccessor{
+				NoopAccessor:  acc.NoopAccessor{"ptrStringAccessor"},
+				valueAccessor: acc.AccessorOf(elemType),
+			}}
+		case reflect.Interface:
+			return &ptrEmptyInterfaceAccessor{
+				acc.NoopAccessor{"ptrEmptyInterfaceAccessor"}}
+		case reflect.Struct:
+			fallthrough
+		case reflect.Slice:
+			fallthrough
+		case reflect.Array:
+			return accessorOf(elemType)
+
+		}
 	case reflect.Int:
-		return &intAccessor{typ:typ}
+		return &intAccessor{
+			NoopAccessor: acc.NoopAccessor{"intAccessor"},
+			typ: typ,
+		}
 	case reflect.String:
-		return &stringAccessor{typ:typ}
-	case reflect.Interface:
-		return &emptyInterfaceAccessor{}
+		return &stringAccessor{
+			NoopAccessor: acc.NoopAccessor{"stringAccessor"},
+			typ:          typ,
+		}
 	case reflect.Struct:
 		return accessorOfStruct(typ)
 	case reflect.Slice:
 		templateElemObj := castToEmptyInterface(reflect.New(typ.Elem()).Interface())
 		return &sliceAccessor{
-			typ:              typ,
-			templateElemObj:  templateElemObj,
+			typ:             typ,
+			templateElemObj: templateElemObj,
 		}
 	case reflect.Array:
 		templateElemObj := castToEmptyInterface(reflect.New(typ.Elem()).Interface())
 		return &arrayAccessor{
-			typ:              typ,
-			templateElemObj:  templateElemObj,
+			typ:             typ,
+			templateElemObj: templateElemObj,
 		}
 	}
 	panic(fmt.Sprintf("do not support: %v", typ.Kind()))

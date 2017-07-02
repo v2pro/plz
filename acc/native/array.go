@@ -25,14 +25,14 @@ func (accessor *arrayAccessor) Elem() acc.Accessor {
 	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
 }
 
-func (accessor *arrayAccessor) IterateArray(obj interface{}, cb func(elem interface{}) bool) {
+func (accessor *arrayAccessor) IterateArray(obj interface{}, cb func(index int, elem interface{}) bool) {
 	elemSize := accessor.typ.Elem().Size()
 	head := uintptr(extractPtrFromEmptyInterface(obj))
-	tail := head + uintptr(accessor.typ.Len())*elemSize
-	for elemPtr := head; elemPtr < tail; elemPtr += elemSize {
+	for index := 0; index < accessor.typ.Len(); index++ {
+		elemPtr := head + uintptr(index) * elemSize
 		elemObj := accessor.templateElemObj
 		elemObj.word = unsafe.Pointer(elemPtr)
-		if !cb(castBackEmptyInterface(elemObj)) {
+		if !cb(index, castBackEmptyInterface(elemObj)) {
 			return
 		}
 	}
@@ -41,32 +41,32 @@ func (accessor *arrayAccessor) IterateArray(obj interface{}, cb func(elem interf
 func (accessor *arrayAccessor) FillArray(obj interface{}, cb func(filler acc.ArrayFiller)) {
 	elemSize := accessor.typ.Elem().Size()
 	head := uintptr(extractPtrFromEmptyInterface(obj))
-	tail := head + uintptr(accessor.typ.Len())*elemSize
-	elemPtr := head
 	filler := &arrayFiller{
 		elemSize:        elemSize,
-		elemPtr:         elemPtr,
-		tail:            tail,
+		len:             accessor.typ.Len(),
+		head:            head,
 		templateElemObj: accessor.templateElemObj,
 	}
 	cb(filler)
 }
 
 type arrayFiller struct {
+	index           int
+	len             int
 	elemSize        uintptr
-	elemPtr         uintptr
-	tail            uintptr
+	head            uintptr
 	templateElemObj emptyInterface
 }
 
-func (filler *arrayFiller) Next() interface{} {
-	if filler.elemPtr < filler.tail {
+func (filler *arrayFiller) Next() (int, interface{}) {
+	if filler.index < filler.len {
 		elemObj := filler.templateElemObj
-		elemObj.word = unsafe.Pointer(filler.elemPtr)
-		filler.elemPtr += filler.elemSize
-		return castBackEmptyInterface(elemObj)
+		elemObj.word = unsafe.Pointer(filler.head + uintptr(filler.index)*filler.elemSize)
+		currentIndex := filler.index
+		filler.index++
+		return currentIndex, castBackEmptyInterface(elemObj)
 	} else {
-		return nil
+		return -1, nil
 	}
 }
 

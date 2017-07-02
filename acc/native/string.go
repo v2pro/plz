@@ -22,9 +22,15 @@ func (accessor *stringAccessor) String(obj interface{}) string {
 	return *((*string)(extractPtrFromEmptyInterface(obj)))
 }
 
-func (accessor *stringAccessor) SetString(obj interface{}, val string) {
-	if reflect.TypeOf(obj).Kind() != reflect.Ptr {
-		panic("can only SetString on pointer")
-	}
+
+type ptrStringAccessor struct {
+	ptrAccessor
+}
+
+func (accessor *ptrStringAccessor) String(obj interface{}) string {
+	return accessor.valueAccessor.String(obj)
+}
+
+func (accessor *ptrStringAccessor) SetString(obj interface{}, val string) {
 	*((*string)(extractPtrFromEmptyInterface(obj))) = val
 }

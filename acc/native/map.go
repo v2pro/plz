@@ -61,9 +61,9 @@ func (filler *mapFiller) Fill() {
 }
 
 func (accessor *mapAccessor) Key() acc.Accessor {
-	return plz.AccessorOf(accessor.typ.Key())
+	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Key()))
 }
 
 func (accessor *mapAccessor) Elem() acc.Accessor {
-	return plz.AccessorOf(accessor.typ.Elem())
+	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
 }
