@@ -5,13 +5,12 @@ import (
 	"github.com/v2pro/plz"
 	"github.com/v2pro/plz/lang/routine"
 	"time"
-	"errors"
 )
 
 func Example_go() {
-routine.BeforeStart = append(routine.BeforeStart, func(kv []interface{}) error {
-	return errors.New("can not start more goroutine")
-})
+	//routine.BeforeStart = append(routine.BeforeStart, func(kv []interface{}) error {
+	//	return errors.New("can not start more goroutine")
+	//})
 	routine.AfterStart = append(routine.AfterStart, func(kv []interface{}) {
 		fmt.Println("started")
 	})
@@ -23,7 +22,10 @@ routine.BeforeStart = append(routine.BeforeStart, func(kv []interface{}) error {
 		panic("should not crash the whole program")
 	})
 	time.Sleep(time.Second)
-	// Output: hello from one off goroutine
+	// Output:
+	// started
+	// hello from one off goroutine
+	// finished
 }
 
 func Example_long_running_goroutine() {

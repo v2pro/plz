@@ -84,13 +84,6 @@ func goLongRunningOnce(longRunning func(), kv []interface{}) (notDone bool) {
 	return false
 }
 
-type Config struct {
-	AfterPanic    func(recovered interface{}, kv []interface{})
-	BeforeRestart func(restartedTimes int, kv []interface{}) bool
-	BeforeStart   func(kv []interface{}) error
-	AfterFinish   func(kv []interface{})
-}
-
 var AfterPanic = []func(recovered interface{}, kv []interface{}){
 	func(recovered interface{}, kv []interface{}) {
 		panicLogger.Error("goroutine panic", append(kv, "recovered", recovered, "stack", string(debug.Stack()))...)
