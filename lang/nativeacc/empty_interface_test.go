@@ -11,7 +11,7 @@ func Test_empty_interface_of_single_value(t *testing.T) {
 	should := require.New(t)
 	var directV interface{}
 	accessor := lang.AccessorOf(reflect.TypeOf(&directV))
-	should.Equal(lang.Interface, accessor.Kind())
+	should.Equal(lang.Variant, accessor.Kind())
 	accessor.SetInt(&directV, 10)
 	should.Equal(10, directV)
 	directV = "hello"
@@ -30,7 +30,7 @@ func Test_empty_interface_not_nil_fill_array(t *testing.T) {
 	should := require.New(t)
 	var directV interface{} = []int{}
 	accessor := lang.AccessorOf(reflect.TypeOf(&directV))
-	v, vAccessor := accessor.PtrElem(&directV)
+	v, vAccessor := accessor.VariantElem(&directV)
 	vAccessor.FillArray(v, func(filler lang.ArrayFiller) {
 		_, elem := filler.Next()
 		vAccessor.Elem().SetInt(elem, 1)
@@ -43,11 +43,11 @@ func Test_empty_interface_nil_fill_array(t *testing.T) {
 	should := require.New(t)
 	var directV interface{}
 	accessor := lang.AccessorOf(reflect.TypeOf(&directV))
-	v, vAccessor := accessor.PtrElem(&directV)
+	v, vAccessor := accessor.VariantElem(&directV)
 	should.Nil(v)
 	should.Nil(vAccessor)
-	accessor.SetPtrElem(&directV, []int{2, 5, 0})
-	v, vAccessor = accessor.PtrElem(&directV)
+	accessor.InitVariant(&directV, []int{2, 5, 0})
+	v, vAccessor = accessor.VariantElem(&directV)
 	should.Equal(reflect.Slice, reflect.TypeOf(v).Kind())
 	should.NotNil(vAccessor)
 	vAccessor.FillArray(v, func(filler lang.ArrayFiller) {

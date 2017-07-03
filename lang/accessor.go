@@ -20,7 +20,12 @@ func AccessorOf(typ reflect.Type) Accessor {
 type Kind uint
 
 const (
-	Invalid   Kind = iota
+	Invalid Kind = iota
+	Array
+	Map
+	Struct
+	Variant
+	String
 	Bool
 	Int
 	Int8
@@ -32,14 +37,8 @@ const (
 	Uint16
 	Uint32
 	Uint64
-	Uintptr
 	Float32
 	Float64
-	Array
-	Interface
-	Map
-	String
-	Struct
 )
 
 func (kind Kind) IsSingleValue() bool {
@@ -68,15 +67,13 @@ func (kind Kind) IsSingleValue() bool {
 		return true
 	case Uint64:
 		return true
-	case Uintptr:
-		return true
 	case Float32:
 		return true
 	case Float64:
 		return true
 	case Array:
 		return false
-	case Interface:
+	case Variant:
 		return false
 	case Map:
 		return false
@@ -114,15 +111,13 @@ func (kind Kind) GoString() string {
 		return "Uint32"
 	case Uint64:
 		return "Uint64"
-	case Uintptr:
-		return "Uintptr"
 	case Float32:
 		return "Float32"
 	case Float64:
 		return "Float64"
 	case Array:
 		return "Array"
-	case Interface:
+	case Variant:
 		return "Interface"
 	case Map:
 		return "Map"
@@ -146,11 +141,9 @@ type MapFiller interface {
 }
 
 type Accessor interface {
+	// === static ===
 	fmt.GoStringer
 	Kind() Kind
-	// ptr
-	PtrElem(obj interface{}) (elem interface{}, elemAccessor Accessor)
-	SetPtrElem(obj interface{}, template interface{}) (elem interface{}, elemAccessor Accessor)
 	// map
 	Key() Accessor
 	// array/map
@@ -158,19 +151,52 @@ type Accessor interface {
 	// struct
 	NumField() int
 	Field(index int) StructField
+	// array/struct
+	RandomAccessible() bool
+
+	// === runtime ===
+	// variant
+	VariantElem(obj interface{}) (elem interface{}, elemAccessor Accessor)
+	InitVariant(obj interface{}, template interface{}) (elem interface{}, elemAccessor Accessor)
 	// map
 	IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool)
 	FillMap(obj interface{}, cb func(filler MapFiller))
-	// array
+	// array/struct
+	Index(obj interface{}, index int) (elem interface{}) // only when random accessible
 	IterateArray(obj interface{}, cb func(index int, elem interface{}) bool)
 	FillArray(obj interface{}, cb func(filler ArrayFiller))
 	// primitives
-	Skip(obj interface{})
-	Int(obj interface{}) int
-	SetInt(obj interface{}, val int)
+	Skip(obj interface{}) // when the value is not needed
 	String(obj interface{}) string
 	SetString(obj interface{}, val string)
-	Uintptr(obj interface{}) uintptr
+	Bool(obj interface{}) bool
+	SetBool(obj interface{}, val bool)
+	Int(obj interface{}) int
+	SetInt(obj interface{}, val int)
+	Int8(obj interface{}) int8
+	SetInt8(obj interface{}, val int8)
+	Int16(obj interface{}) int16
+	SetInt16(obj interface{}, val int16)
+	Int32(obj interface{}) int32
+	SetInt32(obj interface{}, val int32)
+	Int64(obj interface{}) int64
+	SetInt64(obj interface{}, val int64)
+	Uint(obj interface{}) uint
+	SetUint(obj interface{}, val uint)
+	Uint8(obj interface{}) uint8
+	SetUint8(obj interface{}, val uint8)
+	Uint16(obj interface{}) uint16
+	SetUint16(obj interface{}, val uint16)
+	Uint32(obj interface{}) uint32
+	SetUint32(obj interface{}, val uint32)
+	Uint64(obj interface{}) uint64
+	SetUint64(obj interface{}, val uint64)
+	Float32(obj interface{}) float32
+	SetFloat32(obj interface{}, val float32)
+	Float64(obj interface{}) float64
+	SetFloat64(obj interface{}, val float64)
+	// pointer to memory address
+	AddressOf(obj interface{}) uintptr
 }
 
 type StructField interface {
@@ -187,11 +213,11 @@ func (accessor *NoopAccessor) reportError() string {
 	panic(fmt.Sprintf("%s: unsupported operation", accessor.AccessorTypeName))
 }
 
-func (accessor *NoopAccessor) PtrElem(obj interface{}) (elem interface{}, elemAccessor Accessor) {
+func (accessor *NoopAccessor) VariantElem(obj interface{}) (elem interface{}, elemAccessor Accessor) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetPtrElem(obj interface{}, template interface{}) (elem interface{}, elemAccessor Accessor) {
+func (accessor *NoopAccessor) InitVariant(obj interface{}, template interface{}) (elem interface{}, elemAccessor Accessor) {
 	panic(accessor.reportError())
 }
 
@@ -211,6 +237,14 @@ func (accessor *NoopAccessor) Field(index int) StructField {
 	panic(accessor.reportError())
 }
 
+func (accessor *NoopAccessor) RandomAccessible() bool {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Index(obj interface{}, index int) (elem interface{}) {
+	panic(accessor.reportError())
+}
+
 func (accessor *NoopAccessor) IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool) {
 	panic(accessor.reportError())
 }
@@ -227,12 +261,7 @@ func (accessor *NoopAccessor) FillArray(obj interface{}, cb func(filler ArrayFil
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Int(obj interface{}) int {
-	panic(accessor.reportError())
-}
-
-func (accessor *NoopAccessor) SetInt(obj interface{}, val int) {
-	panic(accessor.reportError())
+func (accessor *NoopAccessor) Skip(obj interface{}) {
 }
 
 func (accessor *NoopAccessor) String(obj interface{}) string {
@@ -243,9 +272,110 @@ func (accessor *NoopAccessor) SetString(obj interface{}, val string) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Uintptr(obj interface{}) uintptr {
+func (accessor *NoopAccessor) Bool(obj interface{}) bool {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Skip(obj interface{}) {
+func (accessor *NoopAccessor) SetBool(obj interface{}, val bool) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Int(obj interface{}) int {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetInt(obj interface{}, val int) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Int8(obj interface{}) int8 {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetInt8(obj interface{}, val int8) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Int16(obj interface{}) int16 {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetInt16(obj interface{}, val int16) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Int32(obj interface{}) int32 {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetInt32(obj interface{}, val int32) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Int64(obj interface{}) int64 {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetInt64(obj interface{}, val int64) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Uint(obj interface{}) uint {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetUint(obj interface{}, val uint) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Uint8(obj interface{}) uint8 {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetUint8(obj interface{}, val uint8) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Uint16(obj interface{}) uint16 {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetUint16(obj interface{}, val uint16) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Uint32(obj interface{}) uint32 {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetUint32(obj interface{}, val uint32) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Uint64(obj interface{}) uint64 {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetUint64(obj interface{}, val uint64) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Float32(obj interface{}) float32 {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetFloat32(obj interface{}, val float32) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) Float64(obj interface{}) float64 {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetFloat64(obj interface{}, val float64) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) AddressOf(obj interface{}) uintptr {
+	panic(accessor.reportError())
 }

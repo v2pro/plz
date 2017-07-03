@@ -43,7 +43,7 @@ func Test_map_of_interface(t *testing.T) {
 		"hello": "world",
 	}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(lang.Interface, accessor.Elem().Kind())
+	should.Equal(lang.Variant, accessor.Elem().Kind())
 	keys := []string{}
 	elems := []string{}
 	accessor.IterateMap(v, func(key interface{}, elem interface{}) bool {

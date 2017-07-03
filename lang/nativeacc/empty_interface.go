@@ -29,7 +29,7 @@ type ptrEmptyInterfaceAccessor struct {
 }
 
 func (accessor *ptrEmptyInterfaceAccessor) Kind() lang.Kind {
-	return lang.Interface
+	return lang.Variant
 }
 
 func (accessor *ptrEmptyInterfaceAccessor) GoString() string {
@@ -54,7 +54,7 @@ func (accessor *ptrEmptyInterfaceAccessor) String(obj interface{}) string {
 	return lang.AccessorOf(reflect.TypeOf(obj)).String(obj)
 }
 
-func (accessor *ptrEmptyInterfaceAccessor) PtrElem(obj interface{}) (interface{}, lang.Accessor) {
+func (accessor *ptrEmptyInterfaceAccessor) VariantElem(obj interface{}) (interface{}, lang.Accessor) {
 	obj = *(obj.(*interface{}))
 	if obj == nil {
 		return nil, nil
@@ -63,7 +63,7 @@ func (accessor *ptrEmptyInterfaceAccessor) PtrElem(obj interface{}) (interface{}
 	return obj, lang.AccessorOf(typ)
 }
 
-func (accessor *ptrEmptyInterfaceAccessor) SetPtrElem(obj interface{}, template interface{}) (elem interface{}, elemAccessor lang.Accessor) {
+func (accessor *ptrEmptyInterfaceAccessor) InitVariant(obj interface{}, template interface{}) (elem interface{}, elemAccessor lang.Accessor) {
 	typ := reflect.TypeOf(template)
 	newObj := reflect.New(typ).Elem().Interface()
 	*(obj.(*interface{})) = newObj

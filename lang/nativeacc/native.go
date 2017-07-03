@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	lang.Providers = append(lang.Providers, accessorOf)
+	lang.Providers = append(lang.Providers, accessorOfNativeType)
 }
 
-func accessorOf(typ reflect.Type) lang.Accessor {
+func accessorOfNativeType(typ reflect.Type) lang.Accessor {
 	if typ.Kind() == reflect.Map {
 		return &mapAccessor{
 			typ: typ,
