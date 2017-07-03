@@ -31,6 +31,9 @@ func Go(oneOff func(), kv ...interface{}) error {
 				handle(kv)
 			}
 		}()
+		for _, handle := range AfterStart {
+			handle(kv)
+		}
 		oneOff()
 	}()
 	return nil
@@ -53,6 +56,9 @@ func GoLongRunning(longRunning func(), kv ...interface{}) error {
 				handle(kv)
 			}
 		}()
+		for _, handle := range AfterStart {
+			handle(kv)
+		}
 		for restartedTimes := 0; goLongRunningOnce(longRunning, kv); restartedTimes++ {
 			for _, handle := range BeforeRestart {
 				if !handle(restartedTimes, kv) {
@@ -101,6 +107,12 @@ var BeforeRestart = []func(restartedTimes int, kv []interface{}) bool{
 var BeforeStart = []func(kv []interface{}) error{
 	func(kv []interface{}) error {
 		return nil // allow go without limit
+	},
+}
+
+var AfterStart = []func(kv []interface{}){
+	func(kv []interface{}) {
+		// no op
 	},
 }
 

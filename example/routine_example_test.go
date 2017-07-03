@@ -5,9 +5,19 @@ import (
 	"github.com/v2pro/plz"
 	"github.com/v2pro/plz/lang/routine"
 	"time"
+	"errors"
 )
 
 func Example_go() {
+routine.BeforeStart = append(routine.BeforeStart, func(kv []interface{}) error {
+	return errors.New("can not start more goroutine")
+})
+	routine.AfterStart = append(routine.AfterStart, func(kv []interface{}) {
+		fmt.Println("started")
+	})
+	routine.BeforeFinish = append(routine.BeforeFinish, func(kv []interface{}) {
+		fmt.Println("finished")
+	})
 	plz.Go(func() {
 		fmt.Println("hello from one off goroutine")
 		panic("should not crash the whole program")
