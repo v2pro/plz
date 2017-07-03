@@ -1,8 +1,7 @@
-package native
+package nativeacc
 
 import (
-	"github.com/v2pro/plz"
-	"github.com/v2pro/plz/acc"
+	"github.com/v2pro/plz/lang"
 	"reflect"
 	"unsafe"
 )
@@ -22,7 +21,7 @@ func (accessor *sliceAccessor) GoString() string {
 }
 
 func (accessor *sliceAccessor) Elem() lang.Accessor {
-	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
+	return lang.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
 }
 
 func (accessor *sliceAccessor) IterateArray(obj interface{}, cb func(index int, elem interface{}) bool) {

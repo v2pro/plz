@@ -1,10 +1,9 @@
-package native
+package nativeacc
 
 import (
 	"unsafe"
-	"github.com/v2pro/plz/acc"
+	"github.com/v2pro/plz/lang"
 	"reflect"
-	"github.com/v2pro/plz"
 )
 
 func castToEmptyInterface(val interface{}) emptyInterface {
@@ -47,12 +46,12 @@ func (accessor *ptrEmptyInterfaceAccessor) SetString(obj interface{}, val string
 
 func (accessor *ptrEmptyInterfaceAccessor) Int(obj interface{}) int {
 	obj = *(obj.(*interface{}))
-	return plz.AccessorOf(reflect.TypeOf(obj)).Int(obj)
+	return lang.AccessorOf(reflect.TypeOf(obj)).Int(obj)
 }
 
 func (accessor *ptrEmptyInterfaceAccessor) String(obj interface{}) string {
 	obj = *(obj.(*interface{}))
-	return plz.AccessorOf(reflect.TypeOf(obj)).String(obj)
+	return lang.AccessorOf(reflect.TypeOf(obj)).String(obj)
 }
 
 func (accessor *ptrEmptyInterfaceAccessor) PtrElem(obj interface{}) (interface{}, lang.Accessor) {

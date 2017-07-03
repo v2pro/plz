@@ -1,9 +1,9 @@
-package native
+package nativeacc
 
 import (
-	"github.com/v2pro/plz/acc"
+	"github.com/v2pro/plz/lang"
 	"reflect"
-	"github.com/v2pro/plz/tagging"
+	"github.com/v2pro/plz/lang/tagging"
 	"unsafe"
 )
 

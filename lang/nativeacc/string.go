@@ -1,8 +1,8 @@
-package native
+package nativeacc
 
 import (
 	"reflect"
-	"github.com/v2pro/plz/acc"
+	"github.com/v2pro/plz/lang"
 )
 
 type stringAccessor struct {

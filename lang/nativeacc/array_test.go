@@ -1,11 +1,11 @@
-package native
+package nativeacc
 
 import (
 	"testing"
 	"github.com/v2pro/plz"
 	"reflect"
-	"github.com/v2pro/plz/acc"
 	"github.com/stretchr/testify/require"
+	"github.com/v2pro/plz/lang"
 )
 
 func Test_array(t *testing.T) {

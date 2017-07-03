@@ -1,10 +1,9 @@
-package native
+package nativeacc
 
 import (
-	"github.com/v2pro/plz/acc"
 	"reflect"
-	"github.com/v2pro/plz"
 	"unsafe"
+	"github.com/v2pro/plz/lang"
 )
 
 type arrayAccessor struct {
@@ -22,14 +21,14 @@ func (accessor *arrayAccessor) GoString() string {
 }
 
 func (accessor *arrayAccessor) Elem() lang.Accessor {
-	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
+	return lang.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
 }
 
 func (accessor *arrayAccessor) IterateArray(obj interface{}, cb func(index int, elem interface{}) bool) {
 	elemSize := accessor.typ.Elem().Size()
 	head := uintptr(extractPtrFromEmptyInterface(obj))
 	for index := 0; index < accessor.typ.Len(); index++ {
-		elemPtr := head + uintptr(index) * elemSize
+		elemPtr := head + uintptr(index)*elemSize
 		elemObj := accessor.templateElemObj
 		elemObj.word = unsafe.Pointer(elemPtr)
 		if !cb(index, castBackEmptyInterface(elemObj)) {

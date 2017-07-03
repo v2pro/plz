@@ -1,7 +1,7 @@
 package plz
 
 import (
-	"github.com/v2pro/plz/routine"
+	"github.com/v2pro/plz/lang/routine"
 )
 
 func Go(oneOff func()) error {

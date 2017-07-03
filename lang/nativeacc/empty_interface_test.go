@@ -1,10 +1,10 @@
-package native
+package nativeacc
 
 import (
 	"testing"
 	"github.com/stretchr/testify/require"
 	"reflect"
-	"github.com/v2pro/plz/acc"
+	"github.com/v2pro/plz/lang"
 )
 
 func Test_empty_interface_of_single_value(t *testing.T) {

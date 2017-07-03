@@ -2,7 +2,7 @@ package plz
 
 import (
 	"reflect"
-	"github.com/v2pro/plz/acc"
+	"github.com/v2pro/plz/lang"
 )
 
 func AccessorOf(typ reflect.Type) lang.Accessor {

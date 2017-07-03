@@ -1,11 +1,11 @@
-package native
+package nativeacc
 
 import (
 	"github.com/json-iterator/go/require"
 	"github.com/v2pro/plz"
 	"reflect"
 	"testing"
-	"github.com/v2pro/plz/acc"
+	"github.com/v2pro/plz/lang"
 )
 
 func Test_int(t *testing.T) {

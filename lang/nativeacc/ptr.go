@@ -1,7 +1,7 @@
-package native
+package nativeacc
 
 import (
-	"github.com/v2pro/plz/acc"
+	"github.com/v2pro/plz/lang"
 )
 
 type ptrAccessor struct {

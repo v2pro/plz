@@ -1,11 +1,11 @@
-package native
+package nativeacc
 
 import (
 	"github.com/stretchr/testify/require"
 	"github.com/v2pro/plz"
 	"reflect"
 	"testing"
-	"github.com/v2pro/plz/acc"
+	"github.com/v2pro/plz/lang"
 )
 
 func Test_struct_iterate_array(t *testing.T) {

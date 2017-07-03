@@ -1,8 +1,7 @@
-package native
+package nativeacc
 
 import (
-	"github.com/v2pro/plz"
-	"github.com/v2pro/plz/acc"
+	"github.com/v2pro/plz/lang"
 	"reflect"
 )
 
@@ -61,9 +60,9 @@ func (filler *mapFiller) Fill() {
 }
 
 func (accessor *mapAccessor) Key() lang.Accessor {
-	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Key()))
+	return lang.AccessorOf(reflect.PtrTo(accessor.typ.Key()))
 }
 
 func (accessor *mapAccessor) Elem() lang.Accessor {
-	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
+	return lang.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
 }
