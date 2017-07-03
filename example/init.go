@@ -1,9 +1,9 @@
 package example
 
-import "github.com/v2pro/plz/log"
+import "github.com/v2pro/plz/logging"
 
 func init() {
-	logger.AddLoggerProvider(func(loggerKv []interface{}) logger.Logger {
-		return logger.NewStderrLogger(loggerKv, logger.LEVEL_DEBUG)
+	logging.AddLoggerProvider(func(loggerKv []interface{}) logging.Logger {
+		return logging.NewStderrLogger(loggerKv, logging.LEVEL_DEBUG)
 	})
 }

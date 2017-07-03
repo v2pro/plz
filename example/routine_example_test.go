@@ -3,7 +3,7 @@ package example
 import (
 	"fmt"
 	"github.com/v2pro/plz"
-	"github.com/v2pro/plz/routine"
+	"github.com/v2pro/plz/lang/routine"
 	"time"
 )
 
@@ -32,19 +32,12 @@ func Example_long_running_goroutine() {
 }
 
 func Example_log_goroutine_panic() {
-	routine.Spi.Append(routine.Config{
-		AfterPanic: func(recovered interface{}, kv []interface{}) {
-			fmt.Println(recovered)
-		},
+	routine.AfterPanic = append(routine.AfterPanic, func(recovered interface{}, kv []interface{}) {
+		fmt.Println("panic", recovered)
 	})
-	defer func() {
-		// restore back, after test
-		routine.Spi.AfterPanic = func(recovered interface{}, kv []interface{}) {
-		}
-	}()
 	plz.Go(func() {
 		panic("hello")
 	})
 	time.Sleep(time.Second)
-	// Output: hello
+	// Output: panic hello
 }

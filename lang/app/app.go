@@ -29,9 +29,7 @@ func Run(f func() int, kv ...interface{}) {
 	os.Exit(code)
 }
 
-type AfterPanicHandler func(recovered interface{}, kv []interface{}) int
-
-var AfterPanic = []AfterPanicHandler{
+var AfterPanic = []func(recovered interface{}, kv []interface{}) int{
 	func(recovered interface{}, kv []interface{}) int {
 		logging.LoggerOf("metric", "counter", "panic", "app").
 			Error("app panic", append(kv, "recovered", recovered)...)
@@ -39,9 +37,7 @@ var AfterPanic = []AfterPanicHandler{
 	},
 }
 
-type BeforeFinishHandler func(kv []interface{})
-
-var BeforeFinish = []BeforeFinishHandler{
+var BeforeFinish = []func(kv []interface{}){
 	func(kv []interface{}) {
 		logging.LoggerOf("metric", "counter", "finish", "app").
 			Info("app finish", kv...)

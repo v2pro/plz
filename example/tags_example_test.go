@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"github.com/v2pro/plz/tagging"
+	"github.com/v2pro/plz/lang/tagging"
 )
 
 type Order struct {
