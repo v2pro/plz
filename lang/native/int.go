@@ -6,12 +6,12 @@ import (
 )
 
 type intAccessor struct {
-	acc.NoopAccessor
+	lang.NoopAccessor
 	typ reflect.Type
 }
 
-func (accessor *intAccessor) Kind() acc.Kind {
-	return acc.Int
+func (accessor *intAccessor) Kind() lang.Kind {
+	return lang.Int
 }
 
 func (accessor *intAccessor) GoString() string {

@@ -12,7 +12,7 @@ func Test_map(t *testing.T) {
 	should := require.New(t)
 	v := map[int]int{}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(acc.Map, accessor.Kind())
+	should.Equal(lang.Map, accessor.Kind())
 	keys := []int{}
 	elems := []int{}
 	accessor.IterateMap(v, func(key interface{}, elem interface{}) bool {
@@ -22,7 +22,7 @@ func Test_map(t *testing.T) {
 	})
 	should.Equal([]int{}, keys)
 	should.Equal([]int{}, elems)
-	accessor.FillMap(v, func(filler acc.MapFiller) {
+	accessor.FillMap(v, func(filler lang.MapFiller) {
 		key, elem := filler.Next()
 		accessor.Key().SetInt(key, 1)
 		accessor.Elem().SetInt(elem, 2)
@@ -43,7 +43,7 @@ func Test_map_of_interface(t *testing.T) {
 		"hello": "world",
 	}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(acc.Interface, accessor.Elem().Kind())
+	should.Equal(lang.Interface, accessor.Elem().Kind())
 	keys := []string{}
 	elems := []string{}
 	accessor.IterateMap(v, func(key interface{}, elem interface{}) bool {

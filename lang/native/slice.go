@@ -8,20 +8,20 @@ import (
 )
 
 type sliceAccessor struct {
-	acc.NoopAccessor
+	lang.NoopAccessor
 	typ             reflect.Type
 	templateElemObj emptyInterface
 }
 
-func (accessor *sliceAccessor) Kind() acc.Kind {
-	return acc.Array
+func (accessor *sliceAccessor) Kind() lang.Kind {
+	return lang.Array
 }
 
 func (accessor *sliceAccessor) GoString() string {
 	return accessor.typ.String()
 }
 
-func (accessor *sliceAccessor) Elem() acc.Accessor {
+func (accessor *sliceAccessor) Elem() lang.Accessor {
 	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
 }
 
@@ -39,7 +39,7 @@ func (accessor *sliceAccessor) IterateArray(obj interface{}, cb func(index int, 
 	}
 }
 
-func (accessor *sliceAccessor) FillArray(obj interface{}, cb func(filler acc.ArrayFiller)) {
+func (accessor *sliceAccessor) FillArray(obj interface{}, cb func(filler lang.ArrayFiller)) {
 	sliceHeader := extractSliceHeaderFromEmptyInterface(obj)
 	sliceHeader.Len = 0
 	filler := &sliceFiller{

@@ -7,12 +7,12 @@ import (
 	"unsafe"
 )
 
-func accessorOfStruct(typ reflect.Type) acc.Accessor {
+func accessorOfStruct(typ reflect.Type) lang.Accessor {
 	tags := tagging.Get(typ)
 	fields := []*structField{}
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
-		fieldAcc := acc.AccessorOf(reflect.PtrTo(field.Type))
+		fieldAcc := lang.AccessorOf(reflect.PtrTo(field.Type))
 		fieldTags := tags.Fields[field.Name]
 		if fieldTags == nil {
 			fieldTags = map[string]interface{}{}
@@ -27,7 +27,7 @@ func accessorOfStruct(typ reflect.Type) acc.Accessor {
 		})
 	}
 	return &structAccessor{
-		NoopAccessor: acc.NoopAccessor{"structAccessor"},
+		NoopAccessor: lang.NoopAccessor{"structAccessor"},
 		typ:          typ,
 		fields:       fields,
 	}
@@ -35,7 +35,7 @@ func accessorOfStruct(typ reflect.Type) acc.Accessor {
 
 type structField struct {
 	name            string
-	accessor        acc.Accessor
+	accessor        lang.Accessor
 	tags            map[string]interface{}
 	size            uintptr
 	templateElemObj emptyInterface
@@ -45,7 +45,7 @@ func (sf *structField) Name() string {
 	return sf.name
 }
 
-func (sf *structField) Accessor() acc.Accessor {
+func (sf *structField) Accessor() lang.Accessor {
 	return sf.accessor
 }
 
@@ -54,13 +54,13 @@ func (sf *structField) Tags() map[string]interface{} {
 }
 
 type structAccessor struct {
-	acc.NoopAccessor
+	lang.NoopAccessor
 	typ    reflect.Type
 	fields []*structField
 }
 
-func (accessor *structAccessor) Kind() acc.Kind {
-	return acc.Struct
+func (accessor *structAccessor) Kind() lang.Kind {
+	return lang.Struct
 }
 
 func (accessor *structAccessor) GoString() string {
@@ -71,7 +71,7 @@ func (accessor *structAccessor) NumField() int {
 	return len(accessor.fields)
 }
 
-func (accessor *structAccessor) Field(index int) acc.StructField {
+func (accessor *structAccessor) Field(index int) lang.StructField {
 	return accessor.fields[index]
 }
 
@@ -86,7 +86,7 @@ func (accessor *structAccessor) IterateArray(obj interface{}, cb func(index int,
 	}
 }
 
-func (accessor *structAccessor) FillArray(obj interface{}, cb func(filler acc.ArrayFiller)) {
+func (accessor *structAccessor) FillArray(obj interface{}, cb func(filler lang.ArrayFiller)) {
 	filler := &structFiller{
 		fields:     accessor.fields,
 		currentPtr: uintptr(extractPtrFromEmptyInterface(obj)),

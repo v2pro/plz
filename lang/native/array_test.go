@@ -12,7 +12,7 @@ func Test_array(t *testing.T) {
 	should := require.New(t)
 	var v interface{} = [3]int{1, 2, 3}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(acc.Array, accessor.Kind())
+	should.Equal(lang.Array, accessor.Kind())
 	elemAccessor := accessor.Elem()
 	elems := []int{}
 	accessor.IterateArray(v, func(index int, elem interface{}) bool {
@@ -26,9 +26,9 @@ func Test_array_append(t *testing.T) {
 	should := require.New(t)
 	v := [3]int{1, 2, 3}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(acc.Array, accessor.Kind())
+	should.Equal(lang.Array, accessor.Kind())
 	elemAccessor := accessor.Elem()
-	accessor.FillArray(&v, func(filler acc.ArrayFiller) {
+	accessor.FillArray(&v, func(filler lang.ArrayFiller) {
 		_, elem := filler.Next()
 		should.NotNil(elem)
 		elemAccessor.SetInt(elem, 3)

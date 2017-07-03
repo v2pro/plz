@@ -16,7 +16,7 @@ func Test_struct_iterate_array(t *testing.T) {
 	should := require.New(t)
 	v := &TestObject{1, 2}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(acc.Struct, accessor.Kind())
+	should.Equal(lang.Struct, accessor.Kind())
 	should.Equal(2, accessor.NumField())
 	should.Equal("Field1", accessor.Field(0).Name())
 	elems := []int{}
@@ -36,7 +36,7 @@ func Test_struct_fill_array(t *testing.T) {
 	should := require.New(t)
 	v := &TestObject{}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	accessor.FillArray(v, func(filler acc.ArrayFiller) {
+	accessor.FillArray(v, func(filler lang.ArrayFiller) {
 		index, elem := filler.Next()
 		should.Equal(0, index)
 		accessor.Field(index).Accessor().SetInt(elem, 1)

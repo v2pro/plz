@@ -26,11 +26,11 @@ type emptyInterface struct {
 }
 
 type ptrEmptyInterfaceAccessor struct {
-	acc.NoopAccessor
+	lang.NoopAccessor
 }
 
-func (accessor *ptrEmptyInterfaceAccessor) Kind() acc.Kind {
-	return acc.Interface
+func (accessor *ptrEmptyInterfaceAccessor) Kind() lang.Kind {
+	return lang.Interface
 }
 
 func (accessor *ptrEmptyInterfaceAccessor) GoString() string {
@@ -55,18 +55,18 @@ func (accessor *ptrEmptyInterfaceAccessor) String(obj interface{}) string {
 	return plz.AccessorOf(reflect.TypeOf(obj)).String(obj)
 }
 
-func (accessor *ptrEmptyInterfaceAccessor) PtrElem(obj interface{}) (interface{}, acc.Accessor) {
+func (accessor *ptrEmptyInterfaceAccessor) PtrElem(obj interface{}) (interface{}, lang.Accessor) {
 	obj = *(obj.(*interface{}))
 	if obj == nil {
 		return nil, nil
 	}
 	typ := reflect.TypeOf(obj)
-	return obj, acc.AccessorOf(typ)
+	return obj, lang.AccessorOf(typ)
 }
 
-func (accessor *ptrEmptyInterfaceAccessor) SetPtrElem(obj interface{}, template interface{}) (elem interface{}, elemAccessor acc.Accessor) {
+func (accessor *ptrEmptyInterfaceAccessor) SetPtrElem(obj interface{}, template interface{}) (elem interface{}, elemAccessor lang.Accessor) {
 	typ := reflect.TypeOf(template)
 	newObj := reflect.New(typ).Elem().Interface()
 	*(obj.(*interface{})) = newObj
-	return newObj, acc.AccessorOf(typ)
+	return newObj, lang.AccessorOf(typ)
 }

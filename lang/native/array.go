@@ -8,20 +8,20 @@ import (
 )
 
 type arrayAccessor struct {
-	acc.NoopAccessor
+	lang.NoopAccessor
 	typ             reflect.Type
 	templateElemObj emptyInterface
 }
 
-func (accessor *arrayAccessor) Kind() acc.Kind {
-	return acc.Array
+func (accessor *arrayAccessor) Kind() lang.Kind {
+	return lang.Array
 }
 
 func (accessor *arrayAccessor) GoString() string {
 	return accessor.typ.String()
 }
 
-func (accessor *arrayAccessor) Elem() acc.Accessor {
+func (accessor *arrayAccessor) Elem() lang.Accessor {
 	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
 }
 
@@ -38,7 +38,7 @@ func (accessor *arrayAccessor) IterateArray(obj interface{}, cb func(index int, 
 	}
 }
 
-func (accessor *arrayAccessor) FillArray(obj interface{}, cb func(filler acc.ArrayFiller)) {
+func (accessor *arrayAccessor) FillArray(obj interface{}, cb func(filler lang.ArrayFiller)) {
 	elemSize := accessor.typ.Elem().Size()
 	head := uintptr(extractPtrFromEmptyInterface(obj))
 	filler := &arrayFiller{

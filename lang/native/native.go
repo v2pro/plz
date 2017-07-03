@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	acc.Providers = append(acc.Providers, accessorOf)
+	lang.Providers = append(lang.Providers, accessorOf)
 }
 
-func accessorOf(typ reflect.Type) acc.Accessor {
+func accessorOf(typ reflect.Type) lang.Accessor {
 	if typ.Kind() == reflect.Map {
 		return &mapAccessor{
 			typ: typ,
@@ -22,17 +22,17 @@ func accessorOf(typ reflect.Type) acc.Accessor {
 		switch elemType.Kind() {
 		case reflect.Int:
 			return &ptrIntAccessor{ptrAccessor{
-				NoopAccessor:  acc.NoopAccessor{"ptrIntAccessor"},
-				valueAccessor: acc.AccessorOf(elemType),
+				NoopAccessor:  lang.NoopAccessor{"ptrIntAccessor"},
+				valueAccessor: lang.AccessorOf(elemType),
 			}}
 		case reflect.String:
 			return &ptrStringAccessor{ptrAccessor{
-				NoopAccessor:  acc.NoopAccessor{"ptrStringAccessor"},
-				valueAccessor: acc.AccessorOf(elemType),
+				NoopAccessor:  lang.NoopAccessor{"ptrStringAccessor"},
+				valueAccessor: lang.AccessorOf(elemType),
 			}}
 		case reflect.Interface:
 			return &ptrEmptyInterfaceAccessor{
-				acc.NoopAccessor{"ptrEmptyInterfaceAccessor"}}
+				lang.NoopAccessor{"ptrEmptyInterfaceAccessor"}}
 		case reflect.Struct:
 			fallthrough
 		case reflect.Slice:
@@ -43,12 +43,12 @@ func accessorOf(typ reflect.Type) acc.Accessor {
 		}
 	case reflect.Int:
 		return &intAccessor{
-			NoopAccessor: acc.NoopAccessor{"intAccessor"},
-			typ: typ,
+			NoopAccessor: lang.NoopAccessor{"intAccessor"},
+			typ:          typ,
 		}
 	case reflect.String:
 		return &stringAccessor{
-			NoopAccessor: acc.NoopAccessor{"stringAccessor"},
+			NoopAccessor: lang.NoopAccessor{"stringAccessor"},
 			typ:          typ,
 		}
 	case reflect.Struct:

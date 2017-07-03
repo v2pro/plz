@@ -12,7 +12,7 @@ func Test_slice(t *testing.T) {
 	should := require.New(t)
 	var v interface{} = []int{}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(acc.Array, accessor.Kind())
+	should.Equal(lang.Array, accessor.Kind())
 	elemAccessor := accessor.Elem()
 	elems := []int{}
 	accessor.IterateArray(v, func(index int, elem interface{}) bool {
@@ -21,7 +21,7 @@ func Test_slice(t *testing.T) {
 	})
 	should.Equal([]int{}, elems)
 	// grow one
-	accessor.FillArray(v, func(filler acc.ArrayFiller) {
+	accessor.FillArray(v, func(filler lang.ArrayFiller) {
 		_, elem := filler.Next()
 		accessor.Elem().SetInt(elem, 1)
 	})
@@ -38,7 +38,7 @@ func Test_slice_of_interface(t *testing.T) {
 	should := require.New(t)
 	v := []interface{}{1, 2, 3}
 	accessor := plz.AccessorOf(reflect.TypeOf(v))
-	should.Equal(acc.Array, accessor.Kind())
+	should.Equal(lang.Array, accessor.Kind())
 	elemAccessor := accessor.Elem()
 	elems := []int{}
 	accessor.IterateArray(v, func(index int, elem interface{}) bool {
@@ -46,7 +46,7 @@ func Test_slice_of_interface(t *testing.T) {
 		return true
 	})
 	should.Equal([]int{1, 2, 3}, elems)
-	accessor.FillArray(&v, func(filler acc.ArrayFiller) {
+	accessor.FillArray(&v, func(filler lang.ArrayFiller) {
 		_, elem := filler.Next()
 		elemAccessor.SetInt(elem, 4)
 		filler.Fill()

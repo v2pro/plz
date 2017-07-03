@@ -5,11 +5,11 @@ import (
 )
 
 type ptrAccessor struct {
-	acc.NoopAccessor
-	valueAccessor acc.Accessor
+	lang.NoopAccessor
+	valueAccessor lang.Accessor
 }
 
-func (accessor *ptrAccessor) Kind() acc.Kind {
+func (accessor *ptrAccessor) Kind() lang.Kind {
 	return accessor.valueAccessor.Kind()
 }
 
@@ -21,6 +21,6 @@ func (accessor *ptrAccessor) NumField() int {
 	return accessor.valueAccessor.NumField()
 }
 
-func (accessor *ptrAccessor) Field(index int) acc.StructField {
+func (accessor *ptrAccessor) Field(index int) lang.StructField {
 	return accessor.valueAccessor.Field(index)
 }

@@ -7,12 +7,12 @@ import (
 )
 
 type mapAccessor struct {
-	acc.NoopAccessor
+	lang.NoopAccessor
 	typ reflect.Type
 }
 
-func (accessor *mapAccessor) Kind() acc.Kind {
-	return acc.Map
+func (accessor *mapAccessor) Kind() lang.Kind {
+	return lang.Map
 }
 
 func (accessor *mapAccessor) GoString() string {
@@ -35,7 +35,7 @@ func (accessor *mapAccessor) IterateMap(obj interface{}, cb func(key interface{}
 	}
 }
 
-func (accessor *mapAccessor) FillMap(obj interface{}, cb func(filler acc.MapFiller)) {
+func (accessor *mapAccessor) FillMap(obj interface{}, cb func(filler lang.MapFiller)) {
 	filler := &mapFiller{
 		typ: accessor.typ,
 		value: reflect.ValueOf(obj),
@@ -60,10 +60,10 @@ func (filler *mapFiller) Fill() {
 	filler.value.SetMapIndex(filler.lastKey.Elem(), filler.lastElem.Elem())
 }
 
-func (accessor *mapAccessor) Key() acc.Accessor {
+func (accessor *mapAccessor) Key() lang.Accessor {
 	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Key()))
 }
 
-func (accessor *mapAccessor) Elem() acc.Accessor {
+func (accessor *mapAccessor) Elem() lang.Accessor {
 	return plz.AccessorOf(reflect.PtrTo(accessor.typ.Elem()))
 }
