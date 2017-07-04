@@ -5,17 +5,25 @@ import (
 )
 
 type HandleMethod func(ctx context.Context, request interface{}) (response interface{}, err error)
-type StopServer func()
-type StartServer func(server *Server) (StopServer, error)
 
-var executors []StartServer
-
-func AddServerExecutor(executor StartServer) {
-	executors = append(executors, executor)
+type Notifier interface {
+	Stop()
+	IsStopped() bool
+	Wait()
 }
+
+type StartServer func(server *Server) (Notifier, error)
+
+var Executors []StartServer
 
 func BuildServer(kv ...interface{}) *Server {
 	return &Server{toMap(kv), []map[string]interface{}{}, []*Server{}}
+}
+
+func NewNotifier() Notifier {
+	return &serverNotifier{
+		ch: make(chan bool),
+	}
 }
 
 func toMap(kv []interface{}) map[string]interface{} {
@@ -29,6 +37,8 @@ func toMap(kv []interface{}) map[string]interface{} {
 type Server struct {
 	Properties map[string]interface{}
 	Methods    []map[string]interface{}
+	// sub server will map to Service concept in thrift
+	// will map to url in http
 	SubServers []*Server
 }
 
@@ -47,26 +57,25 @@ func (server *Server) Method(methodName string, kv ...interface{}) *Server {
 	return server
 }
 
-func (server *Server) Start() (StopServer, error) {
-	stopFuncs := []StopServer{}
-	for _, executor := range executors {
-		stopFunc, err := executor(server)
+func (server *Server) Start() (Notifier, error) {
+	signals := []Notifier{}
+	for _, executor := range Executors {
+		signal := &serverNotifier{
+			ch: make(chan bool),
+		}
+		signal, err := executor(server)
 		if err != nil {
-			for _, stopFunc := range stopFuncs {
-				stopFunc()
+			for _, signal := range signals {
+				signal.Stop()
 			}
 			return nil, err
 		}
-		if stopFunc != nil {
-			stopFuncs = append(stopFuncs, stopFunc)
+		if signal != nil {
+			signals = append(signals, signal)
 		}
 	}
-	if len(stopFuncs) == 0 {
+	if len(signals) == 0 {
 		panic("no executor can start this server")
 	}
-	return func() {
-		for _, stopFunc := range stopFuncs {
-			stopFunc()
-		}
-	}, nil
+	return &multipleServerNotifiers{signals}, nil
 }
