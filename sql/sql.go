@@ -12,6 +12,7 @@ type Conn interface {
 	Statement(translatedSql Translated) Stmt
 	TranslateStatement(sql string, columns ...interface{}) Stmt
 	Close() error
+	Exec(translatedSql Translated, inputs ...driver.Value) (driver.Result, error)
 }
 
 type Stmt interface {

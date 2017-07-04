@@ -153,11 +153,12 @@ type Accessor interface {
 	Field(index int) StructField
 	// array/struct
 	RandomAccessible() bool
+	New() interface{}
 
 	// === runtime ===
 	// variant
 	VariantElem(obj interface{}) (elem interface{}, elemAccessor Accessor)
-	InitVariant(obj interface{}, template interface{}) (elem interface{}, elemAccessor Accessor)
+	InitVariant(obj interface{}, template Accessor) (elem interface{}, elemAccessor Accessor)
 	// map
 	IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool)
 	FillMap(obj interface{}, cb func(filler MapFiller))
@@ -217,7 +218,7 @@ func (accessor *NoopAccessor) VariantElem(obj interface{}) (elem interface{}, el
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) InitVariant(obj interface{}, template interface{}) (elem interface{}, elemAccessor Accessor) {
+func (accessor *NoopAccessor) InitVariant(obj interface{}, template Accessor) (elem interface{}, elemAccessor Accessor) {
 	panic(accessor.reportError())
 }
 
@@ -238,6 +239,10 @@ func (accessor *NoopAccessor) Field(index int) StructField {
 }
 
 func (accessor *NoopAccessor) RandomAccessible() bool {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) New() interface{} {
 	panic(accessor.reportError())
 }
 
