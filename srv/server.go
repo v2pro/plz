@@ -50,9 +50,10 @@ func (server *Server) SubServer(subServerName string, kv ...interface{}) *Server
 	return subServer
 }
 
-func (server *Server) Method(methodName string, kv ...interface{}) *Server {
+func (server *Server) Method(methodName string, handle interface{}, kv ...interface{}) *Server {
 	methodProps := toMap(kv)
 	methodProps["name"] = methodName
+	methodProps["handle"] = handle
 	server.Methods = append(server.Methods, methodProps)
 	return server
 }
@@ -60,9 +61,6 @@ func (server *Server) Method(methodName string, kv ...interface{}) *Server {
 func (server *Server) Start() (Notifier, error) {
 	signals := []Notifier{}
 	for _, executor := range Executors {
-		signal := &serverNotifier{
-			ch: make(chan bool),
-		}
 		signal, err := executor(server)
 		if err != nil {
 			for _, signal := range signals {

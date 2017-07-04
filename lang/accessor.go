@@ -5,10 +5,10 @@ import (
 	"reflect"
 )
 
-var Providers = []func(typ reflect.Type) Accessor{}
+var AccessorProviders = []func(typ reflect.Type) Accessor{}
 
 func AccessorOf(typ reflect.Type) Accessor {
-	for _, provider := range Providers {
+	for _, provider := range AccessorProviders {
 		accessor := provider(typ)
 		if accessor != nil {
 			return accessor
