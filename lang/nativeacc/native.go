@@ -38,7 +38,7 @@ func accessorOfNativeType(typ reflect.Type) lang.Accessor {
 		case reflect.Slice:
 			fallthrough
 		case reflect.Array:
-			return accessorOf(elemType)
+			return accessorOfNativeType(elemType)
 
 		}
 	case reflect.Int:

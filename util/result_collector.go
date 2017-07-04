@@ -23,7 +23,7 @@ func newCollector() *resultCollector {
 		trails:        map[uintptr]struct{}{},
 		errors:        map[uintptr][]error{},
 		currentErrors: []error{},
-		currentPtr:    uintptr(nil),
+		currentPtr:    0,
 	}
 }
 
@@ -37,7 +37,7 @@ func (collector *resultCollector) Leave() {
 		collector.errors[collector.currentPtr] = collector.currentErrors
 		collector.currentErrors = []error{}
 	}
-	collector.currentPtr = uintptr(nil)
+	collector.currentPtr = 0
 }
 func (collector *resultCollector) IsVisited(ptr uintptr) bool {
 	_, visited := collector.trails[ptr]

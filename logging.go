@@ -4,6 +4,6 @@ import (
 	"github.com/v2pro/plz/logging"
 )
 
-func LoggerOf(loggerKv ...interface{}) logging.Logger {
+func Log(loggerKv ...interface{}) logging.Logger {
 	return logging.LoggerOf(loggerKv...)
 }
