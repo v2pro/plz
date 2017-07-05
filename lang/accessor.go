@@ -154,7 +154,7 @@ type Accessor interface {
 	Field(index int) StructField
 	// array/struct
 	RandomAccessible() bool
-	New() unsafe.Pointer
+	New() interface{}
 
 	// === runtime ===
 	// variant
@@ -164,7 +164,7 @@ type Accessor interface {
 	IterateMap(ptr unsafe.Pointer, cb func(key unsafe.Pointer, elem unsafe.Pointer) bool)
 	FillMap(ptr unsafe.Pointer, cb func(filler MapFiller))
 	// array/struct
-	Index(ptr unsafe.Pointer, index int) (elem unsafe.Pointer) // only when random accessible
+	ArrayIndex(ptr unsafe.Pointer, index int) (elem unsafe.Pointer) // only when random accessible
 	IterateArray(ptr unsafe.Pointer, cb func(index int, elem unsafe.Pointer) bool)
 	FillArray(ptr unsafe.Pointer, cb func(filler ArrayFiller))
 	// primitives
@@ -204,7 +204,7 @@ type Accessor interface {
 type StructField interface {
 	Name() string
 	Accessor() Accessor
-	Tags() map[string]unsafe.Pointer
+	Tags() map[string]interface{}
 }
 
 type NoopAccessor struct {
@@ -243,11 +243,11 @@ func (accessor *NoopAccessor) RandomAccessible() bool {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) New() unsafe.Pointer {
+func (accessor *NoopAccessor) New() interface{} {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Index(ptr unsafe.Pointer, index int) (elem unsafe.Pointer) {
+func (accessor *NoopAccessor) ArrayIndex(ptr unsafe.Pointer, index int) (elem unsafe.Pointer) {
 	panic(accessor.reportError())
 }
 
