@@ -3,6 +3,7 @@ package lang
 import (
 	"fmt"
 	"reflect"
+	"unsafe"
 )
 
 var AccessorProviders = []func(typ reflect.Type) Accessor{}
@@ -131,12 +132,12 @@ func (kind Kind) GoString() string {
 
 type ArrayFiller interface {
 	// when elem is nil, there is no more to fill
-	Next() (index int, elem interface{})
+	Next() (index int, elem unsafe.Pointer)
 	Fill()
 }
 
 type MapFiller interface {
-	Next() (key interface{}, elem interface{})
+	Next() (key unsafe.Pointer, elem unsafe.Pointer)
 	Fill()
 }
 
@@ -153,57 +154,57 @@ type Accessor interface {
 	Field(index int) StructField
 	// array/struct
 	RandomAccessible() bool
-	New() interface{}
+	New() unsafe.Pointer
 
 	// === runtime ===
 	// variant
-	VariantElem(obj interface{}) (elem interface{}, elemAccessor Accessor)
-	InitVariant(obj interface{}, template Accessor) (elem interface{}, elemAccessor Accessor)
+	VariantElem(ptr unsafe.Pointer) (elem unsafe.Pointer, elemAccessor Accessor)
+	InitVariant(ptr unsafe.Pointer, template Accessor) (elem unsafe.Pointer, elemAccessor Accessor)
 	// map
-	IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool)
-	FillMap(obj interface{}, cb func(filler MapFiller))
+	IterateMap(ptr unsafe.Pointer, cb func(key unsafe.Pointer, elem unsafe.Pointer) bool)
+	FillMap(ptr unsafe.Pointer, cb func(filler MapFiller))
 	// array/struct
-	Index(obj interface{}, index int) (elem interface{}) // only when random accessible
-	IterateArray(obj interface{}, cb func(index int, elem interface{}) bool)
-	FillArray(obj interface{}, cb func(filler ArrayFiller))
+	Index(ptr unsafe.Pointer, index int) (elem unsafe.Pointer) // only when random accessible
+	IterateArray(ptr unsafe.Pointer, cb func(index int, elem unsafe.Pointer) bool)
+	FillArray(ptr unsafe.Pointer, cb func(filler ArrayFiller))
 	// primitives
-	Skip(obj interface{}) // when the value is not needed
-	String(obj interface{}) string
-	SetString(obj interface{}, val string)
-	Bool(obj interface{}) bool
-	SetBool(obj interface{}, val bool)
-	Int(obj interface{}) int
-	SetInt(obj interface{}, val int)
-	Int8(obj interface{}) int8
-	SetInt8(obj interface{}, val int8)
-	Int16(obj interface{}) int16
-	SetInt16(obj interface{}, val int16)
-	Int32(obj interface{}) int32
-	SetInt32(obj interface{}, val int32)
-	Int64(obj interface{}) int64
-	SetInt64(obj interface{}, val int64)
-	Uint(obj interface{}) uint
-	SetUint(obj interface{}, val uint)
-	Uint8(obj interface{}) uint8
-	SetUint8(obj interface{}, val uint8)
-	Uint16(obj interface{}) uint16
-	SetUint16(obj interface{}, val uint16)
-	Uint32(obj interface{}) uint32
-	SetUint32(obj interface{}, val uint32)
-	Uint64(obj interface{}) uint64
-	SetUint64(obj interface{}, val uint64)
-	Float32(obj interface{}) float32
-	SetFloat32(obj interface{}, val float32)
-	Float64(obj interface{}) float64
-	SetFloat64(obj interface{}, val float64)
+	Skip(ptr unsafe.Pointer) // when the value is not needed
+	String(ptr unsafe.Pointer) string
+	SetString(ptr unsafe.Pointer, val string)
+	Bool(ptr unsafe.Pointer) bool
+	SetBool(ptr unsafe.Pointer, val bool)
+	Int(ptr unsafe.Pointer) int
+	SetInt(ptr unsafe.Pointer, val int)
+	Int8(ptr unsafe.Pointer) int8
+	SetInt8(ptr unsafe.Pointer, val int8)
+	Int16(ptr unsafe.Pointer) int16
+	SetInt16(ptr unsafe.Pointer, val int16)
+	Int32(ptr unsafe.Pointer) int32
+	SetInt32(ptr unsafe.Pointer, val int32)
+	Int64(ptr unsafe.Pointer) int64
+	SetInt64(ptr unsafe.Pointer, val int64)
+	Uint(ptr unsafe.Pointer) uint
+	SetUint(ptr unsafe.Pointer, val uint)
+	Uint8(ptr unsafe.Pointer) uint8
+	SetUint8(ptr unsafe.Pointer, val uint8)
+	Uint16(ptr unsafe.Pointer) uint16
+	SetUint16(ptr unsafe.Pointer, val uint16)
+	Uint32(ptr unsafe.Pointer) uint32
+	SetUint32(ptr unsafe.Pointer, val uint32)
+	Uint64(ptr unsafe.Pointer) uint64
+	SetUint64(ptr unsafe.Pointer, val uint64)
+	Float32(ptr unsafe.Pointer) float32
+	SetFloat32(ptr unsafe.Pointer, val float32)
+	Float64(ptr unsafe.Pointer) float64
+	SetFloat64(ptr unsafe.Pointer, val float64)
 	// pointer to memory address
-	AddressOf(obj interface{}) uintptr
+	AddressOf(ptr unsafe.Pointer) uintptr
 }
 
 type StructField interface {
 	Name() string
 	Accessor() Accessor
-	Tags() map[string]interface{}
+	Tags() map[string]unsafe.Pointer
 }
 
 type NoopAccessor struct {
@@ -214,11 +215,11 @@ func (accessor *NoopAccessor) reportError() string {
 	panic(fmt.Sprintf("%s: unsupported operation", accessor.AccessorTypeName))
 }
 
-func (accessor *NoopAccessor) VariantElem(obj interface{}) (elem interface{}, elemAccessor Accessor) {
+func (accessor *NoopAccessor) VariantElem(ptr unsafe.Pointer) (elem unsafe.Pointer, elemAccessor Accessor) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) InitVariant(obj interface{}, template Accessor) (elem interface{}, elemAccessor Accessor) {
+func (accessor *NoopAccessor) InitVariant(ptr unsafe.Pointer, template Accessor) (elem unsafe.Pointer, elemAccessor Accessor) {
 	panic(accessor.reportError())
 }
 
@@ -242,145 +243,145 @@ func (accessor *NoopAccessor) RandomAccessible() bool {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) New() interface{} {
+func (accessor *NoopAccessor) New() unsafe.Pointer {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Index(obj interface{}, index int) (elem interface{}) {
+func (accessor *NoopAccessor) Index(ptr unsafe.Pointer, index int) (elem unsafe.Pointer) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) IterateMap(obj interface{}, cb func(key interface{}, elem interface{}) bool) {
+func (accessor *NoopAccessor) IterateMap(ptr unsafe.Pointer, cb func(key unsafe.Pointer, elem unsafe.Pointer) bool) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) FillMap(obj interface{}, cb func(filler MapFiller)) {
+func (accessor *NoopAccessor) FillMap(ptr unsafe.Pointer, cb func(filler MapFiller)) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) IterateArray(obj interface{}, cb func(index int, elem interface{}) bool) {
+func (accessor *NoopAccessor) IterateArray(ptr unsafe.Pointer, cb func(index int, elem unsafe.Pointer) bool) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) FillArray(obj interface{}, cb func(filler ArrayFiller)) {
+func (accessor *NoopAccessor) FillArray(ptr unsafe.Pointer, cb func(filler ArrayFiller)) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Skip(obj interface{}) {
+func (accessor *NoopAccessor) Skip(ptr unsafe.Pointer) {
 }
 
-func (accessor *NoopAccessor) String(obj interface{}) string {
+func (accessor *NoopAccessor) String(ptr unsafe.Pointer) string {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetString(obj interface{}, val string) {
+func (accessor *NoopAccessor) SetString(ptr unsafe.Pointer, val string) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Bool(obj interface{}) bool {
+func (accessor *NoopAccessor) Bool(ptr unsafe.Pointer) bool {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetBool(obj interface{}, val bool) {
+func (accessor *NoopAccessor) SetBool(ptr unsafe.Pointer, val bool) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Int(obj interface{}) int {
+func (accessor *NoopAccessor) Int(ptr unsafe.Pointer) int {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetInt(obj interface{}, val int) {
+func (accessor *NoopAccessor) SetInt(ptr unsafe.Pointer, val int) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Int8(obj interface{}) int8 {
+func (accessor *NoopAccessor) Int8(ptr unsafe.Pointer) int8 {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetInt8(obj interface{}, val int8) {
+func (accessor *NoopAccessor) SetInt8(ptr unsafe.Pointer, val int8) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Int16(obj interface{}) int16 {
+func (accessor *NoopAccessor) Int16(ptr unsafe.Pointer) int16 {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetInt16(obj interface{}, val int16) {
+func (accessor *NoopAccessor) SetInt16(ptr unsafe.Pointer, val int16) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Int32(obj interface{}) int32 {
+func (accessor *NoopAccessor) Int32(ptr unsafe.Pointer) int32 {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetInt32(obj interface{}, val int32) {
+func (accessor *NoopAccessor) SetInt32(ptr unsafe.Pointer, val int32) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Int64(obj interface{}) int64 {
+func (accessor *NoopAccessor) Int64(ptr unsafe.Pointer) int64 {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetInt64(obj interface{}, val int64) {
+func (accessor *NoopAccessor) SetInt64(ptr unsafe.Pointer, val int64) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Uint(obj interface{}) uint {
+func (accessor *NoopAccessor) Uint(ptr unsafe.Pointer) uint {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetUint(obj interface{}, val uint) {
+func (accessor *NoopAccessor) SetUint(ptr unsafe.Pointer, val uint) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Uint8(obj interface{}) uint8 {
+func (accessor *NoopAccessor) Uint8(ptr unsafe.Pointer) uint8 {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetUint8(obj interface{}, val uint8) {
+func (accessor *NoopAccessor) SetUint8(ptr unsafe.Pointer, val uint8) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Uint16(obj interface{}) uint16 {
+func (accessor *NoopAccessor) Uint16(ptr unsafe.Pointer) uint16 {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetUint16(obj interface{}, val uint16) {
+func (accessor *NoopAccessor) SetUint16(ptr unsafe.Pointer, val uint16) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Uint32(obj interface{}) uint32 {
+func (accessor *NoopAccessor) Uint32(ptr unsafe.Pointer) uint32 {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetUint32(obj interface{}, val uint32) {
+func (accessor *NoopAccessor) SetUint32(ptr unsafe.Pointer, val uint32) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Uint64(obj interface{}) uint64 {
+func (accessor *NoopAccessor) Uint64(ptr unsafe.Pointer) uint64 {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetUint64(obj interface{}, val uint64) {
+func (accessor *NoopAccessor) SetUint64(ptr unsafe.Pointer, val uint64) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Float32(obj interface{}) float32 {
+func (accessor *NoopAccessor) Float32(ptr unsafe.Pointer) float32 {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetFloat32(obj interface{}, val float32) {
+func (accessor *NoopAccessor) SetFloat32(ptr unsafe.Pointer, val float32) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) Float64(obj interface{}) float64 {
+func (accessor *NoopAccessor) Float64(ptr unsafe.Pointer) float64 {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) SetFloat64(obj interface{}, val float64) {
+func (accessor *NoopAccessor) SetFloat64(ptr unsafe.Pointer, val float64) {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) AddressOf(obj interface{}) uintptr {
+func (accessor *NoopAccessor) AddressOf(ptr unsafe.Pointer) uintptr {
 	panic(accessor.reportError())
 }
