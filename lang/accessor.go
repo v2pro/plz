@@ -19,7 +19,21 @@ func AccessorOf(typ reflect.Type) Accessor {
 }
 
 func AddressOf(obj interface{}) unsafe.Pointer {
-	return castToEmptyInterface(obj).word
+	ptr := castToEmptyInterface(obj).word
+	typ := reflect.TypeOf(obj)
+	switch typ.Kind() {
+	case reflect.Array:
+		if typ.Len() == 1 && (typ.Elem().Kind() == reflect.Ptr || typ.Elem().Kind() == reflect.Map){
+			asVal := uintptr(ptr)
+			ptr = unsafe.Pointer(&asVal)
+		}
+	case reflect.Struct:
+		if typ.NumField() == 1 && (typ.Field(0).Type.Kind() == reflect.Ptr || typ.Field(0).Type.Kind() == reflect.Map) {
+			asVal := uintptr(ptr)
+			ptr = unsafe.Pointer(&asVal)
+		}
+	}
+	return ptr
 }
 
 func castToEmptyInterface(obj interface{}) emptyInterface {
@@ -168,9 +182,10 @@ type Accessor interface {
 	Field(index int) StructField
 	// array/struct
 	RandomAccessible() bool
-	New() interface{}
+	New() (interface{}, Accessor)
 
 	// === runtime ===
+	IsNil(ptr unsafe.Pointer) bool
 	// variant
 	VariantElem(ptr unsafe.Pointer) (elem unsafe.Pointer, elemAccessor Accessor)
 	InitVariant(ptr unsafe.Pointer, template Accessor) (elem unsafe.Pointer, elemAccessor Accessor)
@@ -256,8 +271,12 @@ func (accessor *NoopAccessor) RandomAccessible() bool {
 	panic(accessor.reportError())
 }
 
-func (accessor *NoopAccessor) New() interface{} {
+func (accessor *NoopAccessor) New() (interface{}, Accessor) {
 	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) IsNil(ptr unsafe.Pointer) bool {
+	return ptr == nil
 }
 
 func (accessor *NoopAccessor) ArrayIndex(ptr unsafe.Pointer, index int) (elem unsafe.Pointer) {

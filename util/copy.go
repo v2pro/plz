@@ -12,9 +12,6 @@ var CopierProviders = []func(dstAccessor, srcAccessor lang.Accessor) (Copier, er
 
 func Copy(dst, src interface{}) error {
 	dstAccessor := lang.AccessorOf(reflect.TypeOf(dst))
-	if dstAccessor.ReadOnly() {
-		return fmt.Errorf("destination %#v is read only", dstAccessor)
-	}
 	srcAccessor := lang.AccessorOf(reflect.TypeOf(src))
 	copier, err := CopierOf(dstAccessor, srcAccessor)
 	if err != nil {
