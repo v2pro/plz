@@ -16,8 +16,8 @@ type Tags []interface{}
 type TagsForStruct Tags
 type TagsForField Tags
 
-type StructTags struct {
-	Struct map[string]interface{}
+type TypeTags struct {
+	Tags   map[string]interface{}
 	Fields map[string]FieldTags
 }
 
@@ -25,8 +25,8 @@ type FieldTags map[string]interface{}
 
 var protocolType = reflect.TypeOf((*Protocol)(nil)).Elem()
 
-func Get(typ reflect.Type) *StructTags {
-	structTags, found := registry[typ].(*StructTags)
+func Get(typ reflect.Type) *TypeTags {
+	structTags, found := registry[typ].(*TypeTags)
 	if found {
 		return structTags
 	}
@@ -57,7 +57,11 @@ func S(kv ...interface{}) TagsForStruct {
 	return kv
 }
 
-func Define(callback interface{}) {
+func Define(ptr interface{}, kv ...interface{}) {
+	register(reflect.TypeOf(ptr).Elem(), 0, D(S(kv...)))
+}
+
+func DefineStructTags(callback interface{}) {
 	callbackType := reflect.TypeOf(callback)
 	structPtrType := callbackType.In(0)
 	if structPtrType.Kind() != reflect.Ptr {
@@ -70,9 +74,16 @@ func Define(callback interface{}) {
 	register(structType, extractPtr(fakeStructPtrVal.Interface()), allDef)
 }
 
-func register(structType reflect.Type, fakeStructPtr uintptr, allDef Tags) *StructTags {
-	structTags := &StructTags{
+func register(structType reflect.Type, fakeStructPtr uintptr, allDef Tags) *TypeTags {
+	structTags := &TypeTags{
 		Fields: map[string]FieldTags{},
+	}
+	if len(allDef) > 0 {
+		structTags.Tags = toMap(allDef[0].(Tags))
+	}
+	if structType.Kind() != reflect.Struct {
+		registry[structType] = structTags
+		return structTags
 	}
 	fakeFieldsMap := map[uintptr]string{}
 	for i := 0; i < structType.NumField(); i++ {
@@ -83,7 +94,6 @@ func register(structType reflect.Type, fakeStructPtr uintptr, allDef Tags) *Stru
 		structTags.Fields[fieldName] = parseFieldTag(field.Tag)
 	}
 	if len(allDef) > 0 {
-		structTags.Struct = toMap(allDef[0].(Tags))
 		for _, fieldDefObj := range allDef[1:] {
 			fieldDef := fieldDefObj.(Tags)
 			fieldPtr := extractPtr(fieldDef[0])

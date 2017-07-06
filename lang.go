@@ -18,6 +18,6 @@ func GoLongRunning(longRunning func()) error {
 	return routine.GoLongRunning(longRunning)
 }
 
-func DefineTags(callback interface{}) {
-	tagging.Define(callback)
+func DefineStructTags(callback interface{}) {
+	tagging.DefineStructTags(callback)
 }

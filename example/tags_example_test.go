@@ -32,17 +32,24 @@ type Product struct {
 }
 
 func Example_tags_defined_externally() {
-tagging.Define(func(p *Product) tagging.Tags {
-	return tagging.D(
-		tagging.S("comment", "some more info about the struct itself"),
-		tagging.F(&p.ProductId, "validation", "required", "tag_is_not_only_string", 100),
-	)
-})
+	tagging.DefineStructTags(func(p *Product) tagging.Tags {
+		return tagging.D(
+			tagging.S("comment", "some more info about the struct itself"),
+			tagging.F(&p.ProductId, "validation", "required", "tag_is_not_only_string", 100),
+		)
+	})
 	structTags := tagging.Get(reflect.TypeOf(Product{}))
 	fieldTags, _ := json.Marshal(structTags.Fields["ProductId"])
-	fmt.Println(structTags.Struct["comment"])
+	fmt.Println(structTags.Tags["comment"])
 	fmt.Println(string(fieldTags))
 	// Output:
 	// some more info about the struct itself
 	// {"json":"product_id","tag_is_not_only_string":100,"validation":"required"}
+}
+
+func Example_tags_for_non_struct() {
+	tagging.Define(new([]byte), "codec", "json")
+	fmt.Println(tagging.Get(reflect.TypeOf([]byte{})).Tags["codec"])
+	// Output:
+	// json
 }
