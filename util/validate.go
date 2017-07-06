@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"errors"
 	"reflect"
+	"unsafe"
 )
 
 var ValidatorProviders = []func(accessor lang.Accessor) (Validator, error){}
@@ -16,8 +17,9 @@ func Validate(obj interface{}) error {
 		return err
 	}
 	collector := newCollector()
-	collector.Enter("root", accessor.AddressOf(obj))
-	err = validator.Validate(collector, obj)
+	ptr := lang.AddressOf(obj)
+	collector.Enter("root", ptr)
+	err = validator.Validate(collector, ptr)
 	if err != nil {
 		return err
 	}
@@ -39,12 +41,12 @@ func getValidator(accessor lang.Accessor) (Validator, error) {
 }
 
 type ResultCollector interface {
-	Enter(pathElement interface{}, ptr uintptr)
+	Enter(pathElement interface{}, ptr unsafe.Pointer)
 	Leave()
-	IsVisited(ptr uintptr) bool
+	IsVisited(ptr unsafe.Pointer) bool
 	CollectError(err error)
 }
 
 type Validator interface {
-	Validate(collector ResultCollector, obj interface{}) error
+	Validate(collector ResultCollector, ptr unsafe.Pointer) error
 }

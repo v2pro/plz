@@ -5,21 +5,25 @@ import (
 	"reflect"
 	"errors"
 	"fmt"
+	"unsafe"
 )
 
 var CopierProviders = []func(dstAccessor, srcAccessor lang.Accessor) (Copier, error){}
 
 func Copy(dst, src interface{}) error {
 	dstAccessor := lang.AccessorOf(reflect.TypeOf(dst))
+	if dstAccessor.ReadOnly() {
+		return fmt.Errorf("destination %#v is read only", dstAccessor)
+	}
 	srcAccessor := lang.AccessorOf(reflect.TypeOf(src))
-	copier, err := getCopier(dstAccessor, srcAccessor)
+	copier, err := CopierOf(dstAccessor, srcAccessor)
 	if err != nil {
 		return err
 	}
-	return copier.Copy(dst, src)
+	return copier.Copy(lang.AddressOf(dst), lang.AddressOf(src))
 }
 
-func getCopier(dstAccessor, srcAccessor lang.Accessor) (Copier, error) {
+func CopierOf(dstAccessor, srcAccessor lang.Accessor) (Copier, error) {
 	for _, provider := range CopierProviders {
 		copier, err := provider(dstAccessor, srcAccessor)
 		if err != nil {
@@ -33,5 +37,5 @@ func getCopier(dstAccessor, srcAccessor lang.Accessor) (Copier, error) {
 }
 
 type Copier interface {
-	Copy(dst interface{}, src interface{}) error
+	Copy(dst unsafe.Pointer, src unsafe.Pointer) error
 }

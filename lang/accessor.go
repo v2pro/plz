@@ -18,6 +18,20 @@ func AccessorOf(typ reflect.Type) Accessor {
 	panic(fmt.Sprintf("no accessor provider for: %v", typ))
 }
 
+func AddressOf(obj interface{}) unsafe.Pointer {
+	return castToEmptyInterface(obj).word
+}
+
+func castToEmptyInterface(obj interface{}) emptyInterface {
+	return *((*emptyInterface)(unsafe.Pointer(&obj)))
+}
+
+// emptyInterface is the header for an interface{} value.
+type emptyInterface struct {
+	typ  unsafe.Pointer
+	word unsafe.Pointer
+}
+
 type Kind uint
 
 const (
@@ -145,6 +159,7 @@ type Accessor interface {
 	// === static ===
 	fmt.GoStringer
 	Kind() Kind
+	ReadOnly() bool
 	// map
 	Key() Accessor
 	// array/map
@@ -197,11 +212,10 @@ type Accessor interface {
 	SetFloat32(ptr unsafe.Pointer, val float32)
 	Float64(ptr unsafe.Pointer) float64
 	SetFloat64(ptr unsafe.Pointer, val float64)
-	// pointer to memory address
-	AddressOf(ptr unsafe.Pointer) uintptr
 }
 
 type StructField interface {
+	Index() int
 	Name() string
 	Accessor() Accessor
 	Tags() map[string]interface{}
@@ -379,9 +393,5 @@ func (accessor *NoopAccessor) Float64(ptr unsafe.Pointer) float64 {
 }
 
 func (accessor *NoopAccessor) SetFloat64(ptr unsafe.Pointer, val float64) {
-	panic(accessor.reportError())
-}
-
-func (accessor *NoopAccessor) AddressOf(ptr unsafe.Pointer) uintptr {
 	panic(accessor.reportError())
 }

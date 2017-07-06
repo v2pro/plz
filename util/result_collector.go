@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"fmt"
+	"unsafe"
 )
 
 type ValidationError interface {
@@ -11,23 +12,23 @@ type ValidationError interface {
 
 type resultCollector struct {
 	path          []interface{}
-	trails        map[uintptr]struct{}
-	errors        map[uintptr][]error
+	trails        map[unsafe.Pointer]struct{}
+	errors        map[unsafe.Pointer][]error
 	currentErrors []error
-	currentPtr    uintptr
+	currentPtr    unsafe.Pointer
 }
 
 func newCollector() *resultCollector {
 	return &resultCollector{
 		path:          []interface{}{},
-		trails:        map[uintptr]struct{}{},
-		errors:        map[uintptr][]error{},
+		trails:        map[unsafe.Pointer]struct{}{},
+		errors:        map[unsafe.Pointer][]error{},
 		currentErrors: []error{},
-		currentPtr:    0,
+		currentPtr:    unsafe.Pointer(nil),
 	}
 }
 
-func (collector *resultCollector) Enter(pathElement interface{}, ptr uintptr) {
+func (collector *resultCollector) Enter(pathElement interface{}, ptr unsafe.Pointer) {
 	collector.path = append(collector.path, pathElement)
 	collector.trails[ptr] = struct{}{}
 }
@@ -37,9 +38,9 @@ func (collector *resultCollector) Leave() {
 		collector.errors[collector.currentPtr] = collector.currentErrors
 		collector.currentErrors = []error{}
 	}
-	collector.currentPtr = 0
+	collector.currentPtr = unsafe.Pointer(nil)
 }
-func (collector *resultCollector) IsVisited(ptr uintptr) bool {
+func (collector *resultCollector) IsVisited(ptr unsafe.Pointer) bool {
 	_, visited := collector.trails[ptr]
 	return visited
 }
