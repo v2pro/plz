@@ -159,7 +159,6 @@ type Accessor interface {
 	// === static ===
 	fmt.GoStringer
 	Kind() Kind
-	ReadOnly() bool
 	// map
 	Key() Accessor
 	// array/map
