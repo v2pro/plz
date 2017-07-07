@@ -17,11 +17,25 @@ type TagsForStruct Tags
 type TagsForField Tags
 
 type TypeTags struct {
-	Tags   map[string]interface{}
+	Tags   map[string]TagValue
 	Fields map[string]FieldTags
 }
 
-type FieldTags map[string]interface{}
+type FieldTags map[string]TagValue
+
+type TagValue map[string]interface{}
+
+func (tv TagValue) Text() string {
+	text, isDefined := tv["text"].(string)
+	if !isDefined {
+		return ""
+	}
+	return text
+}
+
+func (tv TagValue) SetText(text string) {
+	tv["text"] = text
+}
 
 var protocolType = reflect.TypeOf((*Protocol)(nil)).Elem()
 
@@ -103,7 +117,7 @@ func register(structType reflect.Type, fakeStructPtr uintptr, allDef Tags) *Type
 			}
 			fieldTags := structTags.Fields[fieldName]
 			for i := 1; i < len(fieldDef); i += 2 {
-				fieldTags[fieldDef[i].(string)] = fieldDef[i+1]
+				fieldTags[fieldDef[i].(string)].SetText(fieldDef[i+1].(string))
 			}
 		}
 	}
@@ -155,15 +169,18 @@ func parseFieldTag(tag reflect.StructTag) FieldTags {
 		if err != nil {
 			panic(err.Error())
 		}
-		fieldTags[name] = value
+		fieldTags[name] = TagValue{}
+		fieldTags[name].SetText(value)
 	}
 	return fieldTags
 }
 
-func toMap(tags Tags) map[string]interface{} {
-	m := map[string]interface{}{}
+func toMap(tags Tags) map[string]TagValue {
+	m := map[string]TagValue{}
 	for i := 0; i < len(tags); i += 2 {
-		m[tags[i].(string)] = tags[i+1]
+		tagValue := TagValue{}
+		tagValue.SetText(tags[i+1].(string))
+		m[tags[i].(string)] = tagValue
 	}
 	return m
 }

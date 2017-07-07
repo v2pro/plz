@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"unsafe"
+	"github.com/v2pro/plz/lang/tagging"
 )
 
 var AccessorProviders = []func(typ reflect.Type, tagName string) Accessor{}
@@ -232,7 +233,7 @@ type StructField interface {
 	Index() int
 	Name() string
 	Accessor() Accessor
-	Tags() map[string]interface{}
+	Tags() map[string]tagging.TagValue
 }
 
 type NoopAccessor struct {
