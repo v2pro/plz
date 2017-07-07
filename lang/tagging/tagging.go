@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strconv"
 	"unsafe"
+	"fmt"
 )
 
 var registry = map[reflect.Type]interface{}{}
@@ -13,8 +14,8 @@ type Protocol interface {
 }
 
 type Tags []interface{}
-type TagsForStruct Tags
-type TagsForField Tags
+type tagsForTypeSelf Tags
+type tagsForField Tags
 
 type TypeTags struct {
 	Tags   map[string]TagValue
@@ -55,7 +56,7 @@ func Get(typ reflect.Type) *TypeTags {
 	return register(typ, fakeStructPtr, allDef)
 }
 
-func D(_struct TagsForStruct, fields ...TagsForField) Tags {
+func D(_struct tagsForTypeSelf, fields ...tagsForField) Tags {
 	tags := []interface{}{Tags(_struct)}
 	for _, field := range fields {
 		tags = append(tags, Tags(field))
@@ -63,13 +64,23 @@ func D(_struct TagsForStruct, fields ...TagsForField) Tags {
 	return tags
 }
 
-func F(kv ...interface{}) TagsForField {
+func F(kv ...interface{}) tagsForField {
 	return kv
 }
 
-func S(kv ...interface{}) TagsForStruct {
+func S(kv ...interface{}) tagsForTypeSelf {
 	return kv
 }
+
+func V(kv ...interface{}) TagValue {
+	tagValue := TagValue{}
+	for i := 0; i < len(kv); i += 2 {
+		tagValue[kv[i].(string)] = kv[i+1]
+	}
+	return tagValue
+}
+
+type VirtualField string
 
 func Define(ptr interface{}, kv ...interface{}) {
 	register(reflect.TypeOf(ptr).Elem(), 0, D(S(kv...)))
@@ -110,14 +121,32 @@ func register(structType reflect.Type, fakeStructPtr uintptr, allDef Tags) *Type
 	if len(allDef) > 0 {
 		for _, fieldDefObj := range allDef[1:] {
 			fieldDef := fieldDefObj.(Tags)
-			fieldPtr := extractPtr(fieldDef[0])
-			fieldName := fakeFieldsMap[fieldPtr]
-			if fieldName == "" {
-				panic("field not found")
+			virtualField, isVirtualField := fieldDef[0].(VirtualField)
+			fieldName := ""
+			if isVirtualField {
+				fieldName = string(virtualField)
+			} else {
+				fieldPtr := extractPtr(fieldDef[0])
+				fieldName = fakeFieldsMap[fieldPtr]
+				if fieldName == "" {
+					panic("field not found")
+				}
 			}
 			fieldTags := structTags.Fields[fieldName]
+			if fieldTags == nil {
+				fieldTags = map[string]TagValue{}
+				structTags.Fields[fieldName] = fieldTags
+			}
 			for i := 1; i < len(fieldDef); i += 2 {
-				fieldTags[fieldDef[i].(string)].SetText(fieldDef[i+1].(string))
+				rawVal := fieldDef[i+1]
+				switch val := rawVal.(type) {
+				case string:
+					fieldTags[fieldDef[i].(string)].SetText(val)
+				case TagValue:
+					fieldTags[fieldDef[i].(string)] = val
+				default:
+					panic(fmt.Sprintf("unsupported tag value type: %v", rawVal))
+				}
 			}
 		}
 	}
