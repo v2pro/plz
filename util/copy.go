@@ -29,8 +29,8 @@ func ObjectCopierOf(dstType, srcType reflect.Type) (ObjectCopier, error) {
 			return copier, err
 		}
 	}
-	dstAccessor := lang.AccessorOf(dstType)
-	srcAccessor := lang.AccessorOf(srcType)
+	dstAccessor := lang.AccessorOf(dstType, "")
+	srcAccessor := lang.AccessorOf(srcType, "")
 	copier, err := CopierOf(dstAccessor, srcAccessor)
 	if err != nil {
 		return nil, err

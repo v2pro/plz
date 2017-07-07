@@ -11,7 +11,7 @@ import (
 var ValidatorProviders = []func(accessor lang.Accessor) (Validator, error){}
 
 func Validate(obj interface{}) error {
-	accessor := lang.AccessorOf(reflect.TypeOf(obj))
+	accessor := lang.AccessorOf(reflect.TypeOf(obj), "")
 	validator, err := getValidator(accessor)
 	if err != nil {
 		return err

@@ -6,11 +6,11 @@ import (
 	"unsafe"
 )
 
-var AccessorProviders = []func(typ reflect.Type) Accessor{}
+var AccessorProviders = []func(typ reflect.Type, tagName string) Accessor{}
 
-func AccessorOf(typ reflect.Type) Accessor {
+func AccessorOf(typ reflect.Type, tagName string) Accessor {
 	for _, provider := range AccessorProviders {
-		accessor := provider(typ)
+		accessor := provider(typ, tagName)
 		if accessor != nil {
 			return accessor
 		}
@@ -236,6 +236,7 @@ type StructField interface {
 }
 
 type NoopAccessor struct {
+	TagName string
 	AccessorTypeName string
 }
 
