@@ -103,6 +103,7 @@ type stderrLogger struct {
 
 func (logger *stderrLogger) Log(level Level, msg string, kv ...interface{}) {
 	fmt.Fprintln(os.Stderr, append([]interface{}{logger.loggerKv, level.LevelName, msg}, kv...)...)
+	os.Stderr.Sync()
 }
 func (logger *stderrLogger) Error(msg string, kv ...interface{}) {
 	logger.Log(LEVEL_ERROR, msg, kv...)

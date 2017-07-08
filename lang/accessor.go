@@ -148,7 +148,7 @@ func (kind Kind) GoString() string {
 	case Array:
 		return "Array"
 	case Variant:
-		return "Interface"
+		return "Variant"
 	case Map:
 		return "Map"
 	case String:
@@ -191,6 +191,8 @@ type Accessor interface {
 	VariantElem(ptr unsafe.Pointer) (elem unsafe.Pointer, elemAccessor Accessor)
 	InitVariant(ptr unsafe.Pointer, template Accessor) (elem unsafe.Pointer, elemAccessor Accessor)
 	// map
+	MapIndex(ptr unsafe.Pointer, key unsafe.Pointer) (elem unsafe.Pointer) // only when random accessible
+	SetMapIndex(ptr unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) // only when random accessible
 	IterateMap(ptr unsafe.Pointer, cb func(key unsafe.Pointer, elem unsafe.Pointer) bool)
 	FillMap(ptr unsafe.Pointer, cb func(filler MapFiller))
 	// array/struct
@@ -282,6 +284,14 @@ func (accessor *NoopAccessor) IsNil(ptr unsafe.Pointer) bool {
 }
 
 func (accessor *NoopAccessor) ArrayIndex(ptr unsafe.Pointer, index int) (elem unsafe.Pointer) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) SetMapIndex(ptr unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
+	panic(accessor.reportError())
+}
+
+func (accessor *NoopAccessor) MapIndex(ptr unsafe.Pointer, key unsafe.Pointer) (elem unsafe.Pointer) {
 	panic(accessor.reportError())
 }
 

@@ -7,6 +7,8 @@ import (
 	"fmt"
 )
 
+var TagsProviders = []func(typ reflect.Type, typeTags *TypeTags){}
+
 var registry = map[reflect.Type]interface{}{}
 
 type Protocol interface {
@@ -99,24 +101,24 @@ func DefineStructTags(callback interface{}) {
 	register(structType, extractPtr(fakeStructPtrVal.Interface()), allDef)
 }
 
-func register(structType reflect.Type, fakeStructPtr uintptr, allDef Tags) *TypeTags {
-	structTags := &TypeTags{
+func register(typ reflect.Type, fakeStructPtr uintptr, allDef Tags) *TypeTags {
+	typeTags := &TypeTags{
 		Fields: map[string]FieldTags{},
 	}
 	if len(allDef) > 0 {
-		structTags.Tags = toMap(allDef[0].(Tags))
+		typeTags.Tags = toMap(allDef[0].(Tags))
 	}
-	if structType.Kind() != reflect.Struct {
-		registry[structType] = structTags
-		return structTags
+	if typ.Kind() != reflect.Struct {
+		registry[typ] = typeTags
+		return typeTags
 	}
 	fakeFieldsMap := map[uintptr]string{}
-	for i := 0; i < structType.NumField(); i++ {
-		field := structType.Field(i)
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
 		fakeFieldPtr := fakeStructPtr + field.Offset
 		fieldName := field.Name
 		fakeFieldsMap[fakeFieldPtr] = fieldName
-		structTags.Fields[fieldName] = parseFieldTag(field.Tag)
+		typeTags.Fields[fieldName] = parseFieldTag(field.Tag)
 	}
 	if len(allDef) > 0 {
 		for _, fieldDefObj := range allDef[1:] {
@@ -132,10 +134,10 @@ func register(structType reflect.Type, fakeStructPtr uintptr, allDef Tags) *Type
 					panic("field not found")
 				}
 			}
-			fieldTags := structTags.Fields[fieldName]
+			fieldTags := typeTags.Fields[fieldName]
 			if fieldTags == nil {
 				fieldTags = map[string]TagValue{}
-				structTags.Fields[fieldName] = fieldTags
+				typeTags.Fields[fieldName] = fieldTags
 			}
 			for i := 1; i < len(fieldDef); i += 2 {
 				rawVal := fieldDef[i+1]
@@ -150,8 +152,11 @@ func register(structType reflect.Type, fakeStructPtr uintptr, allDef Tags) *Type
 			}
 		}
 	}
-	registry[structType] = structTags
-	return structTags
+	for _, provider := range TagsProviders {
+		provider(typ, typeTags)
+	}
+	registry[typ] = typeTags
+	return typeTags
 }
 
 func parseFieldTag(tag reflect.StructTag) FieldTags {
