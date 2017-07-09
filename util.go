@@ -15,3 +15,7 @@ func Validate(obj interface{}) error {
 func Max(collection ...interface{}) interface{} {
 	return util.Max(collection...)
 }
+
+func Min(collection ...interface{}) interface{} {
+	return util.Min(collection...)
+}
