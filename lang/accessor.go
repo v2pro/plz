@@ -23,7 +23,6 @@ func AccessorOf(typ reflect.Type, tagName string) Accessor {
 func AddressOf(obj interface{}) unsafe.Pointer {
 	emptyInterface := *((*emptyInterface)(unsafe.Pointer(&obj)))
 	ptr := emptyInterface.word
-	return ptr
 	switch reflect.Kind(emptyInterface.typ.kind & kindMask) {
 	case reflect.Array:
 		typ := reflect.TypeOf(obj)
