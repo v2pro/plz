@@ -19,16 +19,20 @@ func AccessorOf(typ reflect.Type, tagName string) Accessor {
 	panic(fmt.Sprintf("no accessor provider for: %v", typ))
 }
 
+// TODO: remove me, can not pass interface{} across package, which will cause allocation
 func AddressOf(obj interface{}) unsafe.Pointer {
-	ptr := castToEmptyInterface(obj).word
-	typ := reflect.TypeOf(obj)
-	switch typ.Kind() {
+	emptyInterface := *((*emptyInterface)(unsafe.Pointer(&obj)))
+	ptr := emptyInterface.word
+	return ptr
+	switch reflect.Kind(emptyInterface.typ.kind & kindMask) {
 	case reflect.Array:
-		if typ.Len() == 1 && (typ.Elem().Kind() == reflect.Ptr || typ.Elem().Kind() == reflect.Map){
+		typ := reflect.TypeOf(obj)
+		if typ.Len() == 1 && (typ.Elem().Kind() == reflect.Ptr || typ.Elem().Kind() == reflect.Map) {
 			asVal := uintptr(ptr)
 			ptr = unsafe.Pointer(&asVal)
 		}
 	case reflect.Struct:
+		typ := reflect.TypeOf(obj)
 		if typ.NumField() == 1 && (typ.Field(0).Type.Kind() == reflect.Ptr || typ.Field(0).Type.Kind() == reflect.Map) {
 			asVal := uintptr(ptr)
 			ptr = unsafe.Pointer(&asVal)
@@ -41,9 +45,25 @@ func castToEmptyInterface(obj interface{}) emptyInterface {
 	return *((*emptyInterface)(unsafe.Pointer(&obj)))
 }
 
+const kindMask = (1 << 5) - 1
+
+// rtype is the common implementation of most values.
+// It is embedded in other, public struct types, but always
+// with a unique tag like `reflect:"array"` or `reflect:"ptr"`
+// so that code cannot convert from, say, *arrayType to *ptrType.
+type rtype struct {
+	size       uintptr
+	ptrdata    uintptr
+	hash       uint32 // hash of type; avoids computation in hash tables
+	tflag      uint8  // extra type information flags
+	align      uint8  // alignment of variable with this type
+	fieldAlign uint8  // alignment of struct field with this type
+	kind       uint8  // enumeration for C
+}
+
 // emptyInterface is the header for an interface{} value.
 type emptyInterface struct {
-	typ  unsafe.Pointer
+	typ  *rtype
 	word unsafe.Pointer
 }
 
@@ -191,7 +211,7 @@ type Accessor interface {
 	VariantElem(ptr unsafe.Pointer) (elem unsafe.Pointer, elemAccessor Accessor)
 	InitVariant(ptr unsafe.Pointer, template Accessor) (elem unsafe.Pointer, elemAccessor Accessor)
 	// map
-	MapIndex(ptr unsafe.Pointer, key unsafe.Pointer) (elem unsafe.Pointer) // only when random accessible
+	MapIndex(ptr unsafe.Pointer, key unsafe.Pointer) (elem unsafe.Pointer)   // only when random accessible
 	SetMapIndex(ptr unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) // only when random accessible
 	IterateMap(ptr unsafe.Pointer, cb func(key unsafe.Pointer, elem unsafe.Pointer) bool)
 	FillMap(ptr unsafe.Pointer, cb func(filler MapFiller))
@@ -239,7 +259,7 @@ type StructField interface {
 }
 
 type NoopAccessor struct {
-	TagName string
+	TagName          string
 	AccessorTypeName string
 }
 
