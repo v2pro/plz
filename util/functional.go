@@ -1,7 +1,10 @@
 package util
 
-import "reflect"
+import (
+	"reflect"
+)
 
+// TODO: make this thread safe
 var maxSimpleValue = map[reflect.Type]func(collection []interface{}) interface{}{}
 var GenMaxSimpleValue = func(typ reflect.Type) func(collection []interface{}) interface{} {
 	panic("not implemented")
@@ -12,6 +15,7 @@ type structAndField struct {
 	F string
 }
 
+// TODO: make this thread safe
 var maxStructByField = map[structAndField]func(collection []interface{}) interface{}{}
 var GenMaxStructByField = func(typ reflect.Type, fieldName string) func(collection []interface{}) interface{} {
 	panic("not implemented")
