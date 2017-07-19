@@ -4,20 +4,18 @@ import (
 	"math"
 )
 
-var FallbackLogWriter LogWriter = &stderrLogWriter{}
+var FallbackLogger Logger = &defaultLogger{logWriter:&stderrLogWriter{}, minLevel:DebugLevel}
 var LogWriterProviders = []func(loggerKV []interface{}) LogWriter{}
-var DefaultLevel = DebugLevel
-var CreateLogger = func(loggerKV []interface{}, logWriter LogWriter) Logger {
-	return &defaultLogger{loggerKV:loggerKV, logWriter:logWriter, minLevel:DefaultLevel}
+var CreateLogger func(loggerKV []interface{}, logWriter LogWriter) Logger
+
+func Initialized(defaultLevel Level) {
+	CreateLogger = func(loggerKV []interface{}, logWriter LogWriter) Logger {
+		return &defaultLogger{loggerKV:loggerKV, logWriter:logWriter, minLevel:defaultLevel}
+	}
 }
 
 func LoggerOf(loggerKV ...interface{}) Logger {
 	return &placeholder{loggerKV, nil}
-}
-
-func realLoggerOf(loggerKV []interface{}) Logger {
-	logWriter := getLogWriter(loggerKV)
-	return CreateLogger(loggerKV, logWriter)
 }
 
 func getLogWriter(loggerKV []interface{}) LogWriter {
@@ -29,8 +27,6 @@ func getLogWriter(loggerKV []interface{}) LogWriter {
 		}
 	}
 	switch len(logWriters) {
-	case 0:
-		return FallbackLogWriter
 	case 1:
 		return logWriters[0]
 	default:

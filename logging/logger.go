@@ -36,7 +36,10 @@ func (logger *placeholder) realLogger() Logger {
 	if logger.realLoggerCache != nil {
 		return logger.realLoggerCache
 	}
-	logger.realLoggerCache = realLoggerOf(logger.loggerKV)
+	if CreateLogger == nil {
+		return FallbackLogger
+	}
+	logger.realLoggerCache = CreateLogger(logger.loggerKV, getLogWriter(logger.loggerKV))
 	return logger.realLoggerCache
 }
 
