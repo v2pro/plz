@@ -4,24 +4,38 @@ import (
 	"math"
 )
 
-var Providers = []func(loggerKv []interface{}) Logger{}
+var FallbackLogWriter LogWriter = &stderrLogWriter{}
+var LogWriterProviders = []func(loggerKV []interface{}) LogWriter{}
+var DefaultLevel = DebugLevel
+var CreateLogger = func(loggerKV []interface{}, logWriter LogWriter) Logger {
+	return &defaultLogger{loggerKV:loggerKV, logWriter:logWriter, minLevel:DefaultLevel}
+}
 
-func LoggerOf(loggerKv ...interface{}) Logger {
-	var logger Logger
-	for _, provider := range Providers {
-		provided := provider(loggerKv)
-		if provided == nil {
-			continue
+func LoggerOf(loggerKV ...interface{}) Logger {
+	return &placeholder{loggerKV, nil}
+}
+
+func realLoggerOf(loggerKV []interface{}) Logger {
+	logWriter := getLogWriter(loggerKV)
+	return CreateLogger(loggerKV, logWriter)
+}
+
+func getLogWriter(loggerKV []interface{}) LogWriter {
+	logWriters := []LogWriter{}
+	for _, provider := range LogWriterProviders {
+		logWriter := provider(loggerKV)
+		if logWriter != nil {
+			logWriters = append(logWriters, logWriter)
 		}
-		logger = combineLoggers(logger, provided)
 	}
-	if len(Providers) == 0 {
-		return &placeholder{loggerKv, nil}
+	switch len(logWriters) {
+	case 0:
+		return FallbackLogWriter
+	case 1:
+		return logWriters[0]
+	default:
+		return &combinedLogWriter{logWriters: logWriters}
 	}
-	if logger == nil {
-		logger = &dummyLogger{}
-	}
-	return logger
 }
 
 type Level struct {
@@ -29,18 +43,24 @@ type Level struct {
 	LevelName string
 }
 
-var LEVEL_UNDEF = Level{math.MaxInt32, ""}
-var LEVEL_FATAL = Level{60, "FATAL"}
-var LEVEL_ERROR = Level{50, "ERROR"}
-var LEVEL_WARNING = Level{40, "WARNING"}
-var LEVEL_INFO = Level{30, "INFO"}
-var LEVEL_DEBUG = Level{20, "DEBUG"}
-var LEVEL_TRACE = Level{10, "TRACE"}
+var UndefLevel = Level{math.MaxInt32, ""}
+var FatalLevel = Level{60, "FATAL"}
+var ErrorLevel = Level{50, "ERROR"}
+var WarningLevel = Level{40, "WARNING"}
+var InfoLevel = Level{30, "INFO"}
+var DebugLevel = Level{20, "DEBUG"}
+var TraceLevel = Level{10, "TRACE"}
 
 type Logger interface {
 	Log(level Level, msg string, kv ...interface{})
-	Error(msg string, kv ...interface{})
+	Error(err error, msg string, kv ...interface{}) error
+	Warning(msg string, kv ...interface{})
 	Info(msg string, kv ...interface{})
 	Debug(msg string, kv ...interface{})
 	ShouldLog(level Level) bool
+	SetLevel(level Level) Logger
+}
+
+type LogWriter interface {
+	Log(level Level, msg string, kv []interface{})
 }

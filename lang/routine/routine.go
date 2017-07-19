@@ -86,7 +86,7 @@ func goLongRunningOnce(longRunning func(), kv []interface{}) (notDone bool) {
 
 var AfterPanic = []func(recovered interface{}, kv []interface{}){
 	func(recovered interface{}, kv []interface{}) {
-		panicLogger.Error("goroutine panic", append(kv, "recovered", recovered, "stack", string(debug.Stack()))...)
+		panicLogger.Error(nil,"goroutine panic", append(kv, "recovered", recovered, "stack", string(debug.Stack()))...)
 	},
 }
 

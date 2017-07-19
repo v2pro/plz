@@ -5,9 +5,12 @@ import (
 	"os"
 )
 
+var beginLogger = logging.LoggerOf("metric", "counter", "begin", "app")
+var panicLogger = logging.LoggerOf("metric", "counter", "panic", "app")
+var finishLogger = logging.LoggerOf("metric", "counter", "finish", "app")
+
 func Run(f func() int, kv ...interface{}) {
-	logging.LoggerOf("metric", "counter", "begin", "app").
-		Info("app begin", kv...)
+	beginLogger.Info("app begin", kv...)
 	defer func() {
 		recovered := recover()
 		if recovered != nil {
@@ -31,15 +34,14 @@ func Run(f func() int, kv ...interface{}) {
 
 var AfterPanic = []func(recovered interface{}, kv []interface{}) int{
 	func(recovered interface{}, kv []interface{}) int {
-		logging.LoggerOf("metric", "counter", "panic", "app").
-			Error("app panic", append(kv, "recovered", recovered)...)
+		panicLogger.Error(nil, "app panic",
+			append(kv, "recovered", recovered)...)
 		return 1
 	},
 }
 
 var BeforeFinish = []func(kv []interface{}){
 	func(kv []interface{}) {
-		logging.LoggerOf("metric", "counter", "finish", "app").
-			Info("app finish", kv...)
+		finishLogger.Info("app finish", kv...)
 	},
 }
