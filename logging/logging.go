@@ -4,13 +4,30 @@ import (
 	"math"
 )
 
+// FallbackLogger used in dev environment
 var FallbackLogger Logger = &defaultLogger{logWriter:&stderrLogWriter{}, minLevel:DebugLevel}
+
 var LogWriterProviders = []func(loggerKV []interface{}) LogWriter{}
+
+// CreateLogger is set when Configure().Done(). Before it is set, FallbackLogger will be used
 var CreateLogger func(loggerKV []interface{}, logWriter LogWriter) Logger
 
-func Initialized(defaultLevel Level) {
+func Configure() *ConfigBuilder {
+	return &ConfigBuilder{}
+}
+
+type ConfigBuilder struct {
+	defaultLevel Level
+}
+
+func (builder *ConfigBuilder) DefaultLevel(defaultLevel Level) *ConfigBuilder {
+	builder.defaultLevel = defaultLevel
+	return builder
+}
+
+func (builder *ConfigBuilder) Done() {
 	CreateLogger = func(loggerKV []interface{}, logWriter LogWriter) Logger {
-		return &defaultLogger{loggerKV:loggerKV, logWriter:logWriter, minLevel:defaultLevel}
+		return &defaultLogger{loggerKV:loggerKV, logWriter:logWriter, minLevel:builder.defaultLevel}
 	}
 }
 
