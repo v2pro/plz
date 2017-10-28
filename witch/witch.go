@@ -46,7 +46,7 @@ body {
   <script src="http://cdn.jsdeliver.net/npm/axios/dist/axios.min.js"></script>
 	` + compIDE() + compLogViewer() + `
   <script>
-	new Vue({
+	var $vue = new Vue({
       el: '#app',
       data: function() {
         return { visible: false }
@@ -57,7 +57,7 @@ body {
     }, function (error) {
         $vue.$notify.error({
             title: error.message,
-            message: error.response.data.errmsg
+            message: error.response
         });
         return error;
     });
@@ -111,21 +111,17 @@ func compLogViewer() string {
     <div>
 		<el-table
 			:data="tableData"
+			row-key="timestamp"
 			stripe
 			style="width: 100%">
-		<el-table-column
-			prop="level"
-			label="Level"
-			width="180">
-		</el-table-column>
 		<el-table-column
 			prop="timestamp"
 			label="Time"
 			width="180">
 		</el-table-column>
 		<el-table-column
-			prop="event"
-			label="Msg">
+			:formatter="formatSummary"
+			label="Summary">
 			</el-table-column>
 		</el-table>
 	</div>
@@ -135,19 +131,38 @@ func compLogViewer() string {
         template: '#log-viewer-template',
         data: function () {
             return {
-				tableData: []
+				events: [],
             }
         },
+		methods: {
+			formatSummary: function(row, column, cellValue) {
+				var desc = row.event;
+				for (var key in row) {
+					if (key == 'event' || key == 'lineNumber' || key == 'level' || key == 'timestamp') {
+						continue;
+					}
+					desc = desc + ' ' + key + ':' + row[key];
+				}
+				return desc;
+			}
+		},
+		computed: {
+			tableData: function() {
+				if (this.events.length < 1000) {
+					return this.events;
+				}
+				return this.events.slice(0, 1000);
+			}
+		},
 		created: function() {
 			var me = this;
 			(function(){
 				axios.get('/more-events?ts=' + Date.now())
 					.then(function (resp) {
-						me.tableData = me.tableData.concat(resp.data);
+						me.events = resp.data.reverse().concat(me.events);
 					});
 				setTimeout(arguments.callee, 1000);
 			})();
-
 		}
     })
 </script>

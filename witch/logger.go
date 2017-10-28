@@ -5,17 +5,20 @@ import (
 	"os"
 	"net/http"
 	"github.com/json-iterator/go"
+	"sync/atomic"
+	"fmt"
 )
 
 var TheEventQueue = newEventQueue()
 
 type eventQueue struct {
 	msgChan chan countlog.Event
+	droppedEventsCount uint64
 }
 
 func newEventQueue() *eventQueue {
 	return &eventQueue{
-		msgChan: make(chan countlog.Event, 1024),
+		msgChan: make(chan countlog.Event, 10240),
 	}
 }
 
@@ -27,8 +30,12 @@ func (q *eventQueue) WriteLog(level int, event string, properties []interface{})
 	select {
 	case q.msgChan <- countlog.Event{Level: level, Event: event, Properties: properties}:
 	default:
-		os.Stderr.Write([]byte("witch event queue overflow\n"))
-		os.Stderr.Sync()
+		dropped := atomic.AddUint64(&q.droppedEventsCount, 1)
+		if dropped % 10000 == 1 {
+			os.Stderr.Write([]byte(fmt.Sprintf(
+				"witch event queue overflow, dropped %v events since start\n", dropped)))
+			os.Stderr.Sync()
+		}
 	}
 }
 
@@ -38,9 +45,6 @@ func (q *eventQueue) consume() []countlog.Event {
 		select {
 		case event := <-TheEventQueue.msgChan:
 			events = append(events, event)
-			if len(events) > 100 {
-				return events
-			}
 		default:
 			return events
 		}
@@ -49,7 +53,7 @@ func (q *eventQueue) consume() []countlog.Event {
 
 func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
 	events := TheEventQueue.consume()
-	stream := jsoniter.ConfigFastest.BorrowStream(nil)
+	stream := jsoniter.ConfigFastest.BorrowStream(respWriter)
 	defer jsoniter.ConfigFastest.ReturnStream(stream)
 	stream.WriteArrayStart()
 	for i, event := range events {
@@ -62,7 +66,7 @@ func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
 		stream.WriteMore()
 		stream.WriteObjectField("level")
 		stream.WriteVal(event.Level)
-		for j := 0; j < len(event.Properties); j+=2 {
+		for j := 0; j < len(event.Properties); j += 2 {
 			stream.WriteMore()
 			stream.WriteObjectField(event.Properties[j].(string))
 			stream.WriteVal(event.Properties[j+1])
@@ -70,5 +74,5 @@ func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
 		stream.WriteObjectEnd()
 	}
 	stream.WriteArrayEnd()
-	respWriter.Write(stream.Buffer())
+	stream.Flush()
 }
