@@ -10,7 +10,7 @@ func Test_witch(t *testing.T) {
 	countlog.LogWriters = append(countlog.LogWriters, TheEventQueue)
 	go func() {
 		for {
-			countlog.Info("event!hello", "k1", "v1")
+			countlog.Info("event!hello", "k1", "v1", "response", "!!!!!!!!!")
 			time.Sleep(time.Millisecond * 1)
 		}
 	}()

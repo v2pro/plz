@@ -32,7 +32,26 @@ body {
 .main {
 	margin-left: 120px;
 }
-  </style>
+.el-tag + .el-tag {
+margin-left: 10px;
+}
+.el-tag {
+line-height: 30px;
+}
+.button-new-tag {
+margin-left: 10px;
+height: 32px;
+line-height: 30px;
+padding-top: 0;
+padding-bottom: 0;
+}
+.input-new-tag {
+width: 90px;
+line-height: 30px;
+margin-left: 10px;
+vertical-align: bottom;
+}
+</style>
 </head>
 <body>
 	<div id="app">
@@ -108,23 +127,58 @@ func compIDE() string {
 func compLogViewer() string {
 	return `
 <script type="text/x-template" id="log-viewer-template">
-    <div>
-		<el-table
-			:data="tableData"
-			row-key="timestamp"
-			stripe
-			style="width: 100%">
-		<el-table-column
-			prop="timestamp"
-			label="Time"
-			width="180">
-		</el-table-column>
-		<el-table-column
-			:formatter="formatSummary"
-			label="Summary">
-			</el-table-column>
-		</el-table>
-	</div>
+	<el-row>
+		<el-col :span="20">
+			<el-table
+				:data="tableData"
+				row-key="timestamp"
+				stripe
+				border
+				style="width: 100%;">
+			<el-table-column label="timestamp" :formatter="formatTimestamp" />
+			<el-table-column v-for="item in userDefinedColumns" :prop="item" :label="item" resizable />
+			<el-table-column label="event" prop="event" />
+			<el-table-column label="details" min-width="400">
+				  <template slot-scope="scope">
+						<table>
+						<tr v-for="(propValue, propKey) in scope.row" v-if="shouldShowProp(propKey)">
+							<td>{{ propKey }}</td><td>{{ propValue }}</td>
+						</tr>
+						</table>
+				  </template>
+				</el-table-column>
+			</el-table>
+		</el-col>
+		<el-col :span="4" style="pdding-right: 1em;">
+			<ul style="position:fixed; _position:absolute; top:8px; z-index:999; list-style-type: none;">
+				<li @click="scrollToTop" style="cursor: pointer;">
+                <i class="el-icon-upload2"></i> Scroll to Top
+				</li>
+				<li><h3>Excluded Properties</h3>
+				<div>
+					<el-tag
+					  :key="tag"
+					  v-for="tag in excludedProperties"
+					  closable
+					  :disable-transitions="false"
+					  @close="handleClose(tag)">
+					  {{tag}}
+					</el-tag>
+					<el-input
+					  class="input-new-tag"
+					  v-if="inputVisible"
+					  v-model="inputValue"
+					  ref="saveTagInput"
+					  size="small"
+					  @keyup.enter.native="handleInputConfirm"
+					  @blur="handleInputConfirm">
+					</el-input>
+					<el-button v-else class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>
+				</div>
+				</li>
+			</ul>
+		</el-col>
+	</el-row>
 </script>
 <script>
     Vue.component('log-viewer', {
@@ -132,18 +186,41 @@ func compLogViewer() string {
         data: function () {
             return {
 				events: [],
+				userDefinedColumns: [],
+				excludedProperties: ['response']
             }
         },
 		methods: {
-			formatSummary: function(row, column, cellValue) {
-				var desc = row.event;
-				for (var key in row) {
-					if (key == 'event' || key == 'lineNumber' || key == 'level' || key == 'timestamp') {
-						continue;
-					}
-					desc = desc + ' ' + key + ':' + row[key];
+			formatTimestamp: function(row, column, cellValue) {
+				var d = new Date(row.timestamp / 1000000);
+				return d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + '.' + d.getMilliseconds();
+			},
+			scrollToTop: function() {
+				window.scrollTo(0, 0);
+			},
+			handleClose(tag) {
+				this.excludedProperties.splice(this.excludedProperties.indexOf(tag), 1);
+			},
+
+			showInput() {
+				this.inputVisible = true;
+				this.$nextTick(_ => {
+				  this.$refs.saveTagInput.$refs.input.focus();
+				});
+			},
+			handleInputConfirm() {
+				let inputValue = this.inputValue;
+				if (inputValue) {
+				  this.excludedProperties.push(inputValue);
 				}
-				return desc;
+				this.inputVisible = false;
+				this.inputValue = '';
+			},
+			shouldShowProp(propKey) {
+				if (this.excludedProperties.indexOf(propKey) !== -1) {
+					return false;
+				}
+				return propKey != 'lineNumber' && propKey != 'level' && propKey != 'event' && propKey != 'timestamp'
 			}
 		},
 		computed: {
