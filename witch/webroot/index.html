@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="http://cdn.jsdeliver.net/npm/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            font-family: Helvetica
+        }
+
+        .icon {
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.15em;
+            fill: currentColor;
+            overflow: hidden;
+        }
+
+        .main {
+            margin-left: 120px;
+        }
+        .el-tag + .el-tag {
+            margin-left: 10px;
+        }
+        .el-tag {
+            line-height: 30px;
+        }
+        .button-new-tag {
+            margin-left: 10px;
+            height: 32px;
+            line-height: 30px;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        .input-new-tag {
+            width: 90px;
+            line-height: 30px;
+            margin-left: 10px;
+            vertical-align: bottom;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <ide></ide>
+</div>
+</body>
+<!-- 先引入 Vue -->
+<script src="http://cdn.jsdeliver.net/npm/vue/dist/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="http://cdn.jsdeliver.net/npm/element-ui/lib/index.js"></script>
+<script src="http://cdn.jsdeliver.net/npm/axios/dist/axios.min.js"></script>
+{{ COMPONENTS }}
+<script>
+    var $vue = new Vue({
+        el: '#app',
+        data: function() {
+            return { visible: false }
+        }
+    });
+    axios.interceptors.response.use(function (response) {
+        return response;
+    }, function (error) {
+        $vue.$notify.error({
+            title: error.message,
+            message: error.response
+        });
+        return error;
+    });
+
+</script>
+</html>
