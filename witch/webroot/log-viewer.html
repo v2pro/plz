@@ -13,7 +13,7 @@
                 <el-table-column label="details" min-width="400">
                     <template slot-scope="scope">
                         <table>
-                            <tr v-for="(propValue, propKey) in scope.row" v-if="shouldShowProp(propKey)">
+                            <tr v-for="(propValue, propKey) in scope.row" v-if="isInlineProp(propKey)">
                                 <td>{{ propKey }}</td><td>{{ propValue }}</td>
                             </tr>
                         </table>
@@ -21,39 +21,8 @@
                 </el-table-column>
             </el-table>
         </el-col>
-        <el-col :span="4" style="pdding-right: 1em;">
-            <ul style="position:fixed; _position:absolute; top:8px; z-index:999; list-style-type: none;">
-                <li @click="scrollToTop" style="cursor: pointer;">
-                    <i class="el-icon-upload2"></i> Scroll to Top
-                </li>
-                <li><h3>Filters</h3>
-                    <ul>
-                        <li v-for="propKey in filterablePropKeys">{{ propKey }}</li>
-                    </ul>
-                </li>
-                <li><h3>Excluded Properties</h3>
-                    <div>
-                        <el-tag
-                                :key="tag"
-                                v-for="tag in excludedPropKeys"
-                                closable
-                                :disable-transitions="false"
-                                @close="handleClose(tag)">
-                            {{tag}}
-                        </el-tag>
-                        <el-input
-                                class="input-new-tag"
-                                v-if="inputVisible"
-                                v-model="inputValue"
-                                ref="saveTagInput"
-                                size="small"
-                                @keyup.enter.native="handleInputConfirm"
-                                @blur="handleInputConfirm">
-                        </el-input>
-                        <el-button v-else class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>
-                    </div>
-                </li>
-            </ul>
+        <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
+            <filters :propValues="propValues" :filters="filters"></filters>
         </el-col>
     </el-row>
 </script>
@@ -66,8 +35,13 @@
                 userDefinedColumns: [],
                 excludedPropKeys: ['response'],
                 filters: {},
-                inputVisible: false,
-                inputValue: '',
+                propValues: {},
+                propViewModes: {
+                    event: 'column',
+                    timestamp: 'column',
+                    level: 'hidden',
+                    lineNumber: 'hidden'
+                },
             }
         },
         methods: {
@@ -75,32 +49,8 @@
                 var d = new Date(row.timestamp / 1000000);
                 return d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + '.' + d.getMilliseconds();
             },
-            scrollToTop: function() {
-                window.scrollTo(0, 0);
-            },
-            handleClose: function(tag) {
-                this.excludedPropKeys.splice(this.excludedPropKeys.indexOf(tag), 1);
-            },
-
-            showInput: function() {
-                this.inputVisible = true;
-                this.$nextTick = function() {
-                    this.$refs.saveTagInput.$refs.input.focus();
-                };
-            },
-            handleInputConfirm: function() {
-                var inputValue = this.inputValue;
-                if (inputValue) {
-                    this.excludedPropKeys.push(inputValue);
-                }
-                this.inputVisible = false;
-                this.inputValue = '';
-            },
-            shouldShowProp: function(propKey) {
-                if (this.excludedPropKeys.indexOf(propKey) !== -1) {
-                    return false;
-                }
-                return propKey !== 'lineNumber' && propKey !== 'level' && propKey !== 'event' && propKey !== 'timestamp'
+            isInlineProp: function(propKey) {
+                return (this.propViewModes[propKey] || 'inline') == 'inline';
             }
         },
         computed: {
@@ -110,22 +60,6 @@
                 }
                 return this.events.slice(0, 1000);
             },
-            filterablePropKeys: function() {
-                var propKeys = [];
-                for (var propKey in this.filters) {
-                    if (this.filters[propKey].length > 0) {
-                        propKeys.push(propKey);
-                        continue;
-                    }
-                    if (this.excludedPropKeys.indexOf(propKey) !== -1) {
-                        continue;
-                    }
-                    if (propKey !== 'lineNumber' && propKey !== 'level' && propKey !== 'event' && propKey !== 'timestamp') {
-                        propKeys.push(propKey);
-                    }
-                }
-                return propKeys;
-            }
         },
         created: function() {
             var me = this;
@@ -134,9 +68,18 @@
                     .then(function (resp) {
                         for (var i in resp.data) {
                             var event = resp.data[i];
-                            for (var prop in event) {
-                                if (!(prop in me.filters)) {
-                                    Vue.set(me.filters, prop, []);
+                            for (var propKey in event) {
+                                if (propKey === 'level' || propKey === 'timestamp' || propKey === 'lineNumber') {
+                                    continue;
+                                }
+                                var propValue = event[propKey];
+                                if (!(propKey in me.propValues)) {
+                                    Vue.set(me.propValues, propKey, []);
+                                } else {
+                                    var vals = me.propValues[propKey];
+                                    if (vals.length < 100 && vals.indexOf(propValue) === -1) {
+                                        vals.push(propValue);
+                                    }
                                 }
                             }
                         }

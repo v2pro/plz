@@ -1,0 +1,103 @@
+<script type="text/x-template" id="filters-template">
+<div>
+    <h3>Filters</h3>
+    <el-select v-model="editingFilter.propKey" filterable placeholder="Property...">
+        <el-option
+                v-for="propKey in propKeys"
+                :key="propKey"
+                :label="propKey"
+                :value="propKey">
+        </el-option>
+    </el-select>
+    <el-select v-model="editingFilter.operator" filterable placeholder="Operator..." style="margin-top: 8px;">
+        <el-option
+                v-for="operator in operators"
+                :key="operator[1]"
+                :label="operator[0]"
+                :value="operator[1]">
+        </el-option>
+    </el-select>
+    <el-select
+            v-model="editingFilter.operands"
+            filterable
+            allow-create
+            multiple
+            placeholder="Value..." style="margin-top: 8px;">
+        <el-option
+                v-for="propValue in editingPropValues"
+                :key="propValue"
+                :label="propValue"
+                :value="propValue">
+        </el-option>
+    </el-select>
+    <el-button style="margin-top: 8px;" @click="addFilter()">Add Filter</el-button>
+    <ul>
+        <li v-for="filter in editableFilters">{{ filter.propKey }} {{ filter.operator}} {{ filter.operand}}</li>
+    </ul>
+</div>
+</script>
+<script>
+    Vue.component('filters', {
+        template: '#filters-template',
+        props: ['propValues', 'filters'],
+        data: function () {
+            return {
+                editingFilter: {
+                    propKey: '',
+                    operator: 'contains',
+                    operands: []
+                },
+                operators: [
+                    ['Contains', 'contains'],
+                    ['Equal', 'equal'],
+                    ['Not Contains', 'not-contains'],
+                    ['Not Equal', 'not-equal']
+                ],
+                editableFilters: [],
+            }
+        },
+        computed: {
+            propKeys: function() {
+                var propKeys = [];
+                for (var propKey in this.propValues) {
+                    propKeys.push(propKey);
+                }
+                return propKeys;
+            },
+            editingPropValues: function() {
+                if (!this.editingFilter.propKey) {
+                    return [];
+                }
+                return this.propValues[this.editingFilter.propKey];
+            }
+        },
+        methods: {
+            addFilter: function() {
+                if (!(this.editingFilter.propKey)) {
+                    $vue.$notify.error({
+                        title: 'Add filter missing parameter',
+                        message: 'Property not specified'
+                    });
+                    return;
+                }
+                if (this.editingFilter.operands.length === 0) {
+                    $vue.$notify.error({
+                        title: 'Add filter missing parameter',
+                        message: 'Filter operands not specified'
+                    });
+                    return;
+                }
+                for (var i in this.editingFilter.operands) {
+                    var operand = this.editingFilter.operands[i];
+                    this.editableFilters.push({
+                        propKey: this.editingFilter.propKey,
+                        operator: this.editingFilter.operator,
+                        operand: operand,
+                    })
+                }
+                this.editingFilter.propKey = '';
+                this.editingFilter.operands = [];
+            }
+        }
+    })
+</script>
