@@ -31,9 +31,10 @@
         </el-option>
     </el-select>
     <el-button style="margin-top: 8px;" @click="addFilter()">Add Filter</el-button>
-    <ul>
-        <li v-for="filter in editableFilters">{{ filter.propKey }} {{ filter.operator}} {{ filter.operand}}</li>
-    </ul>
+    <div v-for="(filter, index) in editableFilters" :key="filter.key" style="margin-top: 8px;">
+        <i class="el-icon-circle-close-outline" style="cursor: hand" @click="removeFilter(index)"></i>
+        {{ filter.propKey }} {{ filter.operator}} {{ filter.operand}}
+    </div>
 </div>
 </script>
 <script>
@@ -93,10 +94,14 @@
                         propKey: this.editingFilter.propKey,
                         operator: this.editingFilter.operator,
                         operand: operand,
+                        key: new Date().getTime(),
                     })
                 }
                 this.editingFilter.propKey = '';
                 this.editingFilter.operands = [];
+            },
+            removeFilter: function(index) {
+                this.editableFilters.splice(index, 1);
             }
         }
     })
