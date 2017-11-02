@@ -18,10 +18,9 @@
         </el-option>
     </el-select>
     <el-select
-            v-model="editingFilter.operands"
+            v-model="editingFilter.operand"
             filterable
             allow-create
-            multiple
             placeholder="Value..." style="margin-top: 8px;">
         <el-option
                 v-for="propValue in editingPropValues"
@@ -46,7 +45,7 @@
                 editingFilter: {
                     propKey: '',
                     operator: 'contains',
-                    operands: []
+                    operand: ''
                 },
                 operators: [
                     ['Contains', 'contains'],
@@ -55,6 +54,16 @@
                     ['Not Equal', 'not-equal']
                 ],
                 editableFilters: [],
+            }
+        },
+        watch: {
+            editableFilters: function (val) {
+                var filters = {'cacheKey': '__filtered_by_' + new Date().getTime()};
+                for (var i in val) {
+                    var editableFilter = this.editableFilters[i];
+                    filters[editableFilter.propKey] = createFilterFunc(editableFilter, filters[editableFilter.propKey]);
+                }
+                this.$emit('update:filters', filters);
             }
         },
         computed: {
@@ -81,28 +90,44 @@
                     });
                     return;
                 }
-                if (this.editingFilter.operands.length === 0) {
+                if (!(this.editingFilter.operand)) {
                     $vue.$notify.error({
                         title: 'Add filter missing parameter',
-                        message: 'Filter operands not specified'
+                        message: 'Filter operand not specified'
                     });
                     return;
                 }
-                for (var i in this.editingFilter.operands) {
-                    var operand = this.editingFilter.operands[i];
-                    this.editableFilters.push({
-                        propKey: this.editingFilter.propKey,
-                        operator: this.editingFilter.operator,
-                        operand: operand,
-                        key: new Date().getTime(),
-                    })
-                }
+                this.editableFilters.push({
+                    propKey: this.editingFilter.propKey,
+                    operator: this.editingFilter.operator,
+                    operand: this.editingFilter.operand,
+                    key: new Date().getTime(),
+                });
                 this.editingFilter.propKey = '';
-                this.editingFilter.operands = [];
+                this.editingFilter.operand = '';
             },
             removeFilter: function(index) {
                 this.editableFilters.splice(index, 1);
             }
         }
     })
+
+    function createFilterFunc(editableFilter, previousFunc) {
+        switch (editableFilter.operator) {
+            case 'contains':
+                return function(val) {
+                    if (val.indexOf(editableFilter.operand) !== -1) {
+                        return true;
+                    }
+                    if (previousFunc) {
+                        return previousFunc(val)
+                    } else {
+                        return false;
+                    }
+                }
+            default:
+                console.log('unknown filter operator: ' + editableFilter.operator);
+                return function(val) { return false; }
+        }
+    }
 </script>

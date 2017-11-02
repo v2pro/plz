@@ -22,7 +22,7 @@
             </el-table>
         </el-col>
         <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
-            <filters :propValues="propValues" :filters="filters"></filters>
+            <filters :propValues="propValues" :filters.sync="filters"></filters>
         </el-col>
     </el-row>
 </script>
@@ -31,10 +31,10 @@
         template: '#log-viewer-template',
         data: function () {
             return {
+                filters: {'cacheKey': '__filtered_by_0'},
                 events: [],
                 userDefinedColumns: [],
                 excludedPropKeys: ['response'],
-                filters: {},
                 propValues: {},
                 propViewModes: {
                     event: 'column',
@@ -51,14 +51,42 @@
             },
             isInlineProp: function(propKey) {
                 return (this.propViewModes[propKey] || 'inline') == 'inline';
+            },
+            isFiltered: function(event, cacheKey) {
+                var cacheValue = event[cacheKey];
+                if (cacheValue !== undefined) {
+                    return cacheValue;
+                }
+                for (var propKey in this.filters) {
+                    var filterFunc = this.filters[propKey];
+                    var propValue = event[propKey];
+                    if (propValue && !filterFunc(propValue)) {
+                        event[cacheKey] = true;
+                        return true;
+                    }
+                }
+                event[cacheKey] = false;
+                return false;
             }
         },
         computed: {
             tableData: function() {
-                if (this.events.length < 1000) {
-                    return this.events;
+                var count = 0;
+                var filtered = [];
+                var cacheKey = this.filters['cacheKey'];
+                this.propViewModes[cacheKey] = 'hidden';
+                for (var i in this.events) {
+                    var event = this.events[i];
+                    if (this.isFiltered(event, cacheKey)) {
+                        continue;
+                    }
+                    filtered.push(event);
+                    count++;
+                    if (count === 1000) {
+                        break;
+                    }
                 }
-                return this.events.slice(0, 1000);
+                return filtered;
             },
         },
         created: function() {
