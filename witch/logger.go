@@ -52,6 +52,7 @@ func (q *eventQueue) consume() []countlog.Event {
 }
 
 func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
+	respWriter.Header().Add("Access-Control-Allow-Origin", "*")
 	events := TheEventQueue.consume()
 	stream := jsoniter.ConfigFastest.BorrowStream(respWriter)
 	defer jsoniter.ConfigFastest.ReturnStream(stream)

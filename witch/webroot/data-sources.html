@@ -1,0 +1,37 @@
+<script type="text/x-template" id="data-sources-template">
+<div>
+    <h3>Data Source</h3>
+    <el-select
+            v-model="selection"
+            filterable
+            allow-create
+            placeholder="Data Source..." style="margin-top: 8px;">
+        <el-option
+                v-for="ds in dataSources"
+                :key="ds"
+                :label="ds"
+                :value="ds">
+        </el-option>
+    </el-select>
+</div>
+</script>
+<script>
+    Vue.component('data-sources', {
+        template: '#data-sources-template',
+        props: ['dataSource'],
+        data: function() {
+            return {
+                selection: this.dataSource,
+                dataSources: [this.dataSource]
+            }
+        },
+        watch: {
+            selection: function(val) {
+                if (this.dataSources.indexOf(val) === -1) {
+                    this.dataSources.push(val);
+                }
+                this.$emit('update:dataSource', val);
+            }
+        }
+    });
+</script>

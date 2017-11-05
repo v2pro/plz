@@ -6,13 +6,19 @@
                     row-key="timestamp"
                     border
                     style="width: 100%;">
+                <el-table-column type="expand">
+                    <template slot-scope="event">
+                        hello
+                    </template>
+                </el-table-column>
                 <el-table-column label="timestamp" :formatter="formatTimestamp" width="140" />
                 <el-table-column v-for="item in userDefinedColumns" :prop="item" :key="item" :label="item" resizable />
                 <el-table-column label="event" prop="event" />
             </el-table>
         </el-col>
         <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
-            <filters :propValues="propValues" :filters.sync="filters"></filters>
+            <data-sources :dataSource.sync="dataSource" />
+            <filters :propValues="propValues" :filters.sync="filters" />
         </el-col>
     </el-row>
 </script>
@@ -24,23 +30,21 @@
                 filters: {'cacheKey': '__filtered_by_0'},
                 events: [],
                 userDefinedColumns: [],
-                excludedPropKeys: ['response'],
                 propValues: {},
-                propViewModes: {
-                    event: 'column',
-                    timestamp: 'column',
-                    level: 'hidden',
-                    lineNumber: 'hidden'
-                },
+                dataSource: window.location.host
+            }
+        },
+        watch: {
+            dataSource: function() {
+                this.events= [];
+                this.propValues = [];
+                this.userDefinedColumns = [];
             }
         },
         methods: {
             formatTimestamp: function(row, column, cellValue) {
                 var d = new Date(row.timestamp / 1000000);
                 return d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + '.' + d.getMilliseconds();
-            },
-            isInlineProp: function(propKey) {
-                return (this.propViewModes[propKey] || 'inline') == 'inline';
             },
             isFiltered: function(event, cacheKey) {
                 var cacheValue = event[cacheKey];
@@ -64,7 +68,6 @@
                 var count = 0;
                 var filtered = [];
                 var cacheKey = this.filters['cacheKey'];
-                this.propViewModes[cacheKey] = 'hidden';
                 for (var i in this.events) {
                     var event = this.events[i];
                     if (this.isFiltered(event, cacheKey)) {
@@ -77,12 +80,12 @@
                     }
                 }
                 return filtered;
-            },
+            }
         },
         created: function() {
             var me = this;
             (function(){
-                axios.get('/more-events?ts=' + Date.now())
+                axios.get('http://' + me.dataSource + '/more-events?ts=' + Date.now())
                     .then(function (resp) {
                         for (var i in resp.data) {
                             var event = resp.data[i];

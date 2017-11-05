@@ -9,6 +9,7 @@ import (
 	"bytes"
 )
 
+var files = []string{"ide.html", "log-viewer.html", "filters.html", "data-sources.html"}
 //go:generate $GOPATH/bin/statik -src $PWD/webroot
 
 var viewerHtml []byte
@@ -22,7 +23,6 @@ func initViewerHtml() error {
 		countlog.Error("event!witch.failed to load witch viewer web resource", "err", err)
 		return err
 	}
-	var files = []string{"ide.html", "log-viewer.html", "filters.html"}
 	indexHtmlFile, err := statikFS.Open("/index.html")
 	if err != nil {
 		countlog.Error("event!witch.failed to open index.html", "err", err)
