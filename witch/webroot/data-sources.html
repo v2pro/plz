@@ -1,6 +1,6 @@
 <script type="text/x-template" id="data-sources-template">
 <div>
-    <h3>Data Source</h3>
+    <h3>Data Source <i class="el-icon-refresh" style="cursor: hand" @click="clearDataSources()"></i></h3>
     <el-select
             v-model="selection"
             filterable
@@ -20,17 +20,36 @@
         template: '#data-sources-template',
         props: ['dataSource'],
         data: function() {
+            var persistedDataSources = localStorage.getItem('dataSources');
+            var dataSources = [];
+            if (persistedDataSources) {
+                dataSources = JSON.parse(persistedDataSources);
+            }
+            if (dataSources.indexOf(this.dataSource) === -1) {
+                dataSources.push(this.dataSource);
+            }
             return {
                 selection: this.dataSource,
-                dataSources: [this.dataSource]
+                dataSources: dataSources
             }
         },
         watch: {
             selection: function(val) {
                 if (this.dataSources.indexOf(val) === -1) {
                     this.dataSources.push(val);
+                    localStorage.setItem('dataSources', JSON.stringify(this.dataSources));
                 }
                 this.$emit('update:dataSource', val);
+            }
+        },
+        methods: {
+            clearDataSources: function() {
+                this.dataSources = [];
+                this.selection = window.location.host;
+                this.$notify.info({
+                    title: 'info',
+                    message: 'user added data source options cleared'
+                });
             }
         }
     });
