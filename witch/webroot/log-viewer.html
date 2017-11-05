@@ -8,8 +8,8 @@
                     default-expand-all
                     style="width: 100%;">
                 <el-table-column type="expand">
-                    <template slot-scope="event">
-                        hello
+                    <template slot-scope="tbl">
+                        <span v-for="kv in formatKV(tbl.row)" class="event-kv">{{ kv }}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="timestamp" :formatter="formatTimestamp" width="140" />
@@ -23,11 +23,25 @@
         </el-col>
     </el-row>
 </script>
+<style>
+    .event-kv {
+        margin-right: 1em;
+        background-color:#eee;
+        padding:4px;
+    }
+</style>
 <script>
     Vue.component('log-viewer', {
         template: '#log-viewer-template',
         data: function () {
             return {
+                hiddenKeys: {
+                    'level': true,
+                    '__filtered_by_0': true,
+                    'timestamp': true,
+                    'lineNumber': true,
+                    'event': true
+                },
                 filters: {'cacheKey': '__filtered_by_0'},
                 events: [],
                 userDefinedColumns: [],
@@ -46,6 +60,21 @@
             formatTimestamp: function(row, column, cellValue) {
                 var d = new Date(row.timestamp / 1000000);
                 return d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + '.' + d.getMilliseconds();
+            },
+            formatKV: function(event) {
+                var kv = [];
+                for (var propKey in event) {
+                    if (this.hiddenKeys[propKey]) {
+                        continue;
+                    }
+                    var propValue = event[propKey];
+                    if (typeof propValue === 'string') {
+                        kv.push(propKey + '=' + propValue);
+                    } else {
+                        kv.push(propKey + '=' + JSON.stringify(propValue));
+                    }
+                }
+                return kv;
             },
             isFiltered: function(event, cacheKey) {
                 var cacheValue = event[cacheKey];
@@ -69,6 +98,7 @@
                 var count = 0;
                 var filtered = [];
                 var cacheKey = this.filters['cacheKey'];
+                this.hiddenKeys[cacheKey] = true;
                 for (var i in this.events) {
                     var event = this.events[i];
                     if (this.isFiltered(event, cacheKey)) {
