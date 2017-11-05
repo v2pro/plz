@@ -20,16 +20,22 @@
         template: '#data-sources-template',
         props: ['dataSource'],
         data: function() {
-            var persistedDataSources = localStorage.getItem('dataSources');
             var dataSources = [];
-            if (persistedDataSources) {
-                dataSources = JSON.parse(persistedDataSources);
+            var selection = this.dataSource;
+            var persistedModel = localStorage.getItem('dataSources::persistedModel');
+            if (persistedModel) {
+                var model = JSON.parse(persistedModel);
+                dataSources = model.dataSources;
+                selection = model.selection;
             }
-            if (dataSources.indexOf(this.dataSource) === -1) {
-                dataSources.push(this.dataSource);
+            if (dataSources.indexOf(selection) === -1) {
+                dataSources.push(selection);
+            }
+            if (selection !== this.dataSource) {
+                this.$emit('update:dataSource', selection);
             }
             return {
-                selection: this.dataSource,
+                selection: selection,
                 dataSources: dataSources
             }
         },
@@ -37,7 +43,10 @@
             selection: function(val) {
                 if (this.dataSources.indexOf(val) === -1) {
                     this.dataSources.push(val);
-                    localStorage.setItem('dataSources', JSON.stringify(this.dataSources));
+                    localStorage.setItem('dataSources::persistedModel', JSON.stringify({
+                        'dataSources': this.dataSources,
+                        'selection': val
+                    }));
                 }
                 this.$emit('update:dataSource', val);
             }

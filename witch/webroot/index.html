@@ -63,6 +63,7 @@
         return response;
     }, function (error) {
         $vue.$notify.error({
+            position: 'bottom-right',
             title: error.message,
             message: error.response
         });
