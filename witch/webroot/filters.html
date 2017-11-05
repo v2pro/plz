@@ -1,6 +1,6 @@
 <script type="text/x-template" id="filters-template">
 <div>
-    <h3>Filters</h3>
+    <h4>Filters</h4>
     <el-select v-model="editingFilter.propKey" filterable placeholder="Property...">
         <el-option
                 v-for="propKey in propKeys"
@@ -44,16 +44,14 @@
             return {
                 editingFilter: {
                     propKey: '',
-                    operator: 'contains',
+                    operator: 'equals',
                     operand: ''
                 },
                 operators: [
-                    ['Contains', 'contains'],
-                    ['Equal', 'equal'],
-                    ['Not Contains', 'not-contains'],
-                    ['Not Equal', 'not-equal']
+                    ['Equals', 'equals'],
+                    ['Contains', 'contains']
                 ],
-                editableFilters: [],
+                editableFilters: []
             }
         },
         watch: {
@@ -124,7 +122,18 @@
                     } else {
                         return false;
                     }
-                }
+                };
+            case 'equals':
+                return function(val) {
+                    if (val === editableFilter.operand) {
+                        return true;
+                    }
+                    if (previousFunc) {
+                        return previousFunc(val)
+                    } else {
+                        return false;
+                    }
+                };
             default:
                 console.log('unknown filter operator: ' + editableFilter.operator);
                 return function(val) { return false; }

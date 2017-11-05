@@ -2,32 +2,69 @@
     <el-row>
         <el-col :span="20">
             <el-table
+                    ref="logViewerTable"
                     :data="tableData"
                     row-key="timestamp"
-                    border
-                    default-expand-all
+                    :expand-row-keys="expandedRowKeys"
                     style="width: 100%;">
                 <el-table-column type="expand">
                     <template slot-scope="tbl">
                         <span v-for="kv in formatKV(tbl.row)" class="event-kv">{{ kv }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="timestamp" :formatter="formatTimestamp" width="140" />
+                <el-table-column label="timestamp" :formatter="formatTimestamp" width="140" v-if="showTimestamp" />
+                <el-table-column label="level" width="140" v-if="showLevel">
+                    <template slot-scope="tbl">
+                        <span :class="'level level-' + tbl.row.level">{{ tbl.row.level }}</span>
+                    </template>
+                </el-table-column>
                 <el-table-column v-for="item in userDefinedColumns" :prop="item" :key="item" :label="item" resizable />
-                <el-table-column label="event" prop="event" />
+                <el-table-column label="event" prop="event">
+                    <template slot-scope="scope">
+                        <span class="event-cell">{{ scope.row.event }}</span>
+                    </template>
+                </el-table-column>
             </el-table>
         </el-col>
         <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
             <data-sources :dataSource.sync="dataSource" />
+            <columns ref="columns" :namespace="dataSource"
+                     :columns.sync="userDefinedColumns"
+                     :showTimestamp.sync="showTimestamp"
+                     :showLevel.sync="showLevel"
+                     :propKeys="propKeys" @expandAll="expandAll"/>
             <filters :propValues="propValues" :filters.sync="filters" />
         </el-col>
     </el-row>
 </script>
 <style>
+    .level-FATAL {
+        background-color: red;
+    }
+    .level-ERROR {
+        background-color: #ff9999;
+    }
+    .level-WARN {
+        background-color: #ffc8c8;
+    }
     .event-kv {
         margin-right: 1em;
-        background-color:#eee;
         padding:4px;
+        color: #ccc;
+    }
+    tr:hover .event-kv {
+        background-color:#eee;
+        color: #000;
+    }
+    .event-cell {
+        padding:4px;
+        background-color:#eee;
+    }
+    .el-table__expanded-cell[class*=cell] {
+        padding: 4px 0;
+    }
+    .el-table td, .el-table th {
+        padding: 2px 0;
     }
 </style>
 <script>
@@ -46,12 +83,15 @@
                 events: [],
                 userDefinedColumns: [],
                 propValues: {},
-                dataSource: window.location.host
+                dataSource: window.location.host,
+                expandedRowKeys: [],
+                showTimestamp: false,
+                showLevel: false
             }
         },
         watch: {
             dataSource: function() {
-                this.events= [];
+                this.events = [];
                 this.propValues = [];
                 this.userDefinedColumns = [];
             }
@@ -67,12 +107,11 @@
                     if (this.hiddenKeys[propKey]) {
                         continue;
                     }
-                    var propValue = event[propKey];
-                    if (typeof propValue === 'string') {
-                        kv.push(propKey + '=' + propValue);
-                    } else {
-                        kv.push(propKey + '=' + JSON.stringify(propValue));
+                    if (this.userDefinedColumns.indexOf(propKey) !== -1) {
+                        continue;
                     }
+                    var propValue = event[propKey];
+                    kv.push(propKey + '=' + propValue);
                 }
                 return kv;
             },
@@ -82,15 +121,29 @@
                     return cacheValue;
                 }
                 for (var propKey in this.filters) {
+                    if (propKey === 'cacheKey') {
+                        continue;
+                    }
                     var filterFunc = this.filters[propKey];
                     var propValue = event[propKey];
-                    if (propValue && !filterFunc(propValue)) {
+                    if (propValue === undefined) {
+                        event[cacheKey] = true;
+                        return true;
+                    }
+                    if (!filterFunc(propValue)) {
                         event[cacheKey] = true;
                         return true;
                     }
                 }
                 event[cacheKey] = false;
                 return false;
+            },
+            expandAll: function(e) {
+                this.$refs.logViewerTable.$data.store.states.defaultExpandAll = e;
+                var tableData = this.tableData;
+                for (var i in tableData) {
+                    this.$refs.logViewerTable.toggleRowExpansion(tableData[i], e);
+                }
             }
         },
         computed: {
@@ -111,13 +164,28 @@
                     }
                 }
                 return filtered;
+            },
+            propKeys: function() {
+                var keys = ['timestamp', 'level'];
+                for (var propKey in this.propValues) {
+                    if (propKey === 'event') {
+                        continue;
+                    }
+                    keys.push(propKey);
+                }
+                return keys;
             }
         },
         created: function() {
             var me = this;
             (function(){
+                var callback = arguments.callee;
                 axios.get('http://' + me.dataSource + '/more-events?ts=' + Date.now())
                     .then(function (resp) {
+                        if (!resp || !Array.isArray(resp.data)) {
+                            setTimeout(callback, 10000);
+                            return
+                        }
                         for (var i in resp.data) {
                             var event = resp.data[i];
                             for (var propKey in event) {
@@ -136,8 +204,8 @@
                             }
                         }
                         me.events = resp.data.reverse().concat(me.events);
+                        setTimeout(callback, 0);
                     });
-                setTimeout(arguments.callee, 1000);
             })();
         }
     })
