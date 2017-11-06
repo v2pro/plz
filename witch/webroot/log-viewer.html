@@ -33,7 +33,7 @@
                                      resizable/>
                     <el-table-column label="event" prop="event">
                         <template slot-scope="scope">
-                            <span class="event-cell" :id="'row-' + scope.row.timestamp">{{ scope.row.timestamp }}</span>
+                            <span class="event-cell" :id="'row-' + scope.row.timestamp">{{ scope.row.event }}</span>
                         </template>
                     </el-table-column>
                 </el-table>
