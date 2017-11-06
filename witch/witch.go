@@ -61,7 +61,7 @@ func StartViewer(addr string) {
 	countlog.LogWriters = append(countlog.LogWriters, TheEventQueue)
 	http.HandleFunc("/", homepage)
 	http.HandleFunc("/more-events", moreEvents)
-	http.ListenAndServe(addr, nil)
+	go http.ListenAndServe(addr, nil)
 }
 
 func homepage(respWriter http.ResponseWriter, req *http.Request) {
