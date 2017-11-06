@@ -15,10 +15,11 @@
                         highlight-current-row
                         ref="viewer"
                         :data="viewerData"
-                        :row-key="getRowKey">
+                        :row-key="getRowKey"
+                        @row-click="onRowClick">
                     <el-table-column type="expand">
                         <template slot-scope="tbl">
-                            <span v-for="kv in formatKV(tbl.row)" class="event-kv">{{ kv }}</span>
+                            <div @dblclick="onRowDbClick(tbl.row)"><span v-for="kv in formatKV(tbl.row)" class="event-kv">{{ kv }}</span></div>
                         </template>
                     </el-table-column>
                     <el-table-column label="timestamp" :formatter="formatTimestamp" width="140" v-if="showTimestamp"/>
@@ -48,6 +49,18 @@
                 <filters :propValues="propValues" :filters.sync="filters"/>
             </el-col>
         </el-row>
+        <el-dialog
+                title="Event Details"
+                :visible.sync="showDetails"
+                width="70%">
+            <div v-if="currentEvent">
+                <div v-for="(propValue, propKey) in currentEvent" v-if="propKey.indexOf('__') !== 0">
+                    <div><b>{{ propKey }}</b></div>
+                    <div>{{ propValue }}</div>
+                    <hr/>
+                </div>
+            </div>
+        </el-dialog>
     </div>
 </script>
 <style>
@@ -103,6 +116,8 @@
                 },
                 showTimestamp: false,
                 showLevel: false,
+                showDetails: false,
+                currentEvent: null,
                 /* how to fill the events */
                 dataSource: window.location.host,
                 propValues: {}, // property dictionary, only keep last 100 unique values
@@ -112,7 +127,7 @@
                 filters: {'cacheKey': '__filtered_by_0'},
                 viewerData: [], // the actual viewer data, will be refilled to match offset/window
                 viewerOffset: 0, // [viewerOffset, viewerOffset+viewerWindow) defines the expected viewer data
-                viewerWindow: 200,
+                viewerWindow: 400,
                 loading: false
             }
         },
@@ -129,9 +144,18 @@
                 if (this.autoUpdate) {
                     this.updateViewerData();
                 }
-            }
+            },
         },
         methods: {
+            onRowClick: function(row, e, column) {
+                if (column.type !== 'expand') {
+                    this.$refs.viewer.toggleRowExpansion(row);
+                }
+            },
+            onRowDbClick: function(row) {
+                this.currentEvent = row;
+                this.showDetails = true;
+            },
             getRowKey: function (row) {
                 return row.timestamp;
             },
@@ -307,7 +331,7 @@
                         if (me.autoUpdate) {
                             me.updateViewerData();
                         }
-                        setTimeout(callback, 0);
+                        setTimeout(callback, 500);
                     });
             })();
         },
