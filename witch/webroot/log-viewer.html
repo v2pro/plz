@@ -128,7 +128,10 @@
                 events: [], // the backing data store, only events in the window range is filled into viewer
                 /* how to fill the viewer data */
                 autoUpdate: true,
-                filters: {'cacheKey': '__filtered_by_0'},
+                filters: {
+                    cacheKey: '__filtered_by_0',
+                    filterFunc: function(event) { return true; }
+                },
                 viewerData: [], // the actual viewer data, will be refilled to match offset/window
                 viewerOffset: 0, // [viewerOffset, viewerOffset+viewerWindow) defines the expected viewer data
                 viewerWindow: 200,
@@ -212,25 +215,14 @@
                 }
                 return kv;
             },
-            isFiltered: function (event, cacheKey) {
+            shouldShow: function (event, cacheKey, filterFunc) {
                 var cacheValue = event[cacheKey];
                 if (cacheValue !== undefined) {
                     return cacheValue;
                 }
-                for (var propKey in this.filters) {
-                    if (propKey === 'cacheKey') {
-                        continue;
-                    }
-                    var filterFunc = this.filters[propKey];
-                    var propValue = event[propKey];
-                    if (propValue === undefined) {
-                        event[cacheKey] = true;
-                        return true;
-                    }
-                    if (!filterFunc(propValue)) {
-                        event[cacheKey] = true;
-                        return true;
-                    }
+                if (filterFunc(event)) {
+                    event[cacheKey] = true;
+                    return true;
                 }
                 event[cacheKey] = false;
                 return false;
@@ -249,6 +241,7 @@
             updateViewerData: function () {
                 var filtered = [];
                 var cacheKey = this.filters['cacheKey'];
+                var filterFunc = this.filters['filterFunc'];
                 this.hiddenKeys[cacheKey] = true;
                 if (this.autoUpdate) {
                     this.viewerOffset = this.events.length - 1;
@@ -256,7 +249,7 @@
                 var i = this.viewerOffset;
                 for (; i >= 0; i--) {
                     var event = this.events[i];
-                    if (this.isFiltered(event, cacheKey)) {
+                    if (!this.shouldShow(event, cacheKey, filterFunc)) {
                         continue;
                     }
                     filtered.push(event);

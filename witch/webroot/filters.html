@@ -85,11 +85,15 @@
         },
         methods: {
             onEditableFiltersUpdated: function() {
-                var filters = {'cacheKey': '__filtered_by_' + new Date().getTime()};
+                var whitelist = {};
                 for (var i in this.editableFilters) {
                     var editableFilter = this.editableFilters[i];
-                    filters[editableFilter.propKey] = createFilterFunc(editableFilter, filters[editableFilter.propKey]);
+                    whitelist[editableFilter.propKey] = createFilterFunc(editableFilter, whitelist[editableFilter.propKey]);
                 }
+                var filters = {
+                    cacheKey: '__filtered_by_' + new Date().getTime(),
+                    filterFunc: mergeWhitelist(whitelist)
+                };
                 this.$emit('update:filters', filters);
                 localStorage.setItem('filters::persistedModel', JSON.stringify({
                     'editableFilters': this.editableFilters
@@ -123,7 +127,23 @@
                 this.editableFilters.splice(index, 1);
             }
         }
-    })
+    });
+
+    function mergeWhitelist(whitelist) {
+        return function(event) {
+            for (var propKey in whitelist) {
+                var filterFunc = whitelist[propKey];
+                var propValue = event[propKey];
+                if (propValue === undefined) {
+                    return false;
+                }
+                if (filterFunc(propValue)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 
     function createFilterFunc(editableFilter, previousFunc) {
         switch (editableFilter.operator) {
