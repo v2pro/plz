@@ -2,6 +2,8 @@
     <div>
         <el-row>
             <el-col :span="20">
+                <el-button @click="scrollUp" :loading="loading">&nbsp;&nbsp;&nbsp;Load More&nbsp;&nbsp;&nbsp;<i
+                        class="el-icon-arrow-up el-icon--right"></i></el-button>
                 <el-switch
                         v-model="autoUpdate"
                         active-text="Auto Update"
@@ -9,10 +11,11 @@
                 </el-switch>
                 <div style="clear: both;"></div>
                 <el-table
+                        style="margin-top: 8px; margin-bottom: 8px; width: 100%;"
+                        highlight-current-row
                         ref="viewer"
                         :data="viewerData"
-                        :row-key="getRowKey"
-                        style="width: 100%;">
+                        :row-key="getRowKey">
                     <el-table-column type="expand">
                         <template slot-scope="tbl">
                             <span v-for="kv in formatKV(tbl.row)" class="event-kv">{{ kv }}</span>
@@ -24,13 +27,16 @@
                             <span :class="'level level-' + tbl.row.level">{{ tbl.row.level }}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column v-for="item in userDefinedColumns" :prop="item" :key="item" :label="item" resizable/>
+                    <el-table-column v-for="item in userDefinedColumns" :prop="item" :key="item" :label="item"
+                                     resizable/>
                     <el-table-column label="event" prop="event">
                         <template slot-scope="scope">
-                            <span class="event-cell">{{ scope.row.event }}</span>
+                            <span class="event-cell" :id="'row-' + scope.row.timestamp">{{ scope.row.timestamp }}</span>
                         </template>
                     </el-table-column>
                 </el-table>
+                <el-button @click="scrollDown" :loading="loading">&nbsp;&nbsp;&nbsp;Load More&nbsp;&nbsp;&nbsp;<i
+                        class="el-icon-arrow-down el-icon--right"></i></el-button>
             </el-col>
             <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
                 <data-sources :dataSource.sync="dataSource"/>
@@ -106,7 +112,8 @@
                 filters: {'cacheKey': '__filtered_by_0'},
                 viewerData: [], // the actual viewer data, will be refilled to match offset/window
                 viewerOffset: 0, // [viewerOffset, viewerOffset+viewerWindow) defines the expected viewer data
-                viewerWindow: 100
+                viewerWindow: 200,
+                loading: false
             }
         },
         watch: {
@@ -115,12 +122,17 @@
                 this.propValues = [];
                 this.userDefinedColumns = [];
             },
-            filters: function() {
+            filters: function () {
                 this.updateViewerData();
+            },
+            autoUpdate: function () {
+                if (this.autoUpdate) {
+                    this.updateViewerData();
+                }
             }
         },
         methods: {
-            getRowKey: function(row) {
+            getRowKey: function (row) {
                 return row.timestamp;
             },
             formatTimestamp: function (row, column, cellValue) {
@@ -166,34 +178,89 @@
             },
             expandAll: function (e) {
                 this.$refs.viewer.$data.store.states.defaultExpandAll = e;
-                var tableData = this.tableData;
-                for (var i in tableData) {
-                    this.$refs.viewer.toggleRowExpansion(tableData[i], e);
+                for (var i in this.viewerData) {
+                    this.$refs.viewer.toggleRowExpansion(this.viewerData[i], e);
                 }
             },
-            handleScroll: function() {
-                this.autoUpdate = false;
+            handleScroll: function () {
+                if (this.autoUpdate) {
+                    this.autoUpdate = false;
+                }
             },
-            updateViewerData: function() {
-                var count = 0;
+            updateViewerData: function () {
                 var filtered = [];
                 var cacheKey = this.filters['cacheKey'];
                 this.hiddenKeys[cacheKey] = true;
                 if (this.autoUpdate) {
-                    this.viewerOffset = this.events.length;
+                    this.viewerOffset = this.events.length - 1;
                 }
-                for (var i = this.viewerOffset - 1; i >= 0; i--) {
+                var i = this.viewerOffset;
+                for (; i >= 0; i--) {
                     var event = this.events[i];
                     if (this.isFiltered(event, cacheKey)) {
                         continue;
                     }
                     filtered.push(event);
-                    count++;
-                    if (count === this.viewerWindow) {
+                    if (filtered.length === this.viewerWindow) {
                         break;
                     }
                 }
                 this.viewerData = filtered;
+            },
+            scrollUp: function () {
+                var originalTarget = null;
+                if (this.viewerData.length > 0) {
+                    originalTarget = this.viewerData[0];
+                }
+                this.viewerOffset += (this.viewerWindow / 2);
+                var limit = this.events.length - 1;
+                if (this.viewerOffset >= limit) {
+                    this.viewerOffset = limit;
+                }
+                this.updateViewerData();
+                this.scrollToTarget(originalTarget);
+            },
+            scrollDown: function () {
+                var originalTarget = null;
+                if (this.viewerData.length > 0) {
+                    originalTarget = this.viewerData[this.viewerData.length - 1];
+                }
+                this.viewerOffset -= (this.viewerWindow / 2);
+                var limit = this.viewerWindow - 1;
+                var eventsCount = this.events.length;
+                if (eventsCount - 1 < limit) {
+                    limit = eventsCount - 1;
+                }
+                if (this.viewerOffset < limit) {
+                    this.viewerOffset = limit;
+                }
+                this.updateViewerData();
+                this.scrollToTarget(originalTarget);
+            },
+            scrollToTarget: function (originalTarget) {
+                var me = this;
+                me.loading = true;
+                if (!originalTarget) {
+                    return;
+                }
+                var targetId = 'row-' + originalTarget.timestamp;
+                var ele = document.getElementById(targetId);
+                if (!ele) {
+                    return;
+                }
+                var originalTop = ele.getBoundingClientRect().top;
+                Vue.nextTick(function () {
+                    var ele = document.getElementById(targetId);
+                    if (!ele) {
+                        setTimeout(arguments.callee, 50);
+                        return;
+                    }
+                    me.$refs.viewer.setCurrentRow(originalTarget);
+                    me.$scrollTo('#' + targetId, 1, {
+                        offset: -originalTop
+                    });
+                    me.loading = false;
+                });
             }
         },
         computed: {
@@ -237,12 +304,14 @@
                             }
                         }
                         me.events = me.events.concat(resp.data);
-                        me.updateViewerData();
+                        if (me.autoUpdate) {
+                            me.updateViewerData();
+                        }
                         setTimeout(callback, 0);
                     });
             })();
         },
-        destroyed: function() {
+        destroyed: function () {
             window.removeEventListener('scroll', this.handleScroll);
         }
     });

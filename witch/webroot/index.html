@@ -50,9 +50,11 @@
 <script src="http://cdn.jsdeliver.net/npm/vue/dist/vue.js"></script>
 <!-- 引入组件库 -->
 <script src="http://cdn.jsdeliver.net/npm/element-ui/lib/index.js"></script>
+<script src="http://cdn.jsdeliver.net/npm/vue-scrollto/vue-scrollto.js"></script>
 <script src="http://cdn.jsdeliver.net/npm/axios/dist/axios.min.js"></script>
 {{ COMPONENTS }}
 <script>
+    Vue.use(VueScrollTo);
     var $vue = new Vue({
         el: '#app',
         data: function() {
