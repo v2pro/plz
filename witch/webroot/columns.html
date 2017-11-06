@@ -26,9 +26,17 @@
         template: '#columns-template',
         props: ['columns', 'propKeys', 'showTimestamp', 'showLevel'],
         data: function() {
+            var selection = ['timestamp', 'level'];
+            var expandAll = true;
+            var persistedModel = localStorage.getItem('columns::persistedModel');
+            if (persistedModel) {
+                var model = JSON.parse(persistedModel);
+                expandAll = model.expandAll;
+                selection = model.selection;
+            }
             return {
-                selection: ['timestamp', 'level'],
-                expandAll: true
+                selection: selection,
+                expandAll: expandAll
             };
         },
         mounted: function() {
@@ -38,14 +46,23 @@
         watch: {
             selection: function(val) {
                 this.onSelection();
+                this.persistModel();
             },
             expandAll: function(val) {
                 this.$emit('expandAll', val);
+                this.persistModel();
             }
         },
         methods: {
+            persistModel: function() {
+                localStorage.setItem('columns::persistedModel', JSON.stringify({
+                    'expandAll': this.expandAll,
+                    'selection': this.selection
+                }));
+            },
             clearColumns: function() {
-                this.selection = [];
+                this.selection = ['timestamp', 'level'];
+                this.expandAll = true;
                 this.$notify.info({
                     title: 'info',
                     message: 'columns reset'
