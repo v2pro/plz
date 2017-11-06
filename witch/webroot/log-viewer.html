@@ -2,7 +2,7 @@
     <div>
         <el-row>
             <el-col :span="20">
-                <el-button @click="scrollUp" :loading="loading">&nbsp;&nbsp;&nbsp;Load More&nbsp;&nbsp;&nbsp;<i
+                <el-button @click="scrollUp" :loading="loading" :disabled="autoUpdate">&nbsp;&nbsp;&nbsp;Load More&nbsp;&nbsp;&nbsp;<i
                         class="el-icon-arrow-up el-icon--right"></i></el-button>
                 <el-switch
                         v-model="autoUpdate"
@@ -37,7 +37,7 @@
                         </template>
                     </el-table-column>
                 </el-table>
-                <el-button @click="scrollDown" :loading="loading">&nbsp;&nbsp;&nbsp;Load More&nbsp;&nbsp;&nbsp;<i
+                <el-button @click="scrollDown" :loading="loading" :disabled="autoUpdate">&nbsp;&nbsp;&nbsp;Load More&nbsp;&nbsp;&nbsp;<i
                         class="el-icon-arrow-down el-icon--right"></i></el-button>
             </el-col>
             <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
@@ -155,7 +155,7 @@
             assignId: function(event) {
                 if (this.eventIds[event.timestamp]) {
                     while(true) {
-                        var id = event.timestamp + '-' + Math.random();
+                        var id = event.timestamp + '-' + Math.floor(Math.random()*100000);
                         if (this.eventIds[id]) {
                             continue;
                         }
@@ -347,7 +347,6 @@
                         }
                         for (var i in resp.data) {
                             var event = resp.data[i];
-                            me.assignId(event);
                             for (var propKey in event) {
                                 if (propKey === 'level' || propKey === 'timestamp' || propKey === 'lineNumber') {
                                     continue;
@@ -362,6 +361,7 @@
                                     }
                                 }
                             }
+                            me.assignId(event);
                         }
                         me.events = me.events.concat(resp.data);
                         if (me.autoUpdate) {

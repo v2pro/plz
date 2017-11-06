@@ -102,10 +102,6 @@ func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
 			stream.WriteObjectField(propKey)
 			propValue := event.Properties[j+1]
 			propValueAsStr, ok := propValue.(string)
-			if propKey == "timestamp" {
-				stream.WriteVal("1")
-				continue
-			}
 			if ok {
 				stream.WriteVal(propValueAsStr)
 			} else {
