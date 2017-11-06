@@ -55,7 +55,9 @@
                 },
                 operators: [
                     ['Equals', 'equals'],
-                    ['Contains', 'contains']
+                    ['Contains', 'contains'],
+                    ['Not Equals', 'not-equals'],
+                    ['Not Contains', 'not-contains']
                 ],
                 editableFilters: editableFilters
             }
@@ -86,13 +88,20 @@
         methods: {
             onEditableFiltersUpdated: function() {
                 var whitelist = {};
+                var blacklist = {};
                 for (var i in this.editableFilters) {
                     var editableFilter = this.editableFilters[i];
-                    whitelist[editableFilter.propKey] = createFilterFunc(editableFilter, whitelist[editableFilter.propKey]);
+                    if (editableFilter.operator.indexOf('not-') === 0) {
+                        blacklist[editableFilter.propKey] = createFilterFunc(
+                            editableFilter, blacklist[editableFilter.propKey]);
+                    } else {
+                        whitelist[editableFilter.propKey] = createFilterFunc(
+                            editableFilter, whitelist[editableFilter.propKey]);
+                    }
                 }
                 var filters = {
                     cacheKey: '__filtered_by_' + new Date().getTime(),
-                    filterFunc: mergeWhitelist(whitelist)
+                    filterFunc: mergeWhitelistAndBlacklist(whitelist, blacklist)
                 };
                 this.$emit('update:filters', filters);
                 localStorage.setItem('filters::persistedModel', JSON.stringify({
@@ -129,18 +138,29 @@
         }
     });
 
-    function mergeWhitelist(whitelist) {
+    function mergeWhitelistAndBlacklist(whitelist, blacklist) {
         return function(event) {
+            // if blacklist, do not show
+            for (var propKey in blacklist) {
+                var filterFunc = blacklist[propKey];
+                var propValue = event[propKey];
+                if (propValue && !filterFunc(propValue)) {
+                    return false;
+                }
+            }
+            // if no whitelist, show by default
+            if (Object.keys(whitelist).length === 0) {
+                return true;
+            }
+            // test if whitelist matched
             for (var propKey in whitelist) {
                 var filterFunc = whitelist[propKey];
                 var propValue = event[propKey];
-                if (propValue === undefined) {
-                    return false;
-                }
-                if (filterFunc(propValue)) {
+                if (propValue && filterFunc(propValue)) {
                     return true;
                 }
             }
+            // if not covered by whitelist, do not show
             return false;
         }
     }
@@ -158,6 +178,14 @@
                         return false;
                     }
                 };
+            case 'not-contains':
+                return function(val) {
+                    var myResult = val.indexOf(editableFilter.operand) === -1;
+                    if (previousFunc) {
+                        return myResult && previousFunc(val)
+                    }
+                    return myResult;
+                };
             case 'equals':
                 return function(val) {
                     if (val === editableFilter.operand) {
@@ -168,6 +196,14 @@
                     } else {
                         return false;
                     }
+                };
+            case 'not-equals':
+                return function(val) {
+                    var myResult = val !== editableFilter.operand;
+                    if (previousFunc) {
+                        return myResult && previousFunc(val)
+                    }
+                    return myResult;
                 };
             default:
                 console.log('unknown filter operator: ' + editableFilter.operator);
