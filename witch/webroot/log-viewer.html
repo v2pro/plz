@@ -29,6 +29,7 @@
                         </template>
                     </el-table-column>
                     <el-table-column v-for="item in userDefinedColumns" :prop="item" :key="item" :label="item"
+                                     :formatter="formatUserDefinedColumn"
                                      resizable/>
                     <el-table-column label="event" prop="event">
                         <template slot-scope="scope">
@@ -53,7 +54,7 @@
                 title="Event Details"
                 :visible.sync="showDetails"
                 width="70%">
-            <div v-if="currentEvent">
+            <div v-if="currentEvent" style="word-wrap: break-word;">
                 <div v-for="(propValue, propKey) in currentEvent" v-if="propKey.indexOf('__') !== 0">
                     <div><b>{{ propKey }}</b></div>
                     <div>{{ propValue }}</div>
@@ -80,6 +81,8 @@
         margin-right: 1em;
         padding: 4px;
         color: #ccc;
+        word-wrap: break-word;
+        line-height: 2em;
     }
 
     tr:hover .event-kv {
@@ -127,7 +130,7 @@
                 filters: {'cacheKey': '__filtered_by_0'},
                 viewerData: [], // the actual viewer data, will be refilled to match offset/window
                 viewerOffset: 0, // [viewerOffset, viewerOffset+viewerWindow) defines the expected viewer data
-                viewerWindow: 400,
+                viewerWindow: 200,
                 loading: false
             }
         },
@@ -163,6 +166,13 @@
                 var d = new Date(row.timestamp / 1000000);
                 return d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + '.' + d.getMilliseconds();
             },
+            formatUserDefinedColumn: function(row, column, cellValue) {
+                if (cellValue.length > 512) {
+                    return cellValue.substr(0, 512) + '...capped';
+                } else {
+                    return cellValue;
+                }
+            },
             formatKV: function (event) {
                 var kv = [];
                 for (var propKey in event) {
@@ -173,7 +183,11 @@
                         continue;
                     }
                     var propValue = event[propKey];
-                    kv.push(propKey + '=' + propValue);
+                    if (propValue.length > 512) {
+                        kv.push(propKey + '=' + propValue.substr(0, 512) + '...capped');
+                    } else {
+                        kv.push(propKey + '=' + propValue);
+                    }
                 }
                 return kv;
             },
