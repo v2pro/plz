@@ -46,11 +46,11 @@
             selection: function(val) {
                 if (this.dataSources.indexOf(val) === -1) {
                     this.dataSources.push(val);
-                    localStorage.setItem('dataSources::persistedModel', JSON.stringify({
-                        'dataSources': this.dataSources,
-                        'selection': val
-                    }));
                 }
+                localStorage.setItem('dataSources::persistedModel', JSON.stringify({
+                    'dataSources': this.dataSources,
+                    'selection': val
+                }));
                 this.$emit('update:dataSource', val);
             }
         },

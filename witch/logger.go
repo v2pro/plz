@@ -49,10 +49,14 @@ func (q *eventQueue) consume() []countlog.Event {
 	case <-timer.C:
 		// timeout
 	}
+	time.Sleep(time.Millisecond * 10)
 	for {
 		select {
 		case event := <-TheEventQueue.msgChan:
 			events = append(events, event)
+			if len(events) > 100 {
+				return events
+			}
 		default:
 			return events
 		}

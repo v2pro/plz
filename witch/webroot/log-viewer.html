@@ -1,68 +1,82 @@
 <script type="text/x-template" id="log-viewer-template">
-    <el-row>
-        <el-col :span="20">
-            <el-table
-                    ref="logViewerTable"
-                    :data="tableData"
-                    row-key="timestamp"
-                    :expand-row-keys="expandedRowKeys"
-                    style="width: 100%;">
-                <el-table-column type="expand">
-                    <template slot-scope="tbl">
-                        <span v-for="kv in formatKV(tbl.row)" class="event-kv">{{ kv }}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column label="timestamp" :formatter="formatTimestamp" width="140" v-if="showTimestamp" />
-                <el-table-column label="level" width="140" v-if="showLevel">
-                    <template slot-scope="tbl">
-                        <span :class="'level level-' + tbl.row.level">{{ tbl.row.level }}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column v-for="item in userDefinedColumns" :prop="item" :key="item" :label="item" resizable />
-                <el-table-column label="event" prop="event">
-                    <template slot-scope="scope">
-                        <span class="event-cell">{{ scope.row.event }}</span>
-                    </template>
-                </el-table-column>
-            </el-table>
-        </el-col>
-        <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
-            <data-sources :dataSource.sync="dataSource" />
-            <columns ref="columns" :namespace="dataSource"
-                     :columns.sync="userDefinedColumns"
-                     :showTimestamp.sync="showTimestamp"
-                     :showLevel.sync="showLevel"
-                     :propKeys="propKeys" @expandAll="expandAll"/>
-            <filters :propValues="propValues" :filters.sync="filters" />
-        </el-col>
-    </el-row>
+    <div>
+        <el-row>
+            <el-col :span="20">
+                <el-switch
+                        v-model="autoUpdate"
+                        active-text="Auto Update"
+                        style="float: right;">
+                </el-switch>
+                <div style="clear: both;"></div>
+                <el-table
+                        ref="viewer"
+                        :data="viewerData"
+                        :row-key="getRowKey"
+                        style="width: 100%;">
+                    <el-table-column type="expand">
+                        <template slot-scope="tbl">
+                            <span v-for="kv in formatKV(tbl.row)" class="event-kv">{{ kv }}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="timestamp" :formatter="formatTimestamp" width="140" v-if="showTimestamp"/>
+                    <el-table-column label="level" width="140" v-if="showLevel">
+                        <template slot-scope="tbl">
+                            <span :class="'level level-' + tbl.row.level">{{ tbl.row.level }}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column v-for="item in userDefinedColumns" :prop="item" :key="item" :label="item" resizable/>
+                    <el-table-column label="event" prop="event">
+                        <template slot-scope="scope">
+                            <span class="event-cell">{{ scope.row.event }}</span>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </el-col>
+            <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
+                <data-sources :dataSource.sync="dataSource"/>
+                <columns ref="columns" :namespace="dataSource"
+                         :columns.sync="userDefinedColumns"
+                         :showTimestamp.sync="showTimestamp"
+                         :showLevel.sync="showLevel"
+                         :propKeys="propKeys" @expandAll="expandAll"/>
+                <filters :propValues="propValues" :filters.sync="filters"/>
+            </el-col>
+        </el-row>
+    </div>
 </script>
 <style>
     .level-FATAL {
         background-color: red;
     }
+
     .level-ERROR {
         background-color: #ff9999;
     }
+
     .level-WARN {
         background-color: #ffc8c8;
     }
+
     .event-kv {
         margin-right: 1em;
-        padding:4px;
+        padding: 4px;
         color: #ccc;
     }
+
     tr:hover .event-kv {
-        background-color:#eee;
+        background-color: #eee;
         color: #000;
     }
+
     .event-cell {
-        padding:4px;
-        background-color:#eee;
+        padding: 4px;
+        background-color: #eee;
     }
+
     .el-table__expanded-cell[class*=cell] {
         padding: 4px 0;
     }
+
     .el-table td, .el-table th {
         padding: 2px 0;
     }
@@ -72,6 +86,8 @@
         template: '#log-viewer-template',
         data: function () {
             return {
+                /* controls the ui layout */
+                userDefinedColumns: [],
                 hiddenKeys: {
                     'level': true,
                     '__filtered_by_0': true,
@@ -79,29 +95,39 @@
                     'lineNumber': true,
                     'event': true
                 },
-                filters: {'cacheKey': '__filtered_by_0'},
-                events: [],
-                userDefinedColumns: [],
-                propValues: {},
-                dataSource: window.location.host,
-                expandedRowKeys: [],
                 showTimestamp: false,
-                showLevel: false
+                showLevel: false,
+                /* how to fill the events */
+                dataSource: window.location.host,
+                propValues: {}, // property dictionary, only keep last 100 unique values
+                events: [], // the backing data store, only events in the window range is filled into viewer
+                /* how to fill the viewer data */
+                autoUpdate: true,
+                filters: {'cacheKey': '__filtered_by_0'},
+                viewerData: [], // the actual viewer data, will be refilled to match offset/window
+                viewerOffset: 0, // [viewerOffset, viewerOffset+viewerWindow) defines the expected viewer data
+                viewerWindow: 100
             }
         },
         watch: {
-            dataSource: function() {
+            dataSource: function () {
                 this.events = [];
                 this.propValues = [];
                 this.userDefinedColumns = [];
+            },
+            filters: function() {
+                this.updateViewerData();
             }
         },
         methods: {
-            formatTimestamp: function(row, column, cellValue) {
+            getRowKey: function(row) {
+                return row.timestamp;
+            },
+            formatTimestamp: function (row, column, cellValue) {
                 var d = new Date(row.timestamp / 1000000);
                 return d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + '.' + d.getMilliseconds();
             },
-            formatKV: function(event) {
+            formatKV: function (event) {
                 var kv = [];
                 for (var propKey in event) {
                     if (this.hiddenKeys[propKey]) {
@@ -115,7 +141,7 @@
                 }
                 return kv;
             },
-            isFiltered: function(event, cacheKey) {
+            isFiltered: function (event, cacheKey) {
                 var cacheValue = event[cacheKey];
                 if (cacheValue !== undefined) {
                     return cacheValue;
@@ -138,34 +164,40 @@
                 event[cacheKey] = false;
                 return false;
             },
-            expandAll: function(e) {
-                this.$refs.logViewerTable.$data.store.states.defaultExpandAll = e;
+            expandAll: function (e) {
+                this.$refs.viewer.$data.store.states.defaultExpandAll = e;
                 var tableData = this.tableData;
                 for (var i in tableData) {
-                    this.$refs.logViewerTable.toggleRowExpansion(tableData[i], e);
+                    this.$refs.viewer.toggleRowExpansion(tableData[i], e);
                 }
-            }
-        },
-        computed: {
-            tableData: function() {
+            },
+            handleScroll: function() {
+                this.autoUpdate = false;
+            },
+            updateViewerData: function() {
                 var count = 0;
                 var filtered = [];
                 var cacheKey = this.filters['cacheKey'];
                 this.hiddenKeys[cacheKey] = true;
-                for (var i in this.events) {
+                if (this.autoUpdate) {
+                    this.viewerOffset = this.events.length;
+                }
+                for (var i = this.viewerOffset - 1; i >= 0; i--) {
                     var event = this.events[i];
                     if (this.isFiltered(event, cacheKey)) {
                         continue;
                     }
                     filtered.push(event);
                     count++;
-                    if (count === 100) {
+                    if (count === this.viewerWindow) {
                         break;
                     }
                 }
-                return filtered;
-            },
-            propKeys: function() {
+                this.viewerData = filtered;
+            }
+        },
+        computed: {
+            propKeys: function () {
                 var keys = ['timestamp', 'level'];
                 for (var propKey in this.propValues) {
                     if (propKey === 'event') {
@@ -176,9 +208,10 @@
                 return keys;
             }
         },
-        created: function() {
+        created: function () {
+            window.addEventListener('scroll', this.handleScroll);
             var me = this;
-            (function(){
+            (function () {
                 var callback = arguments.callee;
                 axios.get('http://' + me.dataSource + '/more-events?ts=' + Date.now())
                     .then(function (resp) {
@@ -203,10 +236,14 @@
                                 }
                             }
                         }
-                        me.events = resp.data.reverse().concat(me.events);
+                        me.events = me.events.concat(resp.data);
+                        me.updateViewerData();
                         setTimeout(callback, 0);
                     });
             })();
+        },
+        destroyed: function() {
+            window.removeEventListener('scroll', this.handleScroll);
         }
-    })
+    });
 </script>
