@@ -33,7 +33,7 @@
                                      resizable/>
                     <el-table-column label="event" prop="event">
                         <template slot-scope="scope">
-                            <span class="event-cell" :id="'row-' + scope.row.timestamp">{{ scope.row.event }}</span>
+                            <span class="event-cell" :id="'row-' + scope.row.id">{{ scope.row.event }}</span>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -115,7 +115,8 @@
                     '__filtered_by_0': true,
                     'timestamp': true,
                     'lineNumber': true,
-                    'event': true
+                    'event': true,
+                    'id': true
                 },
                 showTimestamp: false,
                 showLevel: false,
@@ -131,7 +132,8 @@
                 viewerData: [], // the actual viewer data, will be refilled to match offset/window
                 viewerOffset: 0, // [viewerOffset, viewerOffset+viewerWindow) defines the expected viewer data
                 viewerWindow: 200,
-                loading: false
+                loading: false,
+                eventIds: {}
             }
         },
         watch: {
@@ -147,9 +149,24 @@
                 if (this.autoUpdate) {
                     this.updateViewerData();
                 }
-            },
+            }
         },
         methods: {
+            assignId: function(event) {
+                if (this.eventIds[event.timestamp]) {
+                    while(true) {
+                        var id = event.timestamp + '-' + Math.random();
+                        if (this.eventIds[id]) {
+                            continue;
+                        }
+                        event.id = id;
+                        break;
+                    }
+                } else {
+                    event.id = event.timestamp;
+                }
+                this.eventIds[event.id] = true;
+            },
             onRowClick: function(row, e, column) {
                 if (column.type !== 'expand') {
                     this.$refs.viewer.toggleRowExpansion(row);
@@ -160,7 +177,7 @@
                 this.showDetails = true;
             },
             getRowKey: function (row) {
-                return row.timestamp;
+                return row.id;
             },
             formatTimestamp: function (row, column, cellValue) {
                 var d = new Date(row.timestamp / 1000000);
@@ -285,7 +302,7 @@
                 if (!originalTarget) {
                     return;
                 }
-                var targetId = 'row-' + originalTarget.timestamp;
+                var targetId = 'row-' + originalTarget.id;
                 var ele = document.getElementById(targetId);
                 if (!ele) {
                     return;
@@ -330,6 +347,7 @@
                         }
                         for (var i in resp.data) {
                             var event = resp.data[i];
+                            me.assignId(event);
                             for (var propKey in event) {
                                 if (propKey === 'level' || propKey === 'timestamp' || propKey === 'lineNumber') {
                                     continue;

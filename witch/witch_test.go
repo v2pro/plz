@@ -21,4 +21,5 @@ func Test_witch(t *testing.T) {
 		}
 	}()
 	StartViewer("192.168.3.33:8318")
+	time.Sleep(time.Hour)
 }
