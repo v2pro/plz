@@ -41,6 +41,12 @@
         template: '#filters-template',
         props: ['propValues', 'filters'],
         data: function () {
+            var editableFilters = [];
+            var persistedModel = localStorage.getItem('filters::persistedModel');
+            if (persistedModel) {
+                var model = JSON.parse(persistedModel);
+                editableFilters = model.editableFilters || [];
+            }
             return {
                 editingFilter: {
                     propKey: '',
@@ -51,18 +57,16 @@
                     ['Equals', 'equals'],
                     ['Contains', 'contains']
                 ],
-                editableFilters: []
+                editableFilters: editableFilters
             }
         },
         watch: {
             editableFilters: function (val) {
-                var filters = {'cacheKey': '__filtered_by_' + new Date().getTime()};
-                for (var i in val) {
-                    var editableFilter = this.editableFilters[i];
-                    filters[editableFilter.propKey] = createFilterFunc(editableFilter, filters[editableFilter.propKey]);
-                }
-                this.$emit('update:filters', filters);
+                this.onEditableFiltersUpdated();
             }
+        },
+        mounted: function() {
+            this.onEditableFiltersUpdated();
         },
         computed: {
             propKeys: function() {
@@ -80,6 +84,17 @@
             }
         },
         methods: {
+            onEditableFiltersUpdated: function() {
+                var filters = {'cacheKey': '__filtered_by_' + new Date().getTime()};
+                for (var i in this.editableFilters) {
+                    var editableFilter = this.editableFilters[i];
+                    filters[editableFilter.propKey] = createFilterFunc(editableFilter, filters[editableFilter.propKey]);
+                }
+                this.$emit('update:filters', filters);
+                localStorage.setItem('filters::persistedModel', JSON.stringify({
+                    'editableFilters': this.editableFilters
+                }));
+            },
             addFilter: function() {
                 if (!(this.editingFilter.propKey)) {
                     $vue.$notify.error({

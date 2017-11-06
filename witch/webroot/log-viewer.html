@@ -167,10 +167,14 @@
                 return d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + '.' + d.getMilliseconds();
             },
             formatUserDefinedColumn: function(row, column, cellValue) {
-                if (cellValue.length > 512) {
-                    return cellValue.substr(0, 512) + '...capped';
+                if (cellValue) {
+                    if (cellValue.length > 512) {
+                        return cellValue.substr(0, 512) + '...capped';
+                    } else {
+                        return cellValue;
+                    }
                 } else {
-                    return cellValue;
+                    return ''
                 }
             },
             formatKV: function (event) {
