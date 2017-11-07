@@ -8,7 +8,6 @@ import (
 	"sync/atomic"
 	"fmt"
 	"time"
-	"github.com/v2pro/koala"
 )
 
 var TheEventQueue = newEventQueue()
@@ -20,7 +19,7 @@ type eventQueue struct {
 
 func newEventQueue() *eventQueue {
 	return &eventQueue{
-		msgChan: make(chan countlog.Event, 10240),
+		msgChan: make(chan countlog.Event, 1024),
 	}
 }
 
@@ -65,7 +64,7 @@ func (q *eventQueue) consume() []countlog.Event {
 }
 
 func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
-	koala.ExcludeCurrentGoRoutineFromRecording()
+	setCurrentGoRoutineIsKoala()
 	respWriter.Header().Add("Access-Control-Allow-Origin", "*")
 	events := TheEventQueue.consume()
 	stream := jsoniter.ConfigFastest.BorrowStream(respWriter)

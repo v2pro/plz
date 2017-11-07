@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+// push event out
+
 const LEVEL_TRACE = 10
 const LEVEL_DEBUG = 20
 const LEVEL_INFO = 30
@@ -81,3 +83,12 @@ func expand(event string, properties []interface{}) (string, []interface{}) {
 	}
 	return event, expandedProperties
 }
+
+// pull state callbacks
+
+// like JMX MBean
+type StateExporter interface {
+	ExportState() map[string]interface{}
+}
+
+var StateExporters = map[string]StateExporter{}

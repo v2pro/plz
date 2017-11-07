@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	_ "github.com/v2pro/plz/witch/statik"
 	"bytes"
-	"github.com/v2pro/koala"
 )
 
 var files = []string{"ide.html", "log-viewer.html", "filters.html", "data-sources.html", "columns.html"}
@@ -62,13 +61,14 @@ func StartViewer(addr string) {
 	countlog.LogWriters = append(countlog.LogWriters, TheEventQueue)
 	http.HandleFunc("/", homepage)
 	http.HandleFunc("/more-events", moreEvents)
+	http.HandleFunc("/export-state", exportState)
 	go func() {
-		koala.ExcludeCurrentGoRoutineFromRecording()
+		setCurrentGoRoutineIsKoala()
 		http.ListenAndServe(addr, nil)
 	}()
 }
 
 func homepage(respWriter http.ResponseWriter, req *http.Request) {
-	koala.ExcludeCurrentGoRoutineFromRecording()
+	setCurrentGoRoutineIsKoala()
 	respWriter.Write(viewerHtml)
 }
