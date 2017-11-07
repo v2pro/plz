@@ -68,7 +68,11 @@ func (encoder *stateExporterEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter
 		stream.WriteVal(nil)
 		return
 	}
-	stream.WriteVal(stateExporter.ExportState())
+	state := stateExporter.ExportState()
+	if state != nil {
+		state["__object_address__"] = uintptr(ptr)
+	}
+	stream.WriteVal(state)
 }
 
 func (encoder *stateExporterEncoder) EncodeInterface(val interface{}, stream *jsoniter.Stream) {
