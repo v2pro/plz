@@ -341,7 +341,7 @@
                         for (var i in resp.data) {
                             var event = resp.data[i];
                             for (var propKey in event) {
-                                if (propKey === 'level' || propKey === 'timestamp' || propKey === 'lineNumber') {
+                                if (propKey === 'timestamp' || propKey === 'lineNumber') {
                                     continue;
                                 }
                                 var propValue = event[propKey];
