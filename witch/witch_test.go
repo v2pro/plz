@@ -15,7 +15,7 @@ func Test_witch(t *testing.T) {
 			for i := int32(0); i < rand.Int31n(1024 * 256); i++ {
 				response = append(response, fakeValues[rand.Int31n(4)]...)
 			}
-			countlog.Info("event!hello", "user", fakeValues[rand.Int31n(4)],
+			countlog.Debug("event!hello", "user", fakeValues[rand.Int31n(4)],
 				"response", string(response))
 			time.Sleep(time.Millisecond * 50)
 		}

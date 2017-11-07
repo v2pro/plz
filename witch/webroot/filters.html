@@ -1,7 +1,10 @@
 <script type="text/x-template" id="filters-template">
 <div>
-    <h4>Filters</h4>
-    <el-select v-model="editingFilter.propKey" filterable placeholder="Property...">
+    <h4>Filters<i class="el-icon-refresh" style="cursor: hand" @click="clearFilters()"></i></h4>
+    <el-select v-model="editingFilter.propKey"
+               allow-create
+               filterable
+               placeholder="Property...">
         <el-option
                 v-for="propKey in propKeys"
                 :key="propKey"
@@ -86,6 +89,18 @@
             }
         },
         methods: {
+            clearFilters: function() {
+                this.editingFilter = {
+                    propKey: '',
+                    operator: 'equals',
+                    operand: ''
+                };
+                this.editableFilters = [];
+                this.$notify.info({
+                    title: 'info',
+                    message: 'filters cleared'
+                });
+            },
             onEditableFiltersUpdated: function() {
                 var whitelist = {};
                 var blacklist = {};
