@@ -128,6 +128,7 @@
                 events: [], // the backing data store, only events in the window range is filled into viewer
                 /* how to fill the viewer data */
                 autoLoad: true,
+                autoLoadDisabledManually: false,
                 filters: {
                     cacheKey: '__filtered_by_0',
                     filterFunc: function(event) { return true; }
@@ -150,7 +151,12 @@
             },
             autoLoad: function () {
                 if (this.autoLoad) {
+                    this.autoLoadDisabledManually = false;
                     this.updateViewerData();
+                } else {
+                    if (window.scrollY === 0) {
+                        this.autoLoadDisabledManually = true;
+                    }
                 }
             }
         },
@@ -234,8 +240,14 @@
                 }
             },
             handleScroll: function () {
-                if (this.autoLoad) {
-                    this.autoLoad = false;
+                if (window.scrollY > 0) {
+                    if (this.autoLoad) {
+                        this.autoLoad = false;
+                    }
+                } else {
+                    if (!this.autoLoad && !this.autoLoadDisabledManually) {
+                        this.autoLoad = true;
+                    }
                 }
             },
             updateViewerData: function () {
