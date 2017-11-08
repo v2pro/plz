@@ -6,6 +6,8 @@ import (
 	"github.com/json-iterator/go"
 	"unsafe"
 	"reflect"
+	"io"
+	"strconv"
 )
 
 var stateExporterType = reflect.TypeOf((*countlog.StateExporter)(nil)).Elem()
@@ -14,11 +16,33 @@ func init() {
 	jsoniter.RegisterExtension(&stateExporterExtension{})
 }
 
+type exporting struct {
+	encodedExporters map[uintptr][]byte // key is object address, value is encoded json
+}
+
 func exportState(respWriter http.ResponseWriter, req *http.Request) {
-	encoder := jsoniter.NewEncoder(respWriter)
-	err := encoder.Encode(countlog.StateExporters)
-	if err != nil {
-		countlog.Error("event!failed to export states", "err", err)
+	marshalState(countlog.StateExporters, respWriter)
+}
+
+func marshalState(exporters map[string]countlog.StateExporter, writer io.Writer) {
+	stream := jsoniter.ConfigFastest.BorrowStream(writer)
+	defer jsoniter.ConfigFastest.ReturnStream(stream)
+	exporting := &exporting{
+		encodedExporters: map[uintptr][]byte{},
+	}
+	stream.Attachment = exporting
+	stream.WriteObjectStart()
+	stream.WriteObjectField("root")
+	stream.WriteVal(exporters)
+	for addr, encoded := range exporting.encodedExporters {
+		stream.WriteMore()
+		stream.WriteObjectField(strconv.Itoa(int(addr)))
+		stream.Write(encoded)
+	}
+	stream.WriteObjectEnd()
+	stream.Flush()
+	if stream.Error != nil {
+		countlog.Error("event!failed to export states", "err", stream.Error)
 	}
 }
 
@@ -44,7 +68,7 @@ func (extension *stateExporterExtension) CreateEncoder(typ reflect.Type) jsonite
 			templateInterface: extractInterface(templateInterface),
 		}
 		if typ.Kind() == reflect.Ptr {
-			encoder = &optionalEncoder{encoder}
+			encoder = &jsoniter.OptionalEncoder{encoder}
 		}
 		return encoder
 	}
@@ -65,14 +89,23 @@ func (encoder *stateExporterEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter
 	realInterface := (*interface{})(unsafe.Pointer(&templateInterface))
 	stateExporter, ok := (*realInterface).(countlog.StateExporter)
 	if !ok {
-		stream.WriteVal(nil)
+		stream.WriteNil()
 		return
 	}
-	state := stateExporter.ExportState()
-	if state != nil {
-		state["__object_address__"] = uintptr(ptr)
+	stream.WriteObjectStart()
+	stream.WriteObjectField("__object_address__")
+	stream.WriteVal(uintptr(ptr))
+	stream.WriteObjectEnd()
+	exporting := stream.Attachment.(*exporting)
+	if _, found := exporting.encodedExporters[uintptr(ptr)]; !found {
+		exporting.encodedExporters[uintptr(ptr)] = nil // placeholder
+		state := stateExporter.ExportState()
+		subStream := jsoniter.ConfigFastest.BorrowStream(nil)
+		defer jsoniter.ConfigFastest.ReturnStream(subStream)
+		subStream.Attachment = stream.Attachment
+		subStream.WriteVal(state)
+		exporting.encodedExporters[uintptr(ptr)] = subStream.Buffer()
 	}
-	stream.WriteVal(state)
 }
 
 func (encoder *stateExporterEncoder) EncodeInterface(val interface{}, stream *jsoniter.Stream) {
@@ -85,26 +118,6 @@ type emptyInterface struct {
 	word unsafe.Pointer
 }
 
-type optionalEncoder struct {
-	valueEncoder jsoniter.ValEncoder
-}
-
 func extractInterface(val interface{}) emptyInterface {
 	return *((*emptyInterface)(unsafe.Pointer(&val)))
-}
-
-func (encoder *optionalEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	if *((*unsafe.Pointer)(ptr)) == nil {
-		stream.WriteNil()
-	} else {
-		encoder.valueEncoder.Encode(*((*unsafe.Pointer)(ptr)), stream)
-	}
-}
-
-func (encoder *optionalEncoder) EncodeInterface(val interface{}, stream *jsoniter.Stream) {
-	jsoniter.WriteToStream(val, stream, encoder)
-}
-
-func (encoder *optionalEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	return *((*unsafe.Pointer)(ptr)) == nil
 }

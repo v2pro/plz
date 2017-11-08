@@ -7,15 +7,6 @@ import (
 	"math/rand"
 )
 
-type fakeStateExporter struct {
-}
-
-func (se *fakeStateExporter) ExportState() map[string]interface{} {
-	return map[string]interface{}{
-		"hello": "world",
-	}
-}
-
 func Test_witch(t *testing.T) {
 	countlog.StateExporters["fake"] = &fakeStateExporter{}
 	fakeValues := []string{"tom", "jerry", "william", "lily"}
