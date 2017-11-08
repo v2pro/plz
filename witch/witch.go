@@ -9,7 +9,10 @@ import (
 	"bytes"
 )
 
-var files = []string{"ide.html", "log-viewer.html", "filters.html", "data-sources.html", "columns.html"}
+var files = []string{
+	"ide.html",
+	"log-viewer.html", "filters.html", "data-sources.html", "columns.html",
+	"state-viewer.html"}
 //go:generate $GOPATH/bin/statik -src $PWD/webroot
 
 var viewerHtml []byte

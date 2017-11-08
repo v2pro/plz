@@ -20,9 +20,8 @@
             </el-menu-item>
         </el-menu>
         <div class="main">
-            <div id="log-view" v-if="currentView == 'log'">
-                <log-viewer></log-viewer>
-            </div>
+            <log-viewer v-show="currentView == 'log'"></log-viewer>
+            <state-viewer v-show="currentView == 'state'"></state-viewer>
         </div>
     </div>
 </script>
