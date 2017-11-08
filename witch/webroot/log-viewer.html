@@ -8,6 +8,7 @@
                         v-model="autoLoad"
                         active-text="Auto Load">
                 </el-switch>
+                <span style="float: right;">downloaded {{ events.length }} events, and loaded {{ viewerData.length }} into the viewer</span>
                 <el-table
                         style="margin-top: 8px; margin-bottom: 8px; width: 100%;"
                         highlight-current-row
@@ -102,6 +103,7 @@
     }
 </style>
 <script>
+    var MAXIMUM_EVENTS_LENGTH = 10000 * 8;
     Vue.component('log-viewer', {
         template: '#log-viewer-template',
         data: function () {
@@ -355,6 +357,9 @@
                             me.assignId(event);
                         }
                         me.events = me.events.concat(resp.data);
+                        if (me.events.length > MAXIMUM_EVENTS_LENGTH) {
+                            me.events = me.events.slice(me.events.length - MAXIMUM_EVENTS_LENGTH)
+                        }
                         if (me.autoLoad) {
                             me.updateViewerData();
                         }

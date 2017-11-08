@@ -54,7 +54,7 @@ func (q *eventQueue) consume() []countlog.Event {
 		select {
 		case event := <-TheEventQueue.msgChan:
 			events = append(events, event)
-			if len(events) > 100 {
+			if len(events) > 1000 {
 				return events
 			}
 		default:
