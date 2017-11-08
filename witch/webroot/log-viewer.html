@@ -2,14 +2,12 @@
     <div>
         <el-row>
             <el-col :span="20">
-                <el-button @click="scrollUp" :loading="loading" :disabled="autoUpdate">&nbsp;&nbsp;&nbsp;Load More&nbsp;&nbsp;&nbsp;<i
+                <el-button @click="scrollUp" :loading="loading" :disabled="autoLoad">&nbsp;&nbsp;&nbsp;Load More&nbsp;&nbsp;&nbsp;<i
                         class="el-icon-arrow-up el-icon--right"></i></el-button>
                 <el-switch
-                        v-model="autoUpdate"
-                        active-text="Auto Update"
-                        style="float: right;">
+                        v-model="autoLoad"
+                        active-text="Auto Load">
                 </el-switch>
-                <div style="clear: both;"></div>
                 <el-table
                         style="margin-top: 8px; margin-bottom: 8px; width: 100%;"
                         highlight-current-row
@@ -37,7 +35,7 @@
                         </template>
                     </el-table-column>
                 </el-table>
-                <el-button @click="scrollDown" :loading="loading" :disabled="autoUpdate">&nbsp;&nbsp;&nbsp;Load More&nbsp;&nbsp;&nbsp;<i
+                <el-button @click="scrollDown" :loading="loading" :disabled="autoLoad">&nbsp;&nbsp;&nbsp;Load More&nbsp;&nbsp;&nbsp;<i
                         class="el-icon-arrow-down el-icon--right"></i></el-button>
             </el-col>
             <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
@@ -127,7 +125,7 @@
                 propValues: {}, // property dictionary, only keep last 100 unique values
                 events: [], // the backing data store, only events in the window range is filled into viewer
                 /* how to fill the viewer data */
-                autoUpdate: true,
+                autoLoad: true,
                 filters: {
                     cacheKey: '__filtered_by_0',
                     filterFunc: function(event) { return true; }
@@ -148,8 +146,8 @@
             filters: function () {
                 this.updateViewerData();
             },
-            autoUpdate: function () {
-                if (this.autoUpdate) {
+            autoLoad: function () {
+                if (this.autoLoad) {
                     this.updateViewerData();
                 }
             }
@@ -234,8 +232,8 @@
                 }
             },
             handleScroll: function () {
-                if (this.autoUpdate) {
-                    this.autoUpdate = false;
+                if (this.autoLoad) {
+                    this.autoLoad = false;
                 }
             },
             updateViewerData: function () {
@@ -243,7 +241,7 @@
                 var cacheKey = this.filters['cacheKey'];
                 var filterFunc = this.filters['filterFunc'];
                 this.hiddenKeys[cacheKey] = true;
-                if (this.autoUpdate) {
+                if (this.autoLoad) {
                     this.viewerOffset = this.events.length - 1;
                 }
                 var i = this.viewerOffset;
@@ -357,7 +355,7 @@
                             me.assignId(event);
                         }
                         me.events = me.events.concat(resp.data);
-                        if (me.autoUpdate) {
+                        if (me.autoLoad) {
                             me.updateViewerData();
                         }
                         setTimeout(callback, 500);
