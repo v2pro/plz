@@ -46,7 +46,7 @@
                          :showTimestamp.sync="showTimestamp"
                          :showLevel.sync="showLevel"
                          :propKeys="propKeys" @expandAll="expandAll"/>
-                <filters :propValues="propValues" :filters.sync="filters"/>
+                <filters ref="filters" :propValues="propValues" :filters.sync="filters"/>
             </el-col>
         </el-row>
         <el-dialog
@@ -55,7 +55,10 @@
                 width="70%">
             <div v-if="currentEvent" style="word-wrap: break-word;">
                 <div v-for="(propValue, propKey) in currentEvent" v-if="propKey.indexOf('__') !== 0">
-                    <div><b>{{ propKey }}</b></div>
+                    <div>
+                        <i class="el-icon-zoom-in" style="cursor: pointer" @click="addFilter(propKey, 'equals', propValue)"></i>
+                        <i class="el-icon-zoom-out" style="cursor: pointer" @click="addFilter(propKey, 'not-equals', propValue)"></i>
+                        <b>{{ propKey }}</b></div>
                     <div>{{ propValue }}</div>
                     <hr/>
                 </div>
@@ -325,6 +328,10 @@
                     });
                     me.loading = false;
                 });
+            },
+            addFilter: function(propKey, operator, propValue) {
+                this.showDetails = false;
+                this.$refs.filters.addFilter(propKey, operator, propValue);
             }
         },
         computed: {
