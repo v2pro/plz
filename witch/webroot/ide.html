@@ -1,6 +1,6 @@
 <script type="text/x-template" id="ide-template">
     <div>
-        <el-menu default-active="1" :collapse="isCollapse"
+        <el-menu default-active="2" :collapse="isCollapse"
                  style="position:fixed; _position:absolute; top:8px; z-index:999">
             <el-menu-item index="1" @click="switchView('log')">
                 <i class="el-icon-document"></i>
@@ -31,7 +31,7 @@
         data: function () {
             return {
                 isCollapse: false,
-                currentView: 'log',
+                currentView: 'state',
             }
         },
         methods: {

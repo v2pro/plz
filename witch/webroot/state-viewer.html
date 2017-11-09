@@ -1,51 +1,82 @@
+<script type="text/x-template" id="state-node-template">
+    <div @click="callbacks.onNodeClick(node)" style="padding-left:18px">
+        <span class="el-tree-node__expand-icon el-icon-caret-right"
+              :class="{ 'is-leaf': node.isLeaf, expanded: !node.isLeaf && node.expanded }"></span>
+        {{ node.label }}
+        <span v-if="node.value">: {{ node.value }}</span>
+        <state-node v-for="child in node.children" :node="child" :callbacks="callbacks" :key="child.id">
+        </state-node>
+    </div>
+</script>
 <script type="text/x-template" id="state-viewer-template">
-<div>
-    <el-tree :data="viewerData" :props="defaultProps"></el-tree>
-</div>
+    <div>
+        <state-node v-for="node in tree.children" :node="node" :callbacks="callbacks" :key="node.id">
+        </state-node>
+    </div>
 </script>
 <script>
+    function Node(options) {
+        this.id = '';
+        this.label = '';
+        this.value = null;
+        this.expanded = false;
+        this.isLeaf = false;
+        this.data = null;
+        this.indention = 0;
+        this.children = [];
+        for (var k in options) {
+            this[k] = options[k];
+        }
+    }
+
+    Node.prototype.addChild = function (options) {
+        var child = new Node(options);
+        child.id = this.id + '>' + options.label;
+        child.indention = this.indention + 18;
+        this.children.push(child);
+    };
+    Vue.component('state-node', {
+        template: '#state-node-template',
+        props: ['node', 'callbacks']
+    });
     Vue.component('state-viewer', {
         template: '#state-viewer-template',
-        data: function() {
+        data: function () {
+            var tree = new Node({id: 'root'});
             return {
-                viewerData: [{
-                    label: '一级 1',
-                    children: [{
-                        label: '二级 1-1',
-                        children: [{
-                            label: '三级 1-1-1'
-                        }]
-                    }]
-                }, {
-                    label: '一级 2',
-                    children: [{
-                        label: '二级 2-1',
-                        children: [{
-                            label: '三级 2-1-1'
-                        }]
-                    }, {
-                        label: '二级 2-2',
-                        children: [{
-                            label: '三级 2-2-1'
-                        }]
-                    }]
-                }, {
-                    label: '一级 3',
-                    children: [{
-                        label: '二级 3-1',
-                        children: [{
-                            label: '三级 3-1-1'
-                        }]
-                    }, {
-                        label: '二级 3-2',
-                        children: [{
-                            label: '三级 3-2-1'
-                        }]
-                    }]
-                }],
-                defaultProps: {
-                    children: 'children',
-                    label: 'label'
+                tree: tree, // view model
+                state: {},
+                callbacks: this
+            }
+        },
+        created: function () {
+            var me = this;
+            axios.get('/export-state?ts=' + Date.now())
+                .then(function (resp) {
+                    me.state = resp.data;
+                    me.tree = new Node({id: 'root'});
+                    for (var k in resp.data.root) {
+                        me.tree.addChild({label: k, data: resp.data.root[k]})
+                    }
+                });
+        },
+        methods: {
+            onNodeClick: function (node) {
+                node.expanded = !node.expanded;
+                if (node.data && node.data.__object_address__) {
+                    var objectAddr = node.data.__object_address__;
+                    node.data = null; // avoid reload children
+                    var object = this.state[objectAddr];
+                    for (var k in object) {
+                        switch (typeof object[k]) {
+                            case 'string':
+                                node.addChild({label: k, value: object[k], isLeaf: true});
+                                break;
+                            case 'object':
+                                node.addChild({label: k, data: object[k]});
+                                break;
+                        }
+                    }
                 }
             }
         }
