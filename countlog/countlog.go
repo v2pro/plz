@@ -17,6 +17,18 @@ const LEVEL_WARN = 40
 const LEVEL_ERROR = 50
 const LEVEL_FATAL = 60
 
+func getLevelName(level int) string {
+	switch level {
+	case LEVEL_TRACE: return "TRACE"
+	case LEVEL_DEBUG: return "DEBUG"
+	case LEVEL_INFO: return "INFO"
+	case LEVEL_WARN: return "WARN"
+	case LEVEL_ERROR: return "ERROR"
+	case LEVEL_FATAL: return "FATAL"
+	default: return "UNKNOWN"
+	}
+}
+
 func Trace(event string, properties ...interface{}) {
 	log(LEVEL_TRACE, event, properties)
 }
