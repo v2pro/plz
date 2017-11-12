@@ -74,11 +74,14 @@ func expand(event string, properties []interface{}) (string, []interface{}) {
 		}
 	}
 	for _, prop := range properties {
-		propProvider, _ := prop.(func() interface{})
-		if propProvider == nil {
+		switch typedProp := prop.(type) {
+		case func() interface{}:
+			expandedProperties = append(expandedProperties, typedProp())
+		case []byte:
+			// []byte is likely being reused, need to make a copy here
+			expandedProperties = append(expandedProperties, encodeAnyByteArray(typedProp))
+		default:
 			expandedProperties = append(expandedProperties, prop)
-		} else {
-			expandedProperties = append(expandedProperties, propProvider())
 		}
 	}
 	return event, expandedProperties

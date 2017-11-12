@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"fmt"
 	"time"
+	"encoding/json"
 )
 
 var TheEventQueue = newEventQueue()
@@ -19,7 +20,7 @@ type eventQueue struct {
 
 func newEventQueue() *eventQueue {
 	return &eventQueue{
-		msgChan: make(chan countlog.Event, 1024),
+		msgChan: make(chan countlog.Event, 10240),
 	}
 }
 
@@ -102,10 +103,12 @@ func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
 			propKey := event.Properties[j].(string)
 			stream.WriteObjectField(propKey)
 			propValue := event.Properties[j+1]
-			propValueAsStr, ok := propValue.(string)
-			if ok {
-				stream.WriteVal(propValueAsStr)
-			} else {
+			switch typedPropValue := propValue.(type) {
+			case string:
+				stream.WriteVal(typedPropValue)
+			case json.RawMessage:
+				stream.Write(typedPropValue)
+			default:
 				valueFormatter.Reset(nil)
 				valueFormatter.WriteVal(propValue)
 				stream.WriteVal(string(valueFormatter.Buffer()))
