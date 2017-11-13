@@ -10,7 +10,7 @@ type LogFormatter interface {
 }
 
 type LogOutput interface {
-	OutputLog(timestamp int64, formattedEvent []byte)
+	OutputLog(level int, timestamp int64, formattedEvent []byte)
 	Close()
 }
 

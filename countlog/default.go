@@ -15,9 +15,13 @@ type directLogWriter struct {
 }
 
 
-
 func (logWriter *directLogWriter) WriteLog(level int, event string, properties []interface{}) {
 	msg := logWriter.logFormatter.FormatLog(Event{Level: level, Event: event, Properties: properties})
+	os.Stdout.Write(withColorLevelPrefix(level, msg))
+	os.Stdout.Sync()
+}
+
+func withColorLevelPrefix(level int, msg []byte) []byte {
 	levelColor := getColor(level)
 	// ESC = \x1b
 	// ESC+[ =  Control Sequence Introducer
@@ -25,30 +29,29 @@ func (logWriter *directLogWriter) WriteLog(level int, event string, properties [
 	// \x1b[0m
 	buf := &bytes.Buffer{}
 	fmt.Fprintf(buf, "\x1b[%d;1m[%s]\x1b[0m%s", levelColor, getLevelName(level), msg)
-	os.Stdout.Write(buf.Bytes())
-	os.Stdout.Sync()
+	return buf.Bytes()
 }
 
 const (
 	nocolor = 0
+	black   = 30
 	red     = 31
 	green   = 32
 	yellow  = 33
 	blue    = 34
+	purple  = 35
+	cyan    = 36
 	gray    = 37
 )
 
 func getColor(level int) int {
-	var levelColor int
 	switch level {
-	case LEVEL_DEBUG:
-		levelColor = gray
-	case LEVEL_WARN:
-		levelColor = yellow
-	case LEVEL_ERROR, LEVEL_FATAL:
-		levelColor = red
-	default:
-		levelColor = green
+	case LEVEL_TRACE: return cyan
+	case LEVEL_DEBUG: return gray
+	case LEVEL_INFO: return green
+	case LEVEL_WARN: return yellow
+	case LEVEL_ERROR: return red
+	case LEVEL_FATAL: return purple
+	default: return nocolor
 	}
-	return levelColor
 }

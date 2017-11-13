@@ -3,7 +3,6 @@ package countlog
 import (
 	"os"
 	"runtime"
-	"bytes"
 	"fmt"
 )
 
@@ -54,18 +53,7 @@ func (logWriter *AsyncLogWriter) Start() {
 			select {
 			case event := <-logWriter.msgChan:
 				formattedEvent := logWriter.LogFormatter.FormatLog(event)
-				if _, ok := logWriter.LogOutput.(*osFileLogOutput); ok {
-					levelColor := getColor(event.Level)
-					// ESC = \x1b
-					// ESC+[ =  Control Sequence Introducer
-					// \x1b[%d;1m, eg. \x1b32;1m
-					// \x1b[0m
-					buf := &bytes.Buffer{}
-					fmt.Fprintf(buf, "\x1b[%d;1m[%s]\x1b[0m%s", levelColor, getLevelName(event.Level), formattedEvent)
-					logWriter.LogOutput.OutputLog(event.Properties[1].(int64), buf.Bytes())
-				} else {
-					logWriter.LogOutput.OutputLog(event.Properties[1].(int64), formattedEvent)
-				}
+				logWriter.LogOutput.OutputLog(event.Level, event.Properties[1].(int64), formattedEvent)
 			case <-logWriter.isClosed:
 				return
 			}

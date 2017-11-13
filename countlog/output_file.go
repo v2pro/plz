@@ -42,7 +42,7 @@ func (output *fileLogOutput) archiveLogFile(logFile string) {
 	}
 }
 
-func (output *fileLogOutput) OutputLog(timestamp int64, formattedEvent []byte) {
+func (output *fileLogOutput) OutputLog(level int, timestamp int64, formattedEvent []byte) {
 	if timestamp > output.rotateAfter {
 		now := time.Now()
 		output.rotateAfter = (int64(now.UnixNano()/output.windowSize) + 1) * output.windowSize
@@ -61,8 +61,8 @@ type osFileLogOutput struct {
 func (output *osFileLogOutput) Close() {
 }
 
-func (output *osFileLogOutput) OutputLog(timestamp int64, formattedEvent []byte) {
-	output.logFile.Write(formattedEvent)
+func (output *osFileLogOutput) OutputLog(level int, timestamp int64, formattedEvent []byte) {
+	output.logFile.Write(withColorLevelPrefix(level, formattedEvent))
 }
 
 func NewFileLogOutput(logFile string) LogOutput {
