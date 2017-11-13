@@ -1,3 +1,4 @@
 package: github.com/v2pro/plz
 import:
 - package: github.com/json-iterator/go
+  version: master
