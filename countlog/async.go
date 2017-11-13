@@ -1,9 +1,9 @@
 package countlog
 
-import "fmt"
 import (
 	"os"
 	"runtime"
+	"fmt"
 )
 
 type AsyncLogWriter struct {
@@ -53,9 +53,7 @@ func (logWriter *AsyncLogWriter) Start() {
 			select {
 			case event := <-logWriter.msgChan:
 				formattedEvent := logWriter.LogFormatter.FormatLog(event)
-				logWriter.LogOutput.OutputLog(
-					event.Properties[1].(int64),
-					formattedEvent)
+				logWriter.LogOutput.OutputLog(event.Level, event.Properties[1].(int64), formattedEvent)
 			case <-logWriter.isClosed:
 				return
 			}
