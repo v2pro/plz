@@ -65,6 +65,7 @@ func NewAsyncLogWriter(minLevel int, output LogOutput) *AsyncLogWriter {
 	writer := &AsyncLogWriter{
 		MinLevel:       minLevel,
 		msgChan:        make(chan Event, 1024),
+		isClosed:	    make(chan bool),
 		LogFormatter:   &HumanReadableFormat{},
 		LogOutput:      output,
 		EventWhitelist: map[string]bool{},

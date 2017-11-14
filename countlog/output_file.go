@@ -20,21 +20,21 @@ func (output *fileLogOutput) Close() {
 	}
 }
 
-func (output *fileLogOutput) openLogFile(logFile string) {
+func (output *fileLogOutput) openLogFile() {
 	var err error
-	output.openedFile, err = os.OpenFile(logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	output.openedFile, err = os.OpenFile(output.logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		os.Stderr.Write([]byte("failed to open log file: " +
-			logFile + ", " + err.Error() + "\n"))
+			output.logFile + ", " + err.Error() + "\n"))
 		os.Stderr.Sync()
 	}
-	output.openedFileArchiveTo = logFile + "." + time.Now().Format("200601021504")
+	output.openedFileArchiveTo = output.logFile + "." + time.Now().Format("200601021504")
 }
 
-func (output *fileLogOutput) archiveLogFile(logFile string) {
+func (output *fileLogOutput) archiveLogFile() {
 	output.openedFile.Close()
 	output.openedFile = nil
-	err := os.Rename(logFile, output.openedFileArchiveTo)
+	err := os.Rename(output.logFile, output.openedFileArchiveTo)
 	if err != nil {
 		os.Stderr.Write([]byte("failed to rename to archived log file: " +
 			output.openedFileArchiveTo + ", " + err.Error() + "\n"))
@@ -46,8 +46,8 @@ func (output *fileLogOutput) OutputLog(level int, timestamp int64, formattedEven
 	if timestamp > output.rotateAfter {
 		now := time.Now()
 		output.rotateAfter = (int64(now.UnixNano()/output.windowSize) + 1) * output.windowSize
-		output.archiveLogFile(output.logFile)
-		output.openLogFile(output.logFile)
+		output.archiveLogFile()
+		output.openLogFile()
 	}
 	if output.openedFile != nil {
 		output.openedFile.Write(formattedEvent) // silently ignore error
@@ -74,6 +74,7 @@ func NewFileLogOutput(logFile string) LogOutput {
 	default:
 		output := &fileLogOutput{
 			windowSize: int64(time.Hour),
+			logFile: logFile,
 		}
 		err := os.MkdirAll(filepath.Dir(logFile), 0755)
 		if err != nil {
@@ -81,7 +82,7 @@ func NewFileLogOutput(logFile string) LogOutput {
 				filepath.Dir(logFile) + ", " + err.Error() + "\n"))
 			os.Stderr.Sync()
 		}
-		output.openLogFile(logFile)
+		output.openLogFile()
 		output.rotateAfter = (int64(time.Now().UnixNano()/output.windowSize) + 1) * output.windowSize
 		return output
 	}
