@@ -33,7 +33,7 @@ func (format *HumanReadableFormat) FormatLog(event Event) []byte {
 		if formattedV == "" {
 			continue
 		}
-		if event.Level < LEVEL_WARN && format.StringLengthCap > 0 {
+		if event.Level < LevelWarn && format.StringLengthCap > 0 {
 			lenCap := len(formattedV)
 			if format.StringLengthCap < lenCap {
 				lenCap = format.StringLengthCap

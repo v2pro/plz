@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 )
 
-var TheEventQueue = newEventQueue()
+var theEventQueue = newEventQueue()
 
 type eventQueue struct {
 	msgChan chan countlog.Event
@@ -45,7 +45,7 @@ func (q *eventQueue) consume() []countlog.Event {
 	events := make([]countlog.Event, 0, 4)
 	timer := time.NewTimer(10 * time.Second)
 	select {
-	case event := <-TheEventQueue.msgChan:
+	case event := <-theEventQueue.msgChan:
 		events = append(events, event)
 	case <-timer.C:
 		// timeout
@@ -53,7 +53,7 @@ func (q *eventQueue) consume() []countlog.Event {
 	time.Sleep(time.Millisecond * 10)
 	for {
 		select {
-		case event := <-TheEventQueue.msgChan:
+		case event := <-theEventQueue.msgChan:
 			events = append(events, event)
 			if len(events) > 1000 {
 				return events
@@ -67,7 +67,7 @@ func (q *eventQueue) consume() []countlog.Event {
 func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
 	setCurrentGoRoutineIsKoala()
 	respWriter.Header().Add("Access-Control-Allow-Origin", "*")
-	events := TheEventQueue.consume()
+	events := theEventQueue.consume()
 	stream := jsoniter.ConfigFastest.BorrowStream(respWriter)
 	defer jsoniter.ConfigFastest.ReturnStream(stream)
 	valueFormatter := jsoniter.ConfigFastest.BorrowStream(respWriter)
@@ -82,22 +82,7 @@ func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
 		stream.WriteVal(event.Event)
 		stream.WriteMore()
 		stream.WriteObjectField("level")
-		switch event.Level {
-		case countlog.LEVEL_TRACE:
-			stream.WriteVal("TRACE")
-		case countlog.LEVEL_DEBUG:
-			stream.WriteVal("DEBUG")
-		case countlog.LEVEL_INFO:
-			stream.WriteVal("INFO")
-		case countlog.LEVEL_WARN:
-			stream.WriteVal("WARN")
-		case countlog.LEVEL_ERROR:
-			stream.WriteVal("ERROR")
-		case countlog.LEVEL_FATAL:
-			stream.WriteVal("FATAL")
-		default:
-			stream.WriteVal("UNKNOWN")
-		}
+		stream.WriteVal(event.LevelName())
 		for j := 0; j < len(event.Properties); j += 2 {
 			stream.WriteMore()
 			propKey := event.Properties[j].(string)

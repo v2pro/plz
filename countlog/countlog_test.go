@@ -5,7 +5,7 @@ import (
 )
 
 func TestNewFileLogOutput(t *testing.T) {
-	logWriter := NewAsyncLogWriter(LEVEL_TRACE, NewFileLogOutput("STDOUT"))
+	logWriter := NewAsyncLogWriter(LevelTrace, NewFileLogOutput("STDOUT"))
 	logWriter.LogFormatter = &CompactFormat{StringLengthCap: 512}
 	logWriter.Start()
 	LogWriters = append(LogWriters, logWriter)

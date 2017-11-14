@@ -61,7 +61,7 @@ func StartViewer(addr string) {
 		return
 	}
 	countlog.Info("event!witch.viewer started", "addr", addr)
-	countlog.LogWriters = append(countlog.LogWriters, TheEventQueue)
+	countlog.LogWriters = append(countlog.LogWriters, theEventQueue)
 	http.HandleFunc("/", homepage)
 	http.HandleFunc("/more-events", moreEvents)
 	http.HandleFunc("/export-state", exportState)

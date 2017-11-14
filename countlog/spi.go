@@ -30,4 +30,8 @@ func (event Event) Get(target string) interface{} {
 	return nil
 }
 
+func (event Event) LevelName() string {
+	return getLevelName(event.Level)
+}
+
 var LogWriters = []LogWriter{}

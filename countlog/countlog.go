@@ -10,42 +10,42 @@ import (
 
 // push event out
 
-const LEVEL_TRACE = 10
-const LEVEL_DEBUG = 20
-const LEVEL_INFO = 30
-const LEVEL_WARN = 40
-const LEVEL_ERROR = 50
-const LEVEL_FATAL = 60
+const LevelTrace = 10
+const LevelDebug = 20
+const LevelInfo = 30
+const LevelWarn = 40
+const LevelError = 50
+const LevelFatal = 60
 
 func getLevelName(level int) string {
 	switch level {
-	case LEVEL_TRACE: return "TRACE"
-	case LEVEL_DEBUG: return "DEBUG"
-	case LEVEL_INFO: return "INFO"
-	case LEVEL_WARN: return "WARN"
-	case LEVEL_ERROR: return "ERROR"
-	case LEVEL_FATAL: return "FATAL"
+	case LevelTrace: return "TRACE"
+	case LevelDebug: return "DEBUG"
+	case LevelInfo: return "INFO"
+	case LevelWarn: return "WARN"
+	case LevelError: return "ERROR"
+	case LevelFatal: return "FATAL"
 	default: return "UNKNOWN"
 	}
 }
 
 func Trace(event string, properties ...interface{}) {
-	log(LEVEL_TRACE, event, properties)
+	log(LevelTrace, event, properties)
 }
 func Debug(event string, properties ...interface{}) {
-	log(LEVEL_DEBUG, event, properties)
+	log(LevelDebug, event, properties)
 }
 func Info(event string, properties ...interface{}) {
-	log(LEVEL_INFO, event, properties)
+	log(LevelInfo, event, properties)
 }
 func Warn(event string, properties ...interface{}) {
-	log(LEVEL_WARN, event, properties)
+	log(LevelWarn, event, properties)
 }
 func Error(event string, properties ...interface{}) {
-	log(LEVEL_ERROR, event, properties)
+	log(LevelError, event, properties)
 }
 func Fatal(event string, properties ...interface{}) {
-	log(LEVEL_FATAL, event, properties)
+	log(LevelFatal, event, properties)
 }
 func Log(level int, event string, properties ...interface{}) {
 	log(level, event, properties)

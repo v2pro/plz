@@ -46,12 +46,12 @@ const (
 
 func getColor(level int) int {
 	switch level {
-	case LEVEL_TRACE: return cyan
-	case LEVEL_DEBUG: return gray
-	case LEVEL_INFO: return green
-	case LEVEL_WARN: return yellow
-	case LEVEL_ERROR: return red
-	case LEVEL_FATAL: return purple
+	case LevelTrace: return cyan
+	case LevelDebug: return gray
+	case LevelInfo: return green
+	case LevelWarn: return yellow
+	case LevelError: return red
+	case LevelFatal: return purple
 	default: return nocolor
 	}
 }

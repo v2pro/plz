@@ -28,7 +28,7 @@ func (format *CompactFormat) FormatLog(event Event) []byte {
 		if v == "" {
 			continue
 		}
-		if event.Level < LEVEL_WARN && format.StringLengthCap > 0 {
+		if event.Level < LevelWarn && format.StringLengthCap > 0 {
 			lenCap := len(v)
 			if format.StringLengthCap < lenCap {
 				lenCap = format.StringLengthCap
