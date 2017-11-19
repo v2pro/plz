@@ -54,6 +54,11 @@
                 :visible.sync="showDetails"
                 width="70%">
             <div v-if="currentEvent" style="word-wrap: break-word;">
+                <el-button style="margin-bottom: 8px;" @click="showEventsNearby">
+                    Show events nearby regardless of the whitelist filters, within range of
+                </el-button>
+                <el-input-number v-model="nearSeconds" :min="1" :max="10" label="seconds"></el-input-number>
+                Seconds
                 <div v-for="(propValue, propKey) in currentEvent" v-if="propKey.indexOf('__') !== 0">
                     <div>
                         <i class="el-icon-zoom-in" style="cursor: pointer" @click="addFilter(propKey, 'equals', propValue)"></i>
@@ -132,6 +137,7 @@
                 /* how to fill the viewer data */
                 autoLoad: true,
                 autoLoadDisabledManually: false,
+                nearSeconds: 1, // used when add nearby events
                 filters: {
                     cacheKey: '__filtered_by_0',
                     filterFunc: function(event) { return true; }
@@ -332,6 +338,11 @@
             addFilter: function(propKey, operator, propValue) {
                 this.showDetails = false;
                 this.$refs.filters.addFilter(propKey, operator, propValue);
+            },
+            showEventsNearby: function() {
+                this.addFilter('timestamp', 'between', [
+                    parseInt(this.currentEvent.timestamp) - this.nearSeconds * 1000000000,
+                    parseInt(this.currentEvent.timestamp) + this.nearSeconds * 1000000000])
             }
         },
         computed: {

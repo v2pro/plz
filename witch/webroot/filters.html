@@ -36,7 +36,7 @@
     <div v-for="(filter, index) in editableFilters" :key="filter.key"
          style="margin-top: 8px; word-wrap: break-word; line-height: 2em;">
         <i class="el-icon-circle-close-outline" style="cursor: pointer" @click="removeFilter(index)"></i>
-        {{ filter.propKey }} {{ filter.operator}} {{ filter.operand}}
+        {{ filter.propKey }} {{ filter.operator}} {{ formatOperand(filter.operand) }}
     </div>
 </div>
 </script>
@@ -153,6 +153,17 @@
             },
             removeFilter: function(index) {
                 this.editableFilters.splice(index, 1);
+            },
+            formatTimestamp: function(val) {
+                var d = new Date(val / 1000000);
+                return d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + '.' + d.getMilliseconds();
+            },
+            formatOperand: function(operand) {
+                if (Array.isArray(operand)) {
+                    return this.formatTimestamp(operand[0]) + ' ~ ' + this.formatTimestamp(operand[1]);
+                } else {
+                    return operand;
+                }
             }
         }
     });
@@ -223,6 +234,17 @@
                         return myResult && previousFunc(val)
                     }
                     return myResult;
+                };
+            case 'between':
+                return function(val) {
+                    if (val >= editableFilter.operand[0] && val <= editableFilter.operand[1]) {
+                        return true;
+                    }
+                    if (previousFunc) {
+                        return previousFunc(val)
+                    } else {
+                        return false;
+                    }
                 };
             default:
                 console.log('unknown filter operator: ' + editableFilter.operator);
