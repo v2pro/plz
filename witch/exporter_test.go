@@ -7,16 +7,16 @@ import (
 	"bytes"
 )
 
-type fakeStateExporter struct {
+type fixedStateExporter struct {
 	state map[string]interface{}
 }
 
-func (se *fakeStateExporter) ExportState() map[string]interface{} {
+func (se *fixedStateExporter) ExportState() map[string]interface{} {
 	return se.state
 }
 
 func Test_recursive_state(t *testing.T) {
-	se1 := &fakeStateExporter{
+	se1 := &fixedStateExporter{
 		state: map[string]interface{}{
 			"hello": "world",
 		},

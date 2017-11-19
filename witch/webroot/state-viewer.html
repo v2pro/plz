@@ -1,21 +1,29 @@
 <script type="text/x-template" id="state-node-template">
-    <div style="padding-left:18px">
-        <div @click="callbacks.onNodeClick(node)">
-            <span class="el-tree-node__expand-icon el-icon-caret-right"
-                  :class="{ 'is-leaf': node.isLeaf, expanded: !node.isLeaf && node.expanded }"></span>
-            {{ node.label }}
-            <span v-if="node.value">: {{ node.value }}</span>
-        </div>
-        <state-node v-for="child in node.children" :node="child"
-                    :callbacks="callbacks" :key="child.id"
-                    v-show="!node.isLeaf && node.expanded" />
+<div style="padding-left:18px">
+    <div @click="callbacks.onNodeClick(node)">
+        <span class="el-tree-node__expand-icon el-icon-caret-right"
+              :class="{ 'is-leaf': node.isLeaf, expanded: !node.isLeaf && node.expanded }"></span>
+        {{ node.label }}
+        <span v-if="node.value">: {{ node.value }}</span>
     </div>
+    <state-node v-for="child in node.children" :node="child"
+                :callbacks="callbacks" :key="child.id"
+                v-show="!node.isLeaf && node.expanded" />
+</div>
 </script>
 <script type="text/x-template" id="state-viewer-template">
-    <div>
-        <state-node v-for="node in tree.children" :node="node" :callbacks="callbacks" :key="node.id">
-        </state-node>
-    </div>
+<div>
+    <el-row>
+        <el-col :span="20">
+            <div v-show="selectedSnapshot === null">No snapshot to show, please click "Poll Current State"</div>
+            <state-node v-for="node in tree.children" :node="node" :callbacks="callbacks" :key="node.id">
+            </state-node>
+        </el-col>
+        <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
+            <snapshots :selectedSnapshot.sync="selectedSnapshot"></snapshots>
+        </el-col>
+    </el-row>
+</div>
 </script>
 <script>
     function Node(options) {
@@ -85,20 +93,17 @@
             var tree = new Node({id: 'root'});
             return {
                 tree: tree, // view model
-                state: {},
+                selectedSnapshot: null,
                 callbacks: this
             }
         },
-        created: function () {
-            var me = this;
-            axios.get('/export-state?ts=' + Date.now())
-                .then(function (resp) {
-                    me.state = resp.data;
-                    me.tree = new Node({id: 'root'});
-                    for (var k in resp.data.root) {
-                        me.tree.addChild({label: k, data: resp.data.root[k]})
-                    }
-                });
+        watch: {
+            selectedSnapshot: function() {
+                this.tree = new Node({id: 'root'});
+                for (var k in this.selectedSnapshot.data.root) {
+                    this.tree.addChild({label: k, data: this.selectedSnapshot.data.root[k]})
+                }
+            }
         },
         methods: {
             onNodeClick: function (node) {
@@ -106,7 +111,7 @@
                 if (node.data && node.data.__object_address__) {
                     var objectAddr = node.data.__object_address__;
                     node.data = null; // avoid reload children
-                    var object = this.state[objectAddr];
+                    var object = this.selectedSnapshot.data[objectAddr];
                     node.addObject(object);
                 }
             }
