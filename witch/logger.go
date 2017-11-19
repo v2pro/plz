@@ -66,6 +66,13 @@ func (q *eventQueue) consume() []countlog.Event {
 
 func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
 	setCurrentGoRoutineIsKoala()
+	defer func() {
+		recovered := recover()
+		if recovered != nil {
+			countlog.Fatal("event!plz.logger.panic", "err", recovered,
+				"stacktrace", countlog.ProvideStacktrace)
+		}
+	}()
 	respWriter.Header().Add("Access-Control-Allow-Origin", "*")
 	events := theEventQueue.consume()
 	stream := jsoniter.ConfigFastest.BorrowStream(respWriter)

@@ -29,7 +29,7 @@ func (se *fakeStateExporter) ExportState() map[string]interface{} {
 }
 
 func Test_witch(t *testing.T) {
-	countlog.StateExporters["fake"] = &fakeStateExporter{}
+	countlog.RegisterStateExporter("fake", &fakeStateExporter{})
 	fakeValues := []string{"tom", "jerry", "william", "lily"}
 	go func() {
 		for {

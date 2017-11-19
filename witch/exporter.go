@@ -27,7 +27,15 @@ type exporting struct {
 }
 
 func exportState(respWriter http.ResponseWriter, req *http.Request) {
-	marshalState(countlog.StateExporters, respWriter)
+	setCurrentGoRoutineIsKoala()
+	defer func() {
+		recovered := recover()
+		if recovered != nil {
+			countlog.Fatal("event!plz.exporter.panic", "err", recovered,
+				"stacktrace", countlog.ProvideStacktrace)
+		}
+	}()
+	marshalState(countlog.StateExporters(), respWriter)
 }
 
 func marshalState(exporters map[string]countlog.StateExporter, writer io.Writer) {
@@ -110,7 +118,7 @@ func (encoder *stateExporterEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter
 		defer myJson.ReturnStream(subStream)
 		subStream.Attachment = stream.Attachment
 		subStream.WriteVal(state)
-		exporting.encodedExporters[uintptr(ptr)] = subStream.Buffer()
+		exporting.encodedExporters[uintptr(ptr)] = append([]byte(nil), subStream.Buffer()...)
 	}
 }
 
