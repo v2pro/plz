@@ -8,7 +8,14 @@ import (
 )
 
 func Test_witch(t *testing.T) {
-	se1 := &fakeStateExporter{state: map[string]interface{}{"hello": "world"}}
+	se1 := &fakeStateExporter{state: map[string]interface{}{"hello": []interface{}{"world1",
+		map[string]interface{}{
+			"level1-1": "val",
+			"level1-2": map[string]interface{}{
+				"level2": "val",
+			},
+		},
+	}}}
 	se1.state["myself"] = se1
 	countlog.StateExporters["fake"] = se1
 	fakeValues := []string{"tom", "jerry", "william", "lily"}

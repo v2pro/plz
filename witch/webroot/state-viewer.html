@@ -31,12 +31,40 @@
             this[k] = options[k];
         }
     }
-
     Node.prototype.addChild = function (options) {
         var child = new Node(options);
         child.id = this.id + '>' + options.label;
         child.indention = this.indention + 18;
         this.children.push(child);
+        return child;
+    };
+    Node.prototype.addObject = function (object) {
+        var isArray = Array.isArray(object);
+        for (var k in object) {
+            var label = k;
+            if (isArray) {
+                label = '[' + label + ']';
+            }
+            var v = object[k];
+            if (Array.isArray(v)) {
+                var childNode = this.addChild({label: label});
+                childNode.addObject(v);
+            } else {
+                switch (typeof v) {
+                    case 'string':
+                        this.addChild({label: label, value: v, isLeaf: true});
+                        break;
+                    case 'object':
+                        if (v.__object_address__) {
+                            this.addChild({label: label, data: v});
+                        } else {
+                            var childNode = this.addChild({label: label});
+                            childNode.addObject(v);
+                        }
+                        break;
+                }
+            }
+        }
     };
     Vue.component('state-node', {
         template: '#state-node-template',
@@ -70,16 +98,7 @@
                     var objectAddr = node.data.__object_address__;
                     node.data = null; // avoid reload children
                     var object = this.state[objectAddr];
-                    for (var k in object) {
-                        switch (typeof object[k]) {
-                            case 'string':
-                                node.addChild({label: k, value: object[k], isLeaf: true});
-                                break;
-                            case 'object':
-                                node.addChild({label: k, data: object[k]});
-                                break;
-                        }
-                    }
+                    node.addObject(object);
                 }
             }
         }
