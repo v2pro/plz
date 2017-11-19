@@ -354,8 +354,12 @@
                     parseInt(this.currentEvent.timestamp) + this.nearSeconds * 1000000000])
             },
             copyPropertyValue: function (e) {
+                var node = e.target.parentElement.parentElement.getElementsByTagName('pre')[0];
+                if (node === undefined) {
+                    return
+                }
                 var range = document.createRange();
-                range.selectNodeContents(e.target.parentElement.parentElement);
+                range.selectNodeContents(node);
                 var selection = window.getSelection();
                 selection.removeAllRanges();
                 selection.addRange(range);
