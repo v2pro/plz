@@ -1,11 +1,14 @@
 <script type="text/x-template" id="state-node-template">
-    <div @click="callbacks.onNodeClick(node)" style="padding-left:18px">
-        <span class="el-tree-node__expand-icon el-icon-caret-right"
-              :class="{ 'is-leaf': node.isLeaf, expanded: !node.isLeaf && node.expanded }"></span>
-        {{ node.label }}
-        <span v-if="node.value">: {{ node.value }}</span>
-        <state-node v-for="child in node.children" :node="child" :callbacks="callbacks" :key="child.id">
-        </state-node>
+    <div style="padding-left:18px">
+        <div @click="callbacks.onNodeClick(node)">
+            <span class="el-tree-node__expand-icon el-icon-caret-right"
+                  :class="{ 'is-leaf': node.isLeaf, expanded: !node.isLeaf && node.expanded }"></span>
+            {{ node.label }}
+            <span v-if="node.value">: {{ node.value }}</span>
+        </div>
+        <state-node v-for="child in node.children" :node="child"
+                    :callbacks="callbacks" :key="child.id"
+                    v-show="!node.isLeaf && node.expanded" />
     </div>
 </script>
 <script type="text/x-template" id="state-viewer-template">
