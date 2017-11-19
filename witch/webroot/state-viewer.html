@@ -49,10 +49,19 @@
             if (Array.isArray(v)) {
                 var childNode = this.addChild({label: label});
                 childNode.addObject(v);
+            } else if (v === null) {
+                this.addChild({label: label, value: '<null>', isLeaf: true});
+                break;
             } else {
                 switch (typeof v) {
                     case 'string':
                         this.addChild({label: label, value: v, isLeaf: true});
+                        break;
+                    case 'boolean':
+                        this.addChild({label: label, value: '' + v, isLeaf: true});
+                        break;
+                    case 'number':
+                        this.addChild({label: label, value: '' + v, isLeaf: true});
                         break;
                     case 'object':
                         if (v.__object_address__) {

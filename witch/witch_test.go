@@ -14,6 +14,9 @@ func Test_witch(t *testing.T) {
 			"level1-2": map[string]interface{}{
 				"level2": "val",
 			},
+			"level1-3": 100.64,
+			"level1-4": nil,
+			"level1-5": true,
 		},
 	}}}
 	se1.state["myself"] = se1
