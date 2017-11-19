@@ -11,6 +11,12 @@ import (
 )
 
 var stateExporterType = reflect.TypeOf((*countlog.StateExporter)(nil)).Elem()
+var myJson = jsoniter.Config{
+	SortMapKeys:                   true,
+	EscapeHTML:                    false,
+	MarshalFloatWith6Digits:       true, // will lose precession
+	ObjectFieldMustBeSimpleString: true, // do not unescape object field
+}.Froze()
 
 func init() {
 	jsoniter.RegisterExtension(&stateExporterExtension{})
@@ -25,8 +31,8 @@ func exportState(respWriter http.ResponseWriter, req *http.Request) {
 }
 
 func marshalState(exporters map[string]countlog.StateExporter, writer io.Writer) {
-	stream := jsoniter.ConfigFastest.BorrowStream(writer)
-	defer jsoniter.ConfigFastest.ReturnStream(stream)
+	stream := myJson.BorrowStream(writer)
+	defer myJson.ReturnStream(stream)
 	exporting := &exporting{
 		encodedExporters: map[uintptr][]byte{},
 	}
@@ -100,8 +106,8 @@ func (encoder *stateExporterEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter
 	if _, found := exporting.encodedExporters[uintptr(ptr)]; !found {
 		exporting.encodedExporters[uintptr(ptr)] = nil // placeholder
 		state := stateExporter.ExportState()
-		subStream := jsoniter.ConfigFastest.BorrowStream(nil)
-		defer jsoniter.ConfigFastest.ReturnStream(subStream)
+		subStream := myJson.BorrowStream(nil)
+		defer myJson.ReturnStream(subStream)
 		subStream.Attachment = stream.Attachment
 		subStream.WriteVal(state)
 		exporting.encodedExporters[uintptr(ptr)] = subStream.Buffer()

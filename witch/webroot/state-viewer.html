@@ -1,49 +1,53 @@
 <script type="text/x-template" id="state-node-template">
-<div style="padding-left:18px">
-    <div @click="callbacks.onNodeClick(node)">
+    <div style="padding-left:18px">
+        <div @click="callbacks.onNodeClick(node)">
         <span class="el-tree-node__expand-icon el-icon-caret-right"
-              :class="{ 'is-leaf': node.isLeaf, expanded: !node.isLeaf && node.expanded }"></span>
-        {{ node.label }}
-        <span v-if="node.value">: {{ node.value }}</span>
+              :class="{ 'is-leaf': node.isLeaf, expanded: !node.isLeaf && callbacks.isExpanded(node) }"></span>
+            {{ node.label }}
+            <span v-if="node.value">: {{ node.value }}</span>
+        </div>
+        <state-node v-for="child in node.children" :node="child"
+                    :callbacks="callbacks" :key="child.id"
+                    v-show="!node.isLeaf && callbacks.isExpanded(node)"/>
     </div>
-    <state-node v-for="child in node.children" :node="child"
-                :callbacks="callbacks" :key="child.id"
-                v-show="!node.isLeaf && node.expanded" />
-</div>
 </script>
 <script type="text/x-template" id="state-viewer-template">
-<div>
-    <el-row>
-        <el-col :span="20">
-            <div v-show="selectedSnapshot === null">No snapshot to show, please click "Poll Current State"</div>
-            <state-node v-for="node in tree.children" :node="node" :callbacks="callbacks" :key="node.id">
-            </state-node>
-        </el-col>
-        <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
-            <snapshots :selectedSnapshot.sync="selectedSnapshot"></snapshots>
-        </el-col>
-    </el-row>
-</div>
+    <div>
+        <el-row>
+            <el-col :span="20">
+                <div v-show="selectedSnapshot === null">No snapshot to show, please click "Poll Current State"</div>
+                <div v-if="selectedSnapshot" style="margin-bottom: 8px;">Snapshot Taken At: {{ selectedSnapshot.timestamp }}</div>
+                <state-node v-for="node in tree.children" :node="node" :callbacks="callbacks" :key="node.id">
+                </state-node>
+            </el-col>
+            <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
+                <snapshots :selectedSnapshot.sync="selectedSnapshot"></snapshots>
+            </el-col>
+        </el-row>
+    </div>
 </script>
 <script>
     function Node(options) {
         this.id = '';
         this.label = '';
         this.value = null;
-        this.expanded = false;
         this.isLeaf = false;
         this.data = null;
         this.indention = 0;
         this.children = [];
+        this.root = null;
         for (var k in options) {
             this[k] = options[k];
         }
     }
+
     Node.prototype.addChild = function (options) {
         var child = new Node(options);
+        child.root = this.root;
         child.id = this.id + '>' + options.label;
         child.indention = this.indention + 18;
         this.children.push(child);
+        this.root.all_nodes[child.id] = child;
         return child;
     };
     Node.prototype.addObject = function (object) {
@@ -90,30 +94,44 @@
     Vue.component('state-viewer', {
         template: '#state-viewer-template',
         data: function () {
-            var tree = new Node({id: 'root'});
             return {
-                tree: tree, // view model
+                tree: new Node(), // view model
                 selectedSnapshot: null,
-                callbacks: this
+                callbacks: this,
+                expansion: {}
             }
         },
         watch: {
-            selectedSnapshot: function() {
+            selectedSnapshot: function () {
                 this.tree = new Node({id: 'root'});
+                this.tree.root = this.tree;
+                this.tree.all_nodes = {};
                 for (var k in this.selectedSnapshot.data.root) {
                     this.tree.addChild({label: k, data: this.selectedSnapshot.data.root[k]})
+                }
+                for (var nodeId in this.expansion) {
+                    var node = this.tree.all_nodes[nodeId];
+                    if (node) {
+                        this.expandStateExporter(node);
+                    }
                 }
             }
         },
         methods: {
             onNodeClick: function (node) {
-                node.expanded = !node.expanded;
+                Vue.set(this.expansion, node.id, !this.expansion[node.id]);
+                this.expandStateExporter(node);
+            },
+            expandStateExporter: function (node) {
                 if (node.data && node.data.__object_address__) {
                     var objectAddr = node.data.__object_address__;
                     node.data = null; // avoid reload children
                     var object = this.selectedSnapshot.data[objectAddr];
                     node.addObject(object);
                 }
+            },
+            isExpanded: function (node) {
+                return this.expansion[node.id];
             }
         }
     });
