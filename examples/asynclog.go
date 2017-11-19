@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	logWriter := countlog.NewAsyncLogWriter(countlog.LEVEL_TRACE, countlog.NewFileLogOutput("STDOUT"))
+	logWriter := countlog.NewAsyncLogWriter(countlog.LevelDebug, countlog.NewFileLogOutput("STDOUT"))
 	logWriter.LogFormatter = &countlog.CompactFormat{StringLengthCap: 512}
 	logWriter.Start()
 	countlog.LogWriters = append(countlog.LogWriters, logWriter)
