@@ -110,13 +110,17 @@ func (encoder *stateExporterEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter
 	stream.WriteObjectField("__object_address__")
 	stream.WriteVal(uintptr(ptr))
 	stream.WriteObjectEnd()
+	if stream.Attachment == nil {
+		// not exporting
+		return
+	}
 	exporting := stream.Attachment.(*exporting)
 	if _, found := exporting.encodedExporters[uintptr(ptr)]; !found {
 		exporting.encodedExporters[uintptr(ptr)] = nil // placeholder
 		state := stateExporter.ExportState()
 		subStream := myJson.BorrowStream(nil)
 		defer myJson.ReturnStream(subStream)
-		subStream.Attachment = stream.Attachment
+		subStream.Attachment = exporting
 		subStream.WriteVal(state)
 		exporting.encodedExporters[uintptr(ptr)] = append([]byte(nil), subStream.Buffer()...)
 	}
