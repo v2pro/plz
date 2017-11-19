@@ -18,7 +18,8 @@
                         @row-click="onRowClick">
                     <el-table-column type="expand">
                         <template slot-scope="tbl">
-                            <div @dblclick="onRowDbClick(tbl.row)"><span v-for="kv in formatKV(tbl.row)" class="event-kv">{{ kv }}</span></div>
+                            <div @dblclick="onRowDbClick(tbl.row)"><span v-for="kv in formatKV(tbl.row)"
+                                                                         class="event-kv">{{ kv }}</span></div>
                         </template>
                     </el-table-column>
                     <el-table-column label="timestamp" :formatter="formatTimestamp" width="140" v-if="showTimestamp"/>
@@ -61,10 +62,16 @@
                 Seconds
                 <div v-for="(propValue, propKey) in currentEvent" v-if="propKey.indexOf('__') !== 0">
                     <div>
-                        <i class="el-icon-zoom-in" style="cursor: pointer" @click="addFilter(propKey, 'equals', propValue)"></i>
-                        <i class="el-icon-zoom-out" style="cursor: pointer" @click="addFilter(propKey, 'not-equals', propValue)"></i>
-                        <b>{{ propKey }}</b></div>
-                    <div>{{ propValue }}</div>
+                        <i class="el-icon-zoom-in" style="cursor: pointer"
+                           @click="addFilter(propKey, 'equals', propValue)"></i>
+                        <i class="el-icon-zoom-out" style="cursor: pointer"
+                           @click="addFilter(propKey, 'not-equals', propValue)"></i>
+                        <b>{{ propKey }}</b>
+                        <svg class="icon" aria-hidden="true" style="cursor: pointer" @click="copyPropertyValue">
+                            <use xlink:href="#icon-copy"></use>
+                        </svg>
+                    </div>
+                    <pre style="white-space: pre-wrap;word-wrap: break-word;">{{ propValue }}</pre>
                     <hr/>
                 </div>
             </div>
@@ -140,7 +147,9 @@
                 nearSeconds: 1, // used when add nearby events
                 filters: {
                     cacheKey: '__filtered_by_0',
-                    filterFunc: function(event) { return true; }
+                    filterFunc: function (event) {
+                        return true;
+                    }
                 },
                 viewerData: [], // the actual viewer data, will be refilled to match offset/window
                 viewerOffset: 0, // [viewerOffset, viewerOffset+viewerWindow) defines the expected viewer data
@@ -170,10 +179,10 @@
             }
         },
         methods: {
-            assignId: function(event) {
+            assignId: function (event) {
                 if (this.eventIds[event.timestamp]) {
-                    while(true) {
-                        var id = event.timestamp + '-' + Math.floor(Math.random()*100000);
+                    while (true) {
+                        var id = event.timestamp + '-' + Math.floor(Math.random() * 100000);
                         if (this.eventIds[id]) {
                             continue;
                         }
@@ -185,12 +194,12 @@
                 }
                 this.eventIds[event.id] = true;
             },
-            onRowClick: function(row, e, column) {
+            onRowClick: function (row, e, column) {
                 if (column.type !== 'expand') {
                     this.$refs.viewer.toggleRowExpansion(row);
                 }
             },
-            onRowDbClick: function(row) {
+            onRowDbClick: function (row) {
                 this.currentEvent = row;
                 this.showDetails = true;
             },
@@ -201,7 +210,7 @@
                 var d = new Date(row.timestamp / 1000000);
                 return d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + '.' + d.getMilliseconds();
             },
-            formatUserDefinedColumn: function(row, column, cellValue) {
+            formatUserDefinedColumn: function (row, column, cellValue) {
                 if (cellValue) {
                     if (cellValue.length > 512) {
                         return cellValue.substr(0, 512) + '...capped';
@@ -335,14 +344,22 @@
                     me.loading = false;
                 });
             },
-            addFilter: function(propKey, operator, propValue) {
+            addFilter: function (propKey, operator, propValue) {
                 this.showDetails = false;
                 this.$refs.filters.addFilter(propKey, operator, propValue);
             },
-            showEventsNearby: function() {
+            showEventsNearby: function () {
                 this.addFilter('timestamp', 'between', [
                     parseInt(this.currentEvent.timestamp) - this.nearSeconds * 1000000000,
                     parseInt(this.currentEvent.timestamp) + this.nearSeconds * 1000000000])
+            },
+            copyPropertyValue: function (e) {
+                var range = document.createRange();
+                range.selectNodeContents(e.target.parentElement.parentElement);
+                var selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                document.execCommand('copy');
             }
         },
         computed: {

@@ -31,7 +31,15 @@ func (se *fakeStateExporter) ExportState() map[string]interface{} {
 func Test_witch(t *testing.T) {
 	countlog.RegisterStateExporter("fake", &fakeStateExporter{})
 	fakeValues := []string{"tom", "jerry", "william", "lily"}
+	StartViewer("192.168.3.33:8318")
 	go func() {
+		defer func() {
+			recovered := recover()
+			if recovered != nil {
+				countlog.Fatal("event!witch_test.panic", "err", recovered,
+					"stacktrace", countlog.ProvideStacktrace)
+			}
+		}()
 		for {
 			response := []byte{}
 			for i := int32(0); i < rand.Int31n(1024*256); i++ {
@@ -42,6 +50,5 @@ func Test_witch(t *testing.T) {
 			time.Sleep(time.Millisecond * 500)
 		}
 	}()
-	StartViewer("192.168.3.33:8318")
 	time.Sleep(time.Hour)
 }
