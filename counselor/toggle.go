@@ -3,38 +3,38 @@ package counselor
 import "fmt"
 
 type rawToggle struct {
-	preprocessorFn   string
-	preprocessorArgs map[string]interface{}
-	variants         []*variant
-	defaultVariant   itemName
+	PreprocessorFn   string
+	PreprocessorArgs map[string]interface{}
+	Variants         []*variant
+	DefaultVariant   itemName
 }
 
 type variant struct {
-	itemName itemName
-	ruleFn   string
-	ruleArgs map[string]interface{}
+	ItemName itemName
+	RuleFn   string
+	RuleArgs map[string]interface{}
 }
 
 type toggle func(target map[string]string) (itemName, error)
 
 var createToggle = func(rawToggle *rawToggle) (toggle, error) {
 	var err error
-	var rules = [len(rawToggle.variants)]rule{}
+	var rules = make([]rule, len(rawToggle.Variants))
 	variants := []string{}
-	for i, variant := range rawToggle.variants {
-		variants = append(variants, string(variant.itemName))
-		if variant.ruleFn == "" {
-			return nil, fmt.Errorf("missing rule for variant: %s", variant.itemName)
+	for i, variant := range rawToggle.Variants {
+		variants = append(variants, string(variant.ItemName))
+		if variant.RuleFn == "" {
+			return nil, fmt.Errorf("missing rule for variant: %s", variant.ItemName)
 		}
-		rules[i], err = createRule(variant.ruleFn, variant.ruleArgs)
+		rules[i], err = createRule(variant.RuleFn, variant.RuleArgs)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create rule for variant %s: %s", variant.itemName, err.Error())
+			return nil, fmt.Errorf("failed to create rule for variant %s: %s", variant.ItemName, err.Error())
 		}
 	}
-	variants = append(variants, string(rawToggle.defaultVariant))
+	variants = append(variants, string(rawToggle.DefaultVariant))
 	var preprocessor preprocessor
-	if rawToggle.preprocessorFn != "" {
-		preprocessor, err = createPreprocessor(rawToggle.preprocessorFn, rawToggle.preprocessorArgs, variants)
+	if rawToggle.PreprocessorFn != "" {
+		preprocessor, err = createPreprocessor(rawToggle.PreprocessorFn, rawToggle.PreprocessorArgs, variants)
 		if err != nil {
 			return nil, err
 		}
@@ -55,6 +55,6 @@ var createToggle = func(rawToggle *rawToggle) (toggle, error) {
 				return itemName(variants[i]), nil
 			}
 		}
-		return rawToggle.defaultVariant, nil
+		return rawToggle.DefaultVariant, nil
 	}, nil
 }

@@ -59,21 +59,21 @@ func getParser(dataFormat string) Parser {
 
 var SourceDir = os.Getenv("HOME") + "/conf"
 
-func getItem(objectId objectId, itemName itemName) interface{} {
+func getItem(objectId objectId, _itemName itemName) interface{} {
 	items := store[objectId]
 	if items == nil {
 		items = map[itemName]interface{}{}
 		store[objectId] = items
 	}
-	item := items[itemName]
+	item := items[_itemName]
 	if item != nil {
 		return item
 	}
-	data := loadItem(objectId, itemName)
+	data := loadItem(objectId, _itemName)
 	if data == nil {
 		return nil
 	}
-	return parseItem(objectId, itemName, data)
+	return parseItem(objectId, _itemName, data)
 }
 
 func loadItem(objectId objectId, itemName itemName) []byte {
