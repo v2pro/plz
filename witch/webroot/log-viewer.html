@@ -138,7 +138,7 @@
                 showDetails: false,
                 currentEvent: null,
                 /* how to fill the events */
-                dataSource: window.location.host,
+                dataSource: window.location.href,
                 propValues: {}, // property dictionary, only keep last 100 unique values
                 events: [], // the backing data store, only events in the window range is filled into viewer
                 /* how to fill the viewer data */
@@ -383,7 +383,7 @@
             var me = this;
             (function () {
                 var callback = arguments.callee;
-                axios.get('http://' + me.dataSource + '/more-events?ts=' + Date.now())
+                axios.get(me.dataSource + '/more-events?ts=' + Date.now())
                     .then(function (resp) {
                         if (!resp || !Array.isArray(resp.data)) {
                             setTimeout(callback, 10000);

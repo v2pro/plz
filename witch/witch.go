@@ -17,6 +17,14 @@ var files = []string{
 
 var viewerHtml []byte
 
+var Mux = &http.ServeMux{}
+
+func init() {
+	Mux.HandleFunc("/witch/more-events", moreEvents)
+	Mux.HandleFunc("/witch/export-state", exportState)
+	Mux.HandleFunc("/witch/", homepage)
+}
+
 func initViewerHtml() error {
 	if viewerHtml != nil {
 		return nil
@@ -54,7 +62,7 @@ func initViewerHtml() error {
 	return nil
 }
 
-func StartViewer(addr string) {
+func Start(addr string) {
 	err := initViewerHtml()
 	if err != nil {
 		countlog.Error("event!witch.failed to init viewer html", "err", err)
@@ -62,13 +70,12 @@ func StartViewer(addr string) {
 	}
 	countlog.Info("event!witch.viewer started", "addr", addr)
 	countlog.LogWriters = append(countlog.LogWriters, theEventQueue)
-	http.HandleFunc("/", homepage)
-	http.HandleFunc("/more-events", moreEvents)
-	http.HandleFunc("/export-state", exportState)
-	go func() {
-		setCurrentGoRoutineIsKoala()
-		http.ListenAndServe(addr, nil)
-	}()
+	if addr != "" {
+		go func() {
+			setCurrentGoRoutineIsKoala()
+			http.ListenAndServe(addr, Mux)
+		}()
+	}
 }
 
 func homepage(respWriter http.ResponseWriter, req *http.Request) {

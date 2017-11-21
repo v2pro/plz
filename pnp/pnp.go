@@ -34,7 +34,7 @@ func maintainTunnelInBackground(pingUrl string, processInfo map[string]interface
 	processInfo["tunnel_addr"] = fmt.Sprintf("127.0.0.1:%d", port)
 	countlog.Info("event!pnp.tunnel started", "add", processInfo["tunnel_addr"])
 	req, err := json.Marshal(map[string]interface{}{
-		"ProcessId": os.Getpid(),
+		"ProcessId":   os.Getpid(),
 		"ProcessInfo": processInfo,
 	})
 	if err != nil {

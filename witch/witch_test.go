@@ -31,7 +31,7 @@ func (se *fakeStateExporter) ExportState() map[string]interface{} {
 func Test_witch(t *testing.T) {
 	countlog.RegisterStateExporter("fake", &fakeStateExporter{})
 	fakeValues := []string{"tom", "jerry", "william", "lily"}
-	StartViewer("192.168.3.33:8318")
+	Start("192.168.3.33:8318")
 	go func() {
 		defer func() {
 			recovered := recover()

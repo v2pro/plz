@@ -4,9 +4,12 @@ import (
 	"github.com/v2pro/plz/countlog"
 	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 const toggleItemName = "toggle"
+
+var Mux = &http.ServeMux{}
 
 func init() {
 	RegisterParserByFunc("toggle", func(data []byte) (interface{}, error) {
