@@ -17,6 +17,14 @@ func init() {
 		}
 		return createToggle(&rawToggle)
 	})
+	RegisterParserByFunc("json", func(data []byte) (interface{}, error) {
+		var obj interface{}
+		err := json.Unmarshal(data, &obj)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal json: %s", err.Error())
+		}
+		return obj, nil
+	})
 }
 
 func GetObject(namespace string, objectName string, targetKV ...string) interface{} {

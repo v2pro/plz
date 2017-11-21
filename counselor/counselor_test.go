@@ -27,5 +27,15 @@ func Test_thousand_bucket(t *testing.T) {
 	should.Nil(err)
 	os.RemoveAll("/tmp/conf/testNS/testObj")
 	os.MkdirAll("/tmp/conf/testNS/testObj", 0777)
-	ioutil.WriteFile("/tmp/conf/testNS/testObj/toggle", toggleItem, 0666)
+	ioutil.WriteFile("/tmp/conf/testNS/testObj/toggle",
+		append([]byte("data_format:toggle\n"), toggleItem...), 0666)
+	ioutil.WriteFile("/tmp/conf/testNS/testObj/true",
+		[]byte("data_format:json\ntrue"), 0666)
+	ioutil.WriteFile("/tmp/conf/testNS/testObj/false",
+		[]byte("data_format:json\nfalse"), 0666)
+	SourceDir = "/tmp/conf"
+	pid1 := "10248"
+	should.True(ShouldUse("testNS", "testObj", "divide_buckets_by", pid1))
+	pid2 := "9876"
+	should.False(ShouldUse("testNS", "testObj", "divide_buckets_by", pid2))
 }
