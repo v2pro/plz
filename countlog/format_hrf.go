@@ -2,9 +2,9 @@ package countlog
 
 import (
 	"fmt"
-	"encoding/base64"
 	"context"
 	"reflect"
+	"encoding/json"
 )
 
 type HumanReadableFormat struct {
@@ -54,14 +54,11 @@ func formatV(v interface{}) string {
 	}
 	switch typedV := v.(type) {
 	case []byte:
-		buf := typedV
-		if isBinary(buf) {
-			return base64.StdEncoding.EncodeToString(buf)
-		} else {
-			return string(buf)
-		}
+		return string(encodeAnyByteArray(typedV))
 	case string:
 		return typedV
+	case json.RawMessage:
+		return string(typedV)
 	default:
 		err, _ := v.(error)
 		if err != nil {

@@ -5,15 +5,16 @@ import (
 	"net/http"
 	"github.com/v2pro/plz/witch"
 	"github.com/v2pro/plz/counselor"
+	"net"
 )
 
-// to be set externally
+// who am i, set externally
+var PrimaryIP string
+var PrimaryPort int
 var Service string
-
-// to be set externally
 var Cluster string
 
-// to be set externally
+// to be set externally, additional info about this process
 var ProcessInfo = map[string]interface{}{}
 
 var PingUrl = "http://127.0.0.1:8318/ping"
