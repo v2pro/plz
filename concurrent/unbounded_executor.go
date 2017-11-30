@@ -34,8 +34,6 @@ func NewUnboundedExecutor() *UnboundedExecutor {
 
 func (executor *UnboundedExecutor) Go(handler func(ctx context.Context)) {
 	_, file, line, _ := runtime.Caller(1)
-	countlog.Info("event!unbounded_executor.start goroutine",
-		"startFromFile", file, "startFromLine", line)
 	executor.activeGoroutinesMutex.Lock()
 	defer executor.activeGoroutinesMutex.Unlock()
 	startFrom := startFrom{
@@ -59,13 +57,18 @@ func (executor *UnboundedExecutor) Go(handler func(ctx context.Context)) {
 	}()
 }
 
-func (executor *UnboundedExecutor) StopAndWait() {
+func (executor *UnboundedExecutor) StopAndWait(ctx context.Context) {
 	executor.cancel()
 	for {
 		if executor.checkGoroutines() {
 			return
 		}
-		time.Sleep(time.Second * 3)
+		fiveSeconds := time.NewTimer(time.Second * 5)
+		select {
+		case <-fiveSeconds.C:
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
