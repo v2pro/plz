@@ -15,6 +15,9 @@ type directLogWriter struct {
 }
 
 func (logWriter *directLogWriter) WriteLog(level int, event string, properties []interface{}) {
+	if level <= LevelTrace {
+		return
+	}
 	msg := logWriter.logFormatter.FormatLog(Event{Level: level, Event: event, Properties: properties})
 	os.Stdout.Write(withColorLevelPrefix(level, msg))
 	os.Stdout.Sync()

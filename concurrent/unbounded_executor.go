@@ -60,13 +60,13 @@ func (executor *UnboundedExecutor) Go(handler func(ctx context.Context)) {
 func (executor *UnboundedExecutor) StopAndWait(ctx context.Context) {
 	executor.cancel()
 	for {
-		if executor.checkGoroutines() {
-			return
-		}
-		fiveSeconds := time.NewTimer(time.Second * 5)
+		fiveSeconds := time.NewTimer(time.Millisecond * 100)
 		select {
 		case <-fiveSeconds.C:
 		case <-ctx.Done():
+			return
+		}
+		if executor.checkGoroutines() {
 			return
 		}
 	}
@@ -75,15 +75,14 @@ func (executor *UnboundedExecutor) StopAndWait(ctx context.Context) {
 func (executor *UnboundedExecutor) checkGoroutines() bool {
 	executor.activeGoroutinesMutex.Lock()
 	defer executor.activeGoroutinesMutex.Unlock()
-	allDone := true
 	for startFrom, count := range executor.activeGoroutines {
 		if count > 0 {
 			countlog.Info("event!unbounded_executor.still waiting goroutines to quit",
 				"startFromFile", startFrom.startFromFile,
 				"startFromLine", startFrom.startFromLine,
 				"count", count)
-			allDone = false
+			return false
 		}
 	}
-	return allDone
+	return true
 }
