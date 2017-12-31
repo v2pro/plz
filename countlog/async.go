@@ -53,6 +53,9 @@ func (logWriter *AsyncLogWriter) Start() {
 			select {
 			case event := <-logWriter.msgChan:
 				formattedEvent := logWriter.LogFormat.FormatLog(event)
+				if formattedEvent == nil {
+					continue
+				}
 				logWriter.LogOutput.OutputLog(event.Level, event.Properties[1].(int64), formattedEvent)
 			case <-logWriter.isClosed:
 				return

@@ -22,6 +22,11 @@ func (format *HumanReadableFormat) FormatLog(event Event) []byte {
 		msg = append(msg, fmt.Sprintf(
 			"=== [%s] %s ===\n", string(ctx), event.Event)...)
 	}
+	if len(event.Properties) % 2 == 1 {
+		msg = append(msg, "wrong number of properties\n"...)
+		return msg
+	}
+	beforePropMsgLen := len(msg)
 	for i := 0; i < len(event.Properties); i += 2 {
 		k, _ := event.Properties[i].(string)
 		switch k {
@@ -29,7 +34,7 @@ func (format *HumanReadableFormat) FormatLog(event Event) []byte {
 			continue
 		}
 		v := event.Properties[i+1]
-		if event.Level <= LevelInfo && k == "lineNumber"{
+		if event.Level <= LevelInfo && (k == "lineNumber" || k == "closedAt"){
 			continue
 		}
 		if k == "err" && v == nil {
@@ -50,6 +55,10 @@ func (format *HumanReadableFormat) FormatLog(event Event) []byte {
 		msg = append(msg, ": "...)
 		msg = append(msg, formattedV...)
 		msg = append(msg, '\n')
+	}
+	noProp := len(msg) == beforePropMsgLen
+	if noProp && event.Level <= LevelTrace {
+		return nil
 	}
 	return msg
 }

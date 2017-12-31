@@ -16,6 +16,9 @@ type directLogWriter struct {
 
 func (logWriter *directLogWriter) WriteLog(level int, event string, properties []interface{}) {
 	msg := logWriter.logFormatter.FormatLog(Event{Level: level, Event: event, Properties: properties})
+	if msg == nil {
+		return
+	}
 	os.Stdout.Write(withColorLevelPrefix(level, msg))
 	os.Stdout.Sync()
 }
