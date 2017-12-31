@@ -7,11 +7,11 @@ import (
 type Context interface {
 	context.Context
 	Trace(event string, properties ...interface{})
-	TraceMetric(callee string, err error, properties ...interface{})
+	TraceCall(callee string, err error, properties ...interface{})
 	Debug(event string, properties ...interface{})
-	DebugMetric(callee string, err error, properties ...interface{})
+	DebugCall(callee string, err error, properties ...interface{})
 	Info(event string, properties ...interface{})
-	InfoMetric(callee string, err error, properties ...interface{})
+	InfoCall(callee string, err error, properties ...interface{})
 	Warn(event string, properties ...interface{})
 	Error(event string, properties ...interface{})
 	Fatal(event string, properties ...interface{})
@@ -31,9 +31,9 @@ func (ctx wrappedContext) Trace(event string, properties ...interface{}) {
 	Trace(event, properties...)
 }
 
-func (ctx wrappedContext) TraceMetric(callee string, err error, properties ...interface{}) {
+func (ctx wrappedContext) TraceCall(callee string, err error, properties ...interface{}) {
 	properties = append(properties, "ctx", ctx.Context)
-	TraceMetric(callee, err, properties...)
+	TraceCall(callee, err, properties...)
 }
 
 func (ctx wrappedContext) Debug(event string, properties ...interface{}) {
@@ -41,9 +41,9 @@ func (ctx wrappedContext) Debug(event string, properties ...interface{}) {
 	Debug(event, properties...)
 }
 
-func (ctx wrappedContext) DebugMetric(callee string, err error, properties ...interface{}) {
+func (ctx wrappedContext) DebugCall(callee string, err error, properties ...interface{}) {
 	properties = append(properties, "ctx", ctx.Context)
-	DebugMetric(callee, err, properties...)
+	DebugCall(callee, err, properties...)
 }
 
 func (ctx wrappedContext) Info(event string, properties ...interface{}) {
@@ -51,9 +51,9 @@ func (ctx wrappedContext) Info(event string, properties ...interface{}) {
 	Info(event, properties...)
 }
 
-func (ctx wrappedContext) InfoMetric(callee string, err error, properties ...interface{}) {
+func (ctx wrappedContext) InfoCall(callee string, err error, properties ...interface{}) {
 	properties = append(properties, "ctx", ctx.Context)
-	InfoMetric(callee, err, properties...)
+	InfoCall(callee, err, properties...)
 }
 
 func (ctx wrappedContext) Warn(event string, properties ...interface{}) {

@@ -28,10 +28,10 @@ func Test_metric(t *testing.T) {
 	err := errors.New("my fault")
 	// when performance is critical, use ShouldLog to reduce log overhead
 	if err != nil || ShouldLog(LevelTrace) {
-		TraceMetric(err, "callee", "hello")
+		TraceCall(err, "callee", "hello")
 	}
 	// without ShouldLog the overhead is still minimum
-	TraceMetric(err, "callee", "hello")
+	TraceCall(err, "callee", "hello")
 	// err == nil will not show, because Trace < Debug
-	TraceMetric(nil, "callee", "world")
+	TraceCall(nil, "callee", "world")
 }

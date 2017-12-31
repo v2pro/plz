@@ -18,7 +18,7 @@ func main() {
 	plz.PlugAndPlay()
 	ctx := context.WithValue(context.Background(), "traceId", "abcd")
 	//err := doSomething(ctx)
-	//countlog.TraceMetric("callee!main.doSomething", err, "ctx", ctx)
+	//countlog.TraceCall("callee!main.doSomething", err, "ctx", ctx)
 	doZ(countlog.Ctx(ctx))
 }
 
@@ -83,13 +83,13 @@ func doY(ctx context.Context) error {
 func doZ(ctx countlog.Context) error {
 	defer countlog.Recover()
 	file, err := os.OpenFile("/tmp/abc", os.O_RDWR, 0666)
-	ctx.TraceMetric("callee!os.OpenFile", err)
+	ctx.TraceCall("callee!os.OpenFile", err)
 	if err != nil {
 		return err
 	}
 	defer countlog.Close(file)
 	_, err = file.Write([]byte("hello"))
-	ctx.TraceMetric("callee!file.Write", err)
+	ctx.TraceCall("callee!file.Write", err)
 	if err != nil {
 		return err
 	}

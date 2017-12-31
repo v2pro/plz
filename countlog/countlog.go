@@ -50,7 +50,8 @@ func Trace(event string, properties ...interface{}) {
 	}
 	log(LevelTrace, event, properties)
 }
-func TraceMetric(callee string, err error, properties ...interface{}) {
+
+func TraceCall(callee string, err error, properties ...interface{}) {
 	level := LevelTrace
 	if err != nil {
 		level = LevelError
@@ -58,15 +59,17 @@ func TraceMetric(callee string, err error, properties ...interface{}) {
 	if level < MinLevel{
 		return
 	}
-	log(level, "event!metric", append(properties, "callee", callee[len("callee!"):], "err", err))
+	log(level, "event!call", append(properties, "callee", callee[len("callee!"):], "err", err))
 }
+
 func Debug(event string, properties ...interface{}) {
 	if LevelDebug < MinLevel{
 		return
 	}
 	log(LevelDebug, event, properties)
 }
-func DebugMetric(callee string, err error, properties ...interface{}) {
+
+func DebugCall(callee string, err error, properties ...interface{}) {
 	level := LevelDebug
 	if err != nil {
 		level = LevelError
@@ -74,15 +77,17 @@ func DebugMetric(callee string, err error, properties ...interface{}) {
 	if level < MinLevel{
 		return
 	}
-	log(level, "event!metric", append(properties, "callee", callee[len("callee!"):], "err", err))
+	log(level, "event!call", append(properties, "callee", callee[len("callee!"):], "err", err))
 }
+
 func Info(event string, properties ...interface{}) {
 	if LevelInfo < MinLevel{
 		return
 	}
 	log(LevelInfo, event, properties)
 }
-func InfoMetric(callee string, err error, properties ...interface{}) {
+
+func InfoCall(callee string, err error, properties ...interface{}) {
 	level := LevelInfo
 	if err != nil {
 		level = LevelError
@@ -90,20 +95,25 @@ func InfoMetric(callee string, err error, properties ...interface{}) {
 	if level < MinLevel{
 		return
 	}
-	log(level, "event!metric", append(properties, "callee", callee[len("callee!"):], "err", err))
+	log(level, "event!call", append(properties, "callee", callee[len("callee!"):], "err", err))
 }
+
 func Warn(event string, properties ...interface{}) {
 	log(LevelWarn, event, properties)
 }
+
 func Error(event string, properties ...interface{}) {
 	log(LevelError, event, properties)
 }
+
 func Fatal(event string, properties ...interface{}) {
 	log(LevelFatal, event, properties)
 }
+
 func Log(level int, event string, properties ...interface{}) {
 	log(level, event, properties)
 }
+
 func log(level int, event string, properties []interface{}) {
 	var expandedProperties []interface{}
 	if len(LogWriters) == 0 {

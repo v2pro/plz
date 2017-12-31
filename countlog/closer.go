@@ -9,5 +9,5 @@ import (
 func Close(closer io.Closer) {
 	err := closer.Close()
 	_, file, line, _ := runtime.Caller(1)
-	TraceMetric("callee!closer", err, "closedAt", fmt.Sprintf("%s:%d", file, line))
+	TraceCall("callee!closer", err, "closedAt", fmt.Sprintf("%s:%d", file, line))
 }
