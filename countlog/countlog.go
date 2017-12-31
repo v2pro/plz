@@ -59,7 +59,8 @@ func TraceCall(callee string, err error, properties ...interface{}) {
 	if level < MinLevel{
 		return
 	}
-	log(level, "event!call", append(properties, "callee", callee[len("callee!"):], "err", err))
+	callee = callee[len("callee!"):]
+	log(level, "event!call " + callee, append(properties, "callee", callee, "err", err))
 }
 
 func Debug(event string, properties ...interface{}) {
@@ -77,7 +78,8 @@ func DebugCall(callee string, err error, properties ...interface{}) {
 	if level < MinLevel{
 		return
 	}
-	log(level, "event!call", append(properties, "callee", callee[len("callee!"):], "err", err))
+	callee = callee[len("callee!"):]
+	log(level, "event!call " + callee, append(properties, "callee", callee, "err", err))
 }
 
 func Info(event string, properties ...interface{}) {
@@ -95,7 +97,8 @@ func InfoCall(callee string, err error, properties ...interface{}) {
 	if level < MinLevel{
 		return
 	}
-	log(level, "event!call", append(properties, "callee", callee[len("callee!"):], "err", err))
+	callee = callee[len("callee!"):]
+	log(level, "event!call " + callee, append(properties, "callee", callee, "err", err))
 }
 
 func Warn(event string, properties ...interface{}) {

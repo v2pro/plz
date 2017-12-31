@@ -25,10 +25,16 @@ func (format *HumanReadableFormat) FormatLog(event Event) []byte {
 	for i := 0; i < len(event.Properties); i += 2 {
 		k, _ := event.Properties[i].(string)
 		switch k {
-		case "", "ctx", "timestamp":
+		case "", "ctx", "timestamp", "callee":
 			continue
 		}
 		v := event.Properties[i+1]
+		if event.Level <= LevelInfo && k == "lineNumber"{
+			continue
+		}
+		if k == "err" && v == nil {
+			continue
+		}
 		formattedV := formatV(v)
 		if formattedV == "" {
 			continue
