@@ -152,6 +152,7 @@ func expand(level int, event string, properties []interface{}) (int, string, []i
 	expandedProperties := make([]interface{}, 0, len(properties) + 4)
 	expandedProperties = append(expandedProperties, "timestamp")
 	expandedProperties = append(expandedProperties, time.Now().UnixNano())
+	skipFramesCount := 3
 	for _, prop := range properties {
 		switch typedProp := prop.(type) {
 		case func() interface{}:
@@ -159,11 +160,14 @@ func expand(level int, event string, properties []interface{}) (int, string, []i
 		case []byte:
 			// []byte is likely being reused, need to make a copy here
 			expandedProperties = append(expandedProperties, encodeAnyByteArray(typedProp))
+		case wrappedContext:
+			skipFramesCount = 5
+			expandedProperties = append(expandedProperties, prop)
 		default:
 			expandedProperties = append(expandedProperties, prop)
 		}
 	}
-	_, file, line, ok := runtime.Caller(3)
+	_, file, line, ok := runtime.Caller(skipFramesCount)
 	if ok {
 		expandedProperties = append(expandedProperties, "lineNumber")
 		// this format allows intellij to jump to that line

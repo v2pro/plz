@@ -27,51 +27,51 @@ type wrappedContext struct {
 }
 
 func (ctx wrappedContext) Trace(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx.Context)
+	properties = append(properties, "ctx", ctx)
 	Trace(event, properties...)
 }
 
 func (ctx wrappedContext) TraceCall(callee string, err error, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx.Context)
+	properties = append(properties, "ctx", ctx)
 	TraceCall(callee, err, properties...)
 }
 
 func (ctx wrappedContext) Debug(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx.Context)
+	properties = append(properties, "ctx", ctx)
 	Debug(event, properties...)
 }
 
 func (ctx wrappedContext) DebugCall(callee string, err error, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx.Context)
+	properties = append(properties, "ctx", ctx)
 	DebugCall(callee, err, properties...)
 }
 
 func (ctx wrappedContext) Info(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx.Context)
+	properties = append(properties, "ctx", ctx)
 	Info(event, properties...)
 }
 
 func (ctx wrappedContext) InfoCall(callee string, err error, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx.Context)
+	properties = append(properties, "ctx", ctx)
 	InfoCall(callee, err, properties...)
 }
 
 func (ctx wrappedContext) Warn(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx.Context)
+	properties = append(properties, "ctx", ctx)
 	Warn(event, properties...)
 }
 
 func (ctx wrappedContext) Error(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx.Context)
+	properties = append(properties, "ctx", ctx)
 	Error(event, properties...)
 }
 
 func (ctx wrappedContext) Fatal(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx.Context)
+	properties = append(properties, "ctx", ctx)
 	Fatal(event, properties...)
 }
 
 func (ctx wrappedContext) Log(level int, event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx.Context)
+	properties = append(properties, "ctx", ctx)
 	Log(level, event, properties...)
 }
