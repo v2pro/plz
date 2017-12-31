@@ -19,6 +19,10 @@ type Context interface {
 }
 
 func Ctx(ctx context.Context) Context {
+	wrapped, isWrapped := ctx.(wrappedContext)
+	if isWrapped {
+		return wrapped
+	}
 	return wrappedContext{Context: ctx}
 }
 
