@@ -21,6 +21,7 @@ func setupLogging() {
 	if LogFormat == nil {
 		LogFormat = &countlog.HumanReadableFormat{}
 	}
+	countlog.MinLevel = LogLevel
 	logWriter := countlog.NewAsyncLogWriter(
 		LogLevel,
 		countlog.NewFileLogOutput(LogFile))
