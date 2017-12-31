@@ -3,6 +3,7 @@ package countlog
 import (
 	"testing"
 	"time"
+	"errors"
 )
 
 func TestOsFileLogOutput(t *testing.T) {
@@ -21,4 +22,8 @@ func TestNewFileLogOutput(t *testing.T) {
 	Info("event!this is a test info")
 	time.Sleep(time.Second)
 	logWriter.Close()
+}
+
+func Test_metric(t *testing.T) {
+	Trace("metric!", "callee", "hello", "err", errors.New("my fault"))
 }

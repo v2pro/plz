@@ -55,7 +55,7 @@ func log(level int, event string, properties []interface{}) {
 	var expandedProperties []interface{}
 	if len(LogWriters) == 0 {
 		if expandedProperties == nil {
-			event, expandedProperties = expand(event, properties)
+			level, event, expandedProperties = expand(level, event, properties)
 		}
 		defaultLogWriter.WriteLog(level, event, expandedProperties)
 		return
@@ -65,39 +65,56 @@ func log(level int, event string, properties []interface{}) {
 			continue
 		}
 		if expandedProperties == nil {
-			event, expandedProperties = expand(event, properties)
+			level, event, expandedProperties = expand(level, event, properties)
 		}
 		logWriter.WriteLog(level, event, expandedProperties)
 	}
 }
-func expand(event string, properties []interface{}) (string, []interface{}) {
-	expandedProperties := []interface{}{
-		"timestamp", time.Now().UnixNano(),
-	}
-	_, file, line, ok := runtime.Caller(3)
-	if ok {
-		expandedProperties = append(expandedProperties, "lineNumber")
-		lineNumber := fmt.Sprintf("%s:%d", file, line)
-		expandedProperties = append(expandedProperties, lineNumber)
-		if strings.HasPrefix(event, "event!") {
-			event = event[len("event!"):]
-		} else {
-			os.Stderr.Write([]byte("countlog event must starts with event! prefix:" + lineNumber + "\n"))
-			os.Stderr.Sync()
+func expand(level int, event string, properties []interface{}) (int, string, []interface{}) {
+	expandedProperties := make([]interface{}, 0, len(properties))
+	hasError := false
+	hasTimestamp := false
+	for i := 0; i < len(properties); i = i + 2 {
+		k := properties[i]
+		v := properties[i+1]
+		switch k {
+		case "err":
+			hasError = v != nil
+		case "timestamp":
+			hasTimestamp = true
 		}
-	}
-	for _, prop := range properties {
-		switch typedProp := prop.(type) {
+		expandedProperties = append(expandedProperties, k)
+		switch typedProp := v.(type) {
 		case func() interface{}:
 			expandedProperties = append(expandedProperties, typedProp())
 		case []byte:
 			// []byte is likely being reused, need to make a copy here
 			expandedProperties = append(expandedProperties, encodeAnyByteArray(typedProp))
 		default:
-			expandedProperties = append(expandedProperties, prop)
+			expandedProperties = append(expandedProperties, v)
 		}
 	}
-	return event, expandedProperties
+	if !hasTimestamp {
+		expandedProperties = append(expandedProperties, "timestamp")
+		expandedProperties = append(expandedProperties, time.Now().UnixNano())
+	}
+	_, file, line, ok := runtime.Caller(3)
+	if ok {
+		expandedProperties = append(expandedProperties, "lineNumber")
+		lineNumber := fmt.Sprintf("%s:%d", file, line)
+		expandedProperties = append(expandedProperties, lineNumber)
+		if event == "metric!" {
+			if hasError {
+				level = LevelError
+			}
+		} else if strings.HasPrefix(event, "event!") {
+			event = event[len("event!"):]
+		} else {
+			os.Stderr.Write([]byte("countlog event must starts with event! prefix:" + lineNumber + "\n"))
+			os.Stderr.Sync()
+		}
+	}
+	return level, event, expandedProperties
 }
 
 // pull state callbacks
