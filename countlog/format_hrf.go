@@ -13,7 +13,7 @@ type HumanReadableFormat struct {
 }
 
 func (format *HumanReadableFormat) FormatLog(event Event) []byte {
-	msg := []byte{}
+	msg := make([]byte, 0, 64)
 	ctx := format.describeContext(event)
 	if len(ctx) == 0 {
 		msg = append(msg, fmt.Sprintf(
@@ -81,7 +81,7 @@ func formatV(v interface{}) string {
 }
 
 func (format *HumanReadableFormat) describeContext(event Event) []byte {
-	msg := []byte{}
+	var msg []byte
 	ctx, _ := event.Get("ctx").(context.Context)
 	for _, propName := range format.ContextPropertyNames {
 		propValue := event.Get(propName)

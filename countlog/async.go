@@ -11,7 +11,7 @@ type AsyncLogWriter struct {
 	EventWhitelist map[string]bool
 	msgChan        chan Event
 	isClosed       chan bool
-	LogFormatter   LogFormatter
+	LogFormat      LogFormatter
 	LogOutput      LogOutput
 }
 
@@ -52,7 +52,7 @@ func (logWriter *AsyncLogWriter) Start() {
 		for {
 			select {
 			case event := <-logWriter.msgChan:
-				formattedEvent := logWriter.LogFormatter.FormatLog(event)
+				formattedEvent := logWriter.LogFormat.FormatLog(event)
 				logWriter.LogOutput.OutputLog(event.Level, event.Properties[1].(int64), formattedEvent)
 			case <-logWriter.isClosed:
 				return
@@ -65,8 +65,8 @@ func NewAsyncLogWriter(minLevel int, output LogOutput) *AsyncLogWriter {
 	writer := &AsyncLogWriter{
 		MinLevel:       minLevel,
 		msgChan:        make(chan Event, 1024),
-		isClosed:	    make(chan bool),
-		LogFormatter:   &HumanReadableFormat{},
+		isClosed:       make(chan bool),
+		LogFormat:      &HumanReadableFormat{},
 		LogOutput:      output,
 		EventWhitelist: map[string]bool{},
 	}

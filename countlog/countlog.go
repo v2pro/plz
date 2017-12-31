@@ -18,26 +18,79 @@ const LevelWarn = 40
 const LevelError = 50
 const LevelFatal = 60
 
+// MinLevel exists to minimize the overhead of Trace/Debug logging
+var MinLevel = LevelDebug
+
 func getLevelName(level int) string {
 	switch level {
-	case LevelTrace: return "TRACE"
-	case LevelDebug: return "DEBUG"
-	case LevelInfo: return "INFO"
-	case LevelWarn: return "WARN"
-	case LevelError: return "ERROR"
-	case LevelFatal: return "FATAL"
-	default: return "UNKNOWN"
+	case LevelTrace:
+		return "TRACE"
+	case LevelDebug:
+		return "DEBUG"
+	case LevelInfo:
+		return "INFO"
+	case LevelWarn:
+		return "WARN"
+	case LevelError:
+		return "ERROR"
+	case LevelFatal:
+		return "FATAL"
+	default:
+		return "UNKNOWN"
 	}
 }
 
+func ShouldLog(level int) bool {
+	return level >= MinLevel
+}
+
 func Trace(event string, properties ...interface{}) {
+	if LevelTrace < MinLevel{
+		return
+	}
 	log(LevelTrace, event, properties)
 }
+func TraceMetric(callee string, err error, properties ...interface{}) {
+	level := LevelTrace
+	if err != nil {
+		level = LevelError
+	}
+	if level < MinLevel{
+		return
+	}
+	log(level, "event!metric", append(properties, "callee", callee[len("callee!"):], "err", err))
+}
 func Debug(event string, properties ...interface{}) {
+	if LevelDebug < MinLevel{
+		return
+	}
 	log(LevelDebug, event, properties)
 }
+func DebugMetric(callee string, err error, properties ...interface{}) {
+	level := LevelDebug
+	if err != nil {
+		level = LevelError
+	}
+	if level < MinLevel{
+		return
+	}
+	log(level, "event!metric", append(properties, "callee", callee[len("callee!"):], "err", err))
+}
 func Info(event string, properties ...interface{}) {
+	if LevelInfo < MinLevel{
+		return
+	}
 	log(LevelInfo, event, properties)
+}
+func InfoMetric(callee string, err error, properties ...interface{}) {
+	level := LevelInfo
+	if err != nil {
+		level = LevelError
+	}
+	if level < MinLevel{
+		return
+	}
+	log(level, "event!metric", append(properties, "callee", callee[len("callee!"):], "err", err))
 }
 func Warn(event string, properties ...interface{}) {
 	log(LevelWarn, event, properties)
@@ -56,6 +109,9 @@ func log(level int, event string, properties []interface{}) {
 	if len(LogWriters) == 0 {
 		if expandedProperties == nil {
 			level, event, expandedProperties = expand(level, event, properties)
+			if level < MinLevel {
+				return
+			}
 		}
 		defaultLogWriter.WriteLog(level, event, expandedProperties)
 		return
@@ -66,53 +122,43 @@ func log(level int, event string, properties []interface{}) {
 		}
 		if expandedProperties == nil {
 			level, event, expandedProperties = expand(level, event, properties)
+			if level < MinLevel {
+				return
+			}
 		}
 		logWriter.WriteLog(level, event, expandedProperties)
 	}
 }
 func expand(level int, event string, properties []interface{}) (int, string, []interface{}) {
-	expandedProperties := make([]interface{}, 0, len(properties))
-	hasError := false
-	hasTimestamp := false
-	for i := 0; i < len(properties); i = i + 2 {
-		k := properties[i]
-		v := properties[i+1]
-		switch k {
-		case "err":
-			hasError = v != nil
-		case "timestamp":
-			hasTimestamp = true
-		}
-		expandedProperties = append(expandedProperties, k)
-		switch typedProp := v.(type) {
+	if strings.HasPrefix(event, "event!") {
+		event = event[len("event!"):]
+	} else {
+		_, file, line, _ := runtime.Caller(3)
+		// this format allows intellij to jump to that line
+		lineNumber := fmt.Sprintf("%s:%d", file, line)
+		os.Stderr.Write([]byte("countlog event must starts with event! prefix:" + lineNumber + "\n"))
+		os.Stderr.Sync()
+	}
+	expandedProperties := make([]interface{}, 0, len(properties) + 4)
+	expandedProperties = append(expandedProperties, "timestamp")
+	expandedProperties = append(expandedProperties, time.Now().UnixNano())
+	for _, prop := range properties {
+		switch typedProp := prop.(type) {
 		case func() interface{}:
 			expandedProperties = append(expandedProperties, typedProp())
 		case []byte:
 			// []byte is likely being reused, need to make a copy here
 			expandedProperties = append(expandedProperties, encodeAnyByteArray(typedProp))
 		default:
-			expandedProperties = append(expandedProperties, v)
+			expandedProperties = append(expandedProperties, prop)
 		}
-	}
-	if !hasTimestamp {
-		expandedProperties = append(expandedProperties, "timestamp")
-		expandedProperties = append(expandedProperties, time.Now().UnixNano())
 	}
 	_, file, line, ok := runtime.Caller(3)
 	if ok {
 		expandedProperties = append(expandedProperties, "lineNumber")
+		// this format allows intellij to jump to that line
 		lineNumber := fmt.Sprintf("%s:%d", file, line)
 		expandedProperties = append(expandedProperties, lineNumber)
-		if event == "metric!" {
-			if hasError {
-				level = LevelError
-			}
-		} else if strings.HasPrefix(event, "event!") {
-			event = event[len("event!"):]
-		} else {
-			os.Stderr.Write([]byte("countlog event must starts with event! prefix:" + lineNumber + "\n"))
-			os.Stderr.Sync()
-		}
 	}
 	return level, event, expandedProperties
 }

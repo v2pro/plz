@@ -7,7 +7,7 @@ import (
 
 func main() {
 	logWriter := countlog.NewAsyncLogWriter(countlog.LevelDebug, countlog.NewFileLogOutput("STDOUT"))
-	logWriter.LogFormatter = &countlog.CompactFormat{StringLengthCap: 512}
+	logWriter.LogFormat = &countlog.CompactFormat{StringLengthCap: 512}
 	logWriter.Start()
 	countlog.LogWriters = append(countlog.LogWriters, logWriter)
 	countlog.Trace("event!this is a test Trace")

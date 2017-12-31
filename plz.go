@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"github.com/v2pro/plz/witch"
 	"github.com/v2pro/plz/counselor"
-	"net"
 )
 
 // who am i, set externally
@@ -17,7 +16,7 @@ var Cluster string
 // to be set externally, additional info about this process
 var ProcessInfo = map[string]interface{}{}
 
-var PingUrl = "http://127.0.0.1:8318/ping"
+var PingUrl = ""
 
 // will make counselor externally available after PlugAndPlay
 var ExportCounselor = true
@@ -27,6 +26,7 @@ var ExportWitch = false
 
 // PlugAndPlay will register the process into the grid
 func PlugAndPlay() {
+	setupLogging()
 	ProcessInfo["Service"] = Service
 	ProcessInfo["Cluster"] = Cluster
 	mux := &http.ServeMux{}
@@ -40,5 +40,7 @@ func PlugAndPlay() {
 	mux.HandleFunc("/", func(respWriter http.ResponseWriter, req *http.Request) {
 		respWriter.Write([]byte(req.URL.String() + " not found"))
 	})
-	pnp.Start(PingUrl, ProcessInfo, mux)
+	if PingUrl != "" {
+		pnp.Start(PingUrl, ProcessInfo, mux)
+	}
 }

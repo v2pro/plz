@@ -15,11 +15,9 @@ type directLogWriter struct {
 }
 
 func (logWriter *directLogWriter) WriteLog(level int, event string, properties []interface{}) {
-	if level >= LevelDebug {
-		msg := logWriter.logFormatter.FormatLog(Event{Level: level, Event: event, Properties: properties})
-		os.Stdout.Write(withColorLevelPrefix(level, msg))
-		os.Stdout.Sync()
-	}
+	msg := logWriter.logFormatter.FormatLog(Event{Level: level, Event: event, Properties: properties})
+	os.Stdout.Write(withColorLevelPrefix(level, msg))
+	os.Stdout.Sync()
 }
 
 func withColorLevelPrefix(level int, msg []byte) []byte {
@@ -47,12 +45,19 @@ const (
 
 func getColor(level int) int {
 	switch level {
-	case LevelTrace: return cyan
-	case LevelDebug: return gray
-	case LevelInfo: return green
-	case LevelWarn: return yellow
-	case LevelError: return red
-	case LevelFatal: return purple
-	default: return nocolor
+	case LevelTrace:
+		return cyan
+	case LevelDebug:
+		return gray
+	case LevelInfo:
+		return green
+	case LevelWarn:
+		return yellow
+	case LevelError:
+		return red
+	case LevelFatal:
+		return purple
+	default:
+		return nocolor
 	}
 }

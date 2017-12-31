@@ -6,6 +6,7 @@ import (
 	"context"
 	"runtime"
 	"time"
+	"fmt"
 )
 
 const StopSignal = "STOP!"
@@ -14,13 +15,13 @@ type UnboundedExecutor struct {
 	ctx                   context.Context
 	cancel                context.CancelFunc
 	activeGoroutinesMutex *sync.Mutex
-	activeGoroutines      map[startFrom]int
+	activeGoroutines      map[string]int
 }
 
-type startFrom struct {
-	startFromFile string
-	startFromLine int
-}
+
+// GlobalUnboundedExecutor has the life cycle of the program itself
+// any goroutine want to be shutdown before main exit can be started from this executor
+var GlobalUnboundedExecutor = NewUnboundedExecutor()
 
 func NewUnboundedExecutor() *UnboundedExecutor {
 	ctx, cancel := context.WithCancel(context.TODO())
@@ -28,7 +29,7 @@ func NewUnboundedExecutor() *UnboundedExecutor {
 		ctx:                   ctx,
 		cancel:                cancel,
 		activeGoroutinesMutex: &sync.Mutex{},
-		activeGoroutines:      map[startFrom]int{},
+		activeGoroutines:      map[string]int{},
 	}
 }
 
@@ -36,10 +37,7 @@ func (executor *UnboundedExecutor) Go(handler func(ctx context.Context)) {
 	_, file, line, _ := runtime.Caller(1)
 	executor.activeGoroutinesMutex.Lock()
 	defer executor.activeGoroutinesMutex.Unlock()
-	startFrom := startFrom{
-		startFromFile: file,
-		startFromLine: line,
-	}
+	startFrom := fmt.Sprintf("%s:%d", file, line)
 	executor.activeGoroutines[startFrom] += 1
 	go func() {
 		defer func() {
@@ -55,6 +53,14 @@ func (executor *UnboundedExecutor) Go(handler func(ctx context.Context)) {
 		}()
 		handler(executor.ctx)
 	}()
+}
+
+func (executor *UnboundedExecutor) Stop() {
+	executor.cancel()
+}
+
+func (executor *UnboundedExecutor) StopAndWaitForever() {
+	executor.StopAndWait(context.Background())
 }
 
 func (executor *UnboundedExecutor) StopAndWait(ctx context.Context) {
@@ -78,8 +84,7 @@ func (executor *UnboundedExecutor) checkGoroutines() bool {
 	for startFrom, count := range executor.activeGoroutines {
 		if count > 0 {
 			countlog.Info("event!unbounded_executor.still waiting goroutines to quit",
-				"startFromFile", startFrom.startFromFile,
-				"startFromLine", startFrom.startFromLine,
+				"startFrom", startFrom,
 				"count", count)
 			return false
 		}
