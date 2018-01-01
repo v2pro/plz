@@ -14,11 +14,17 @@ func (errs MultiError) Error() string {
 	return "multiple errors"
 }
 
-func NewMultiError(errs []error) error {
-	if len(errs) == 0 {
+func MergeErrors(errs ...error) error {
+	var nonNilErrs []error
+	for _, err := range errs {
+		if err != nil {
+			nonNilErrs = append(nonNilErrs, err)
+		}
+	}
+	if len(nonNilErrs) == 0 {
 		return nil
 	}
-	return MultiError(errs)
+	return MultiError(nonNilErrs)
 }
 
 func Close(resource io.Closer, properties ...interface{}) error {
@@ -45,7 +51,7 @@ func CloseAll(resources []io.Closer, properties ...interface{}) error {
 			errs = append(errs, err)
 		}
 	}
-	return NewMultiError(errs)
+	return MergeErrors(errs...)
 }
 
 type funcResource struct {
