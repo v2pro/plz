@@ -7,7 +7,6 @@ import (
 	"github.com/v2pro/plz/countlog"
 )
 
-var Recover = countlog.Recover
 type MultiError []error
 
 func (errs MultiError) Error() string {

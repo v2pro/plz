@@ -81,13 +81,13 @@ func doY(ctx context.Context) error {
 }
 
 func doZ(ctx countlog.Context) error {
-	defer countlog.Recover()
+	defer countlog.LogPanic(recover())
 	file, err := os.OpenFile("/tmp/abc", os.O_RDWR, 0666)
 	ctx.TraceCall("callee!os.OpenFile", err)
 	if err != nil {
 		return err
 	}
-	defer countlog.Close(file)
+	defer plz.Close(file)
 	_, err = file.Write([]byte("hello"))
 	ctx.TraceCall("callee!file.Write", err)
 	if err != nil {

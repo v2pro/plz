@@ -1,6 +1,8 @@
 package countlog
 
-import "runtime"
+import (
+	"runtime"
+)
 
 var ProvideStacktrace = func() interface{} {
 	buf := make([]byte, 1<<16)
@@ -8,10 +10,10 @@ var ProvideStacktrace = func() interface{} {
 	return string(buf)
 }
 
-func Recover() interface{} {
-	recovered := recover()
+func LogPanic(recovered interface{}, properties ...interface{}) interface{} {
 	if recovered != nil {
-		Fatal("event!panic", "err", recovered, "stacktrace", ProvideStacktrace)
+		properties = append(properties, "err", recovered, "stacktrace", ProvideStacktrace)
+		Fatal("event!panic", properties...)
 	}
 	return recovered
 }
