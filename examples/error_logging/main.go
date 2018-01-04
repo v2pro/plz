@@ -81,7 +81,9 @@ func doY(ctx context.Context) error {
 }
 
 func doZ(ctx countlog.Context) error {
-	defer countlog.LogPanic(recover())
+	defer func(){
+		countlog.LogPanic(recover())
+	}()
 	file, err := os.OpenFile("/tmp/abc", os.O_RDWR, 0666)
 	ctx.TraceCall("callee!os.OpenFile", err)
 	if err != nil {
