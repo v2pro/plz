@@ -4,12 +4,28 @@ import (
 	"os"
 	"runtime"
 	"fmt"
+	"context"
 )
+
+type Executor interface {
+	Go(handler func(ctx context.Context))
+}
+
+type defaultExecutor struct {
+}
+
+func (executor *defaultExecutor) Go(handler func(ctx context.Context)) {
+	go func() {
+		handler(context.Background())
+	}()
+}
+
+var AsyncLogExecutor Executor = &defaultExecutor{}
 
 type AsyncLogWriter struct {
 	MinLevel       int
 	EventWhitelist map[string]bool
-	msgChan        chan Event
+	eventChan      chan Event
 	isClosed       chan bool
 	LogFormat      LogFormatter
 	LogOutput      LogOutput
@@ -24,21 +40,22 @@ func (logWriter *AsyncLogWriter) ShouldLog(level int, event string, properties [
 
 func (logWriter *AsyncLogWriter) WriteLog(level int, event string, properties []interface{}) {
 	select {
-	case logWriter.msgChan <- Event{Level: level, Event: event, Properties: properties}:
+	case logWriter.eventChan <- Event{Level: level, Event: event, Properties: properties}:
 	default:
-		// drop on the floor
+		if ShouldLog(LevelTrace) {
+			logWriter.eventChan <- Event{Level: level, Event: event, Properties: properties}
+		} else {
+			// drop on the floor
+		}
 	}
 }
 
 func (logWriter *AsyncLogWriter) Close() {
 	close(logWriter.isClosed)
-	if logWriter.LogOutput != nil {
-		logWriter.LogOutput.Close()
-	}
 }
 
 func (logWriter *AsyncLogWriter) Start() {
-	go func() {
+	AsyncLogExecutor.Go(func(ctx context.Context) {
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
@@ -48,26 +65,49 @@ func (logWriter *AsyncLogWriter) Start() {
 				os.Stderr.Write(buf)
 				os.Stderr.Sync()
 			}
+			if logWriter.LogOutput != nil {
+				logWriter.LogOutput.Close()
+			}
 		}()
 		for {
 			select {
-			case event := <-logWriter.msgChan:
-				formattedEvent := logWriter.LogFormat.FormatLog(event)
-				if formattedEvent == nil {
-					continue
+			case event := <-logWriter.eventChan:
+				logWriter.handleEvent(event)
+			case <-ctx.Done():
+				for {
+					select {
+					case event := <-logWriter.eventChan:
+						logWriter.handleEvent(event)
+					default:
+						return
+					}
 				}
-				logWriter.LogOutput.OutputLog(event.Level, event.Properties[1].(int64), formattedEvent)
 			case <-logWriter.isClosed:
-				return
+				for {
+					select {
+					case event := <-logWriter.eventChan:
+						logWriter.handleEvent(event)
+					default:
+						return
+					}
+				}
 			}
 		}
-	}()
+	})
+}
+
+func (logWriter *AsyncLogWriter) handleEvent(event Event) {
+	formattedEvent := logWriter.LogFormat.FormatLog(event)
+	if formattedEvent == nil {
+		return
+	}
+	logWriter.LogOutput.OutputLog(event.Level, event.Properties[1].(int64), formattedEvent)
 }
 
 func NewAsyncLogWriter(minLevel int, output LogOutput) *AsyncLogWriter {
 	writer := &AsyncLogWriter{
 		MinLevel:       minLevel,
-		msgChan:        make(chan Event, 1024),
+		eventChan:      make(chan Event, 1024),
 		isClosed:       make(chan bool),
 		LogFormat:      &HumanReadableFormat{},
 		LogOutput:      output,

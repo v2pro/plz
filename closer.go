@@ -46,9 +46,14 @@ func CloseAll(resources []io.Closer, properties ...interface{}) error {
 			_, file, line, _ := runtime.Caller(1)
 			closedAt := fmt.Sprintf("%s:%d", file, line)
 			properties = append(properties, "err", err)
-			countlog.Error("event!close "+closedAt, properties...)
+			countlog.Error("event!CloseAll called from "+closedAt, properties...)
 			errs = append(errs, err)
 		}
+	}
+	if len(errs) == 0 && len(properties) > 0 {
+		_, file, line, _ := runtime.Caller(1)
+		closedAt := fmt.Sprintf("%s:%d", file, line)
+		countlog.Debug("event!CloseAll called from "+closedAt, properties...)
 	}
 	return MergeErrors(errs...)
 }

@@ -59,6 +59,7 @@ type osFileLogOutput struct {
 }
 
 func (output *osFileLogOutput) Close() {
+	output.logFile.Sync()
 }
 
 func (output *osFileLogOutput) OutputLog(level int, timestamp int64, formattedEvent []byte) {

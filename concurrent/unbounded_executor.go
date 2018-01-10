@@ -18,10 +18,13 @@ type UnboundedExecutor struct {
 	activeGoroutines      map[string]int
 }
 
-
 // GlobalUnboundedExecutor has the life cycle of the program itself
 // any goroutine want to be shutdown before main exit can be started from this executor
 var GlobalUnboundedExecutor = NewUnboundedExecutor()
+
+func init() {
+	countlog.AsyncLogExecutor = GlobalUnboundedExecutor
+}
 
 func NewUnboundedExecutor() *UnboundedExecutor {
 	ctx, cancel := context.WithCancel(context.TODO())
@@ -43,9 +46,7 @@ func (executor *UnboundedExecutor) Go(handler func(ctx context.Context)) {
 		defer func() {
 			recovered := recover()
 			if recovered != nil && recovered != StopSignal {
-				countlog.Fatal("event!unbounded_executor.panic",
-					"err", recovered,
-					"stacktrace", countlog.ProvideStacktrace)
+				countlog.LogPanic(recovered)
 			}
 			executor.activeGoroutinesMutex.Lock()
 			defer executor.activeGoroutinesMutex.Unlock()
