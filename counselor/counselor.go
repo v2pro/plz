@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path"
+	"io/ioutil"
 )
 
 const toggleItemName = "toggle"
@@ -39,7 +42,7 @@ func GetObject(namespace string, objectName string, targetKV ...string) interfac
 		return nil
 	}
 	target := map[string]string{}
-	for i := 0; i < len(targetKV); i+=2 {
+	for i := 0; i < len(targetKV); i += 2 {
 		target[targetKV[i]] = targetKV[i+1]
 	}
 	variant, err := toggle(target)
@@ -53,4 +56,30 @@ func GetObject(namespace string, objectName string, targetKV ...string) interfac
 func ShouldUse(namespace string, objectName string, targetKV ...string) bool {
 	verdict, _ := GetObject(namespace, objectName, targetKV...).(bool)
 	return verdict
+}
+
+// SetObjectVariant is only intended to be used in test
+func SetObjectVariant(namespace string, objectName string, variantName string, dataFormat string, content []byte) {
+	dir := path.Join(SourceDir, namespace, objectName)
+	os.MkdirAll(dir, 0777)
+	err := ioutil.WriteFile(path.Join(dir, variantName), append([]byte("data_format:" + dataFormat+"\n"), content...), 0666)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// SetObjectToggle is only intended to be used in test
+func SetObjectToggle(namespace string, objectName string, content string) {
+	dir := path.Join(SourceDir, namespace, objectName)
+	os.MkdirAll(dir, 0777)
+	err := ioutil.WriteFile(path.Join(dir, toggleItemName), []byte("data_format:toggle\n" + content), 0666)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// SetObject is only intended to be used in test
+func SetObject(namespace string, objectName string, dataFormat string, content []byte) {
+	SetObjectToggle(namespace, objectName, `{"DefaultVariant":"default"}`)
+	SetObjectVariant(namespace, objectName, "default", dataFormat, content)
 }
