@@ -163,7 +163,7 @@ func expand(level int, event string, properties []interface{}) (int, string, []i
 		case []byte:
 			// []byte is likely being reused, need to make a copy here
 			expandedProperties = append(expandedProperties, encodeAnyByteArray(typedProp))
-		case wrappedContext:
+		case Context:
 			skipFramesCount = 5
 			expandedProperties = append(expandedProperties, prop)
 		default:
