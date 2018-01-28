@@ -12,7 +12,7 @@ import (
 const StopSignal = "STOP!"
 
 type UnboundedExecutor struct {
-	ctx                   context.Context
+	ctx                   *countlog.Context
 	cancel                context.CancelFunc
 	activeGoroutinesMutex *sync.Mutex
 	activeGoroutines      map[string]int
@@ -29,14 +29,14 @@ func init() {
 func NewUnboundedExecutor() *UnboundedExecutor {
 	ctx, cancel := context.WithCancel(context.TODO())
 	return &UnboundedExecutor{
-		ctx:                   ctx,
+		ctx:                   countlog.Ctx(ctx),
 		cancel:                cancel,
 		activeGoroutinesMutex: &sync.Mutex{},
 		activeGoroutines:      map[string]int{},
 	}
 }
 
-func (executor *UnboundedExecutor) Go(handler func(ctx context.Context)) {
+func (executor *UnboundedExecutor) Go(handler func(ctx *countlog.Context)) {
 	_, file, line, _ := runtime.Caller(1)
 	executor.activeGoroutinesMutex.Lock()
 	defer executor.activeGoroutinesMutex.Unlock()

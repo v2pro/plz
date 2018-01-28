@@ -8,15 +8,15 @@ import (
 )
 
 type Executor interface {
-	Go(handler func(ctx context.Context))
+	Go(handler func(ctx *Context))
 }
 
 type defaultExecutor struct {
 }
 
-func (executor *defaultExecutor) Go(handler func(ctx context.Context)) {
+func (executor *defaultExecutor) Go(handler func(ctx *Context)) {
 	go func() {
-		handler(context.Background())
+		handler(Ctx(context.Background()))
 	}()
 }
 
@@ -55,7 +55,7 @@ func (logWriter *AsyncLogWriter) Close() {
 }
 
 func (logWriter *AsyncLogWriter) Start() {
-	AsyncLogExecutor.Go(func(ctx context.Context) {
+	AsyncLogExecutor.Go(func(ctx *Context) {
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
