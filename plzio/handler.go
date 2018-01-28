@@ -30,13 +30,26 @@ func init() {
 	atomic.StorePointer(&handlerTypeCache, unsafe.Pointer(&cache))
 }
 
+func ConvertPtrHandler(ptrHandlerObj interface{}) (*Handler, *HandlerTypeInfo) {
+	ptr := (*emptyInterface)(unsafe.Pointer(&ptrHandlerObj)).word
+	ptrHandler := *(**Handler)(unsafe.Pointer(&ptr))
+	handlerType := reflect.TypeOf(ptrHandlerObj).Elem()
+	return ptrHandler, getHandlerTypeInfo(handlerType)
+}
+
 func ConvertHandler(handlerObj interface{}) (Handler, *HandlerTypeInfo) {
 	ptr := (*emptyInterface)(unsafe.Pointer(&handlerObj)).word
 	handler := *(*Handler)(unsafe.Pointer(&ptr))
 	handlerType := reflect.TypeOf(handlerObj)
-	handlerTypeInfo := getHandlerTypeInfo(handlerType)
+	return handler, getHandlerTypeInfo(handlerType)
+}
+
+func getHandlerTypeInfo(handlerType reflect.Type) *HandlerTypeInfo {
+	ptr := atomic.LoadPointer(&handlerTypeCache)
+	cache := *(*map[reflect.Type]*HandlerTypeInfo)(ptr)
+	handlerTypeInfo := cache[handlerType]
 	if handlerTypeInfo != nil {
-		return handler, handlerTypeInfo
+		return handlerTypeInfo
 	}
 	if handlerType.NumIn() != 2 {
 		panic("arguments count must be 2")
@@ -65,13 +78,7 @@ func ConvertHandler(handlerObj interface{}) (Handler, *HandlerTypeInfo) {
 		ResponseBoxer: newBoxer(responseType),
 	}
 	addHandlerTypeInfo(handlerType, handlerTypeInfo)
-	return handler, handlerTypeInfo
-}
-
-func getHandlerTypeInfo(handlerType reflect.Type) *HandlerTypeInfo {
-	ptr := atomic.LoadPointer(&handlerTypeCache)
-	cache := *(*map[reflect.Type]*HandlerTypeInfo)(ptr)
-	return cache[handlerType]
+	return handlerTypeInfo
 }
 
 func addHandlerTypeInfo(handlerType reflect.Type, handlerTypeInfo *HandlerTypeInfo) {
