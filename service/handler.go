@@ -1,4 +1,4 @@
-package plzio
+package service
 
 import (
 	"github.com/v2pro/plz/countlog"

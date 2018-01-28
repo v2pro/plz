@@ -1,4 +1,4 @@
-package plzio
+package service
 
 import (
 	"github.com/json-iterator/go"
