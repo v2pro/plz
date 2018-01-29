@@ -80,7 +80,7 @@ func doY(ctx context.Context) error {
 	return nil
 }
 
-func doZ(ctx countlog.Context) error {
+func doZ(ctx *countlog.Context) error {
 	defer func() {
 		countlog.LogPanic(recover())
 	}()

@@ -10,5 +10,5 @@ type Response struct {
 }
 
 type Marshaller interface {
-	Marshal(ctx countlog.Context, output interface{}, obj interface{}) error
+	Marshal(ctx *countlog.Context, output interface{}, obj interface{}) error
 }

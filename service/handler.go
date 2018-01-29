@@ -7,13 +7,13 @@ import (
 	"unsafe"
 )
 
-var ptrContextType = reflect.TypeOf((countlog.Context)(nil))
+var ptrContextType = reflect.TypeOf((*countlog.Context)(nil))
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 // Handler is the function prototype for both client and server.
 // User should substitute request and response with their own concrete types.
-// For example func(ctx countlog.Context, request NewOrderRequest) (NewOrderResponse, error)
-type Handler func(ctx countlog.Context, request unsafe.Pointer) (response unsafe.Pointer, err error)
+// For example func(ctx *countlog.Context, request NewOrderRequest) (NewOrderResponse, error)
+type Handler func(ctx *countlog.Context, request unsafe.Pointer) (response unsafe.Pointer, err error)
 type Boxer func(ptr unsafe.Pointer) interface{}
 
 type HandlerTypeInfo struct {
