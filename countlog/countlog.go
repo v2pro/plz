@@ -44,21 +44,19 @@ func ShouldLog(level int) bool {
 	return level >= MinLevel
 }
 
-func Trace(event string, properties ...interface{}) {
+func TraceCall(callee string, err error, properties ...interface{}) {
+	if err != nil {
+		logCall(LevelError, callee, err, properties)
+		return
+	}
 	if LevelTrace < MinLevel {
 		return
 	}
-	log(LevelTrace, event, properties)
+	logCall(LevelTrace, callee, err, properties)
 }
 
-func TraceCall(callee string, err error, properties ...interface{}) {
-	level := LevelTrace
-	if err != nil {
-		level = LevelError
-	}
-	if level < MinLevel {
-		return
-	}
+//go:noinline
+func logCall(level int, callee string, err error, properties []interface{}) {
 	callee = callee[len("callee!"):]
 	log(level, "event!call "+callee, append(properties, "callee", callee, "err", err))
 }
@@ -71,15 +69,14 @@ func Debug(event string, properties ...interface{}) {
 }
 
 func DebugCall(callee string, err error, properties ...interface{}) {
-	level := LevelDebug
 	if err != nil {
-		level = LevelError
-	}
-	if level < MinLevel {
+		logCall(LevelError, callee, err, properties)
 		return
 	}
-	callee = callee[len("callee!"):]
-	log(level, "event!call "+callee, append(properties, "callee", callee, "err", err))
+	if LevelDebug < MinLevel {
+		return
+	}
+	logCall(LevelDebug, callee, err, properties)
 }
 
 func Info(event string, properties ...interface{}) {
@@ -90,15 +87,14 @@ func Info(event string, properties ...interface{}) {
 }
 
 func InfoCall(callee string, err error, properties ...interface{}) {
-	level := LevelInfo
 	if err != nil {
-		level = LevelError
-	}
-	if level < MinLevel {
+		logCall(LevelError, callee, err, properties)
 		return
 	}
-	callee = callee[len("callee!"):]
-	log(level, "event!call "+callee, append(properties, "callee", callee, "err", err))
+	if LevelInfo < MinLevel {
+		return
+	}
+	logCall(LevelInfo, callee, err, properties)
 }
 
 func Warn(event string, properties ...interface{}) {
