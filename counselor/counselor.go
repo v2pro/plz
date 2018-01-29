@@ -1,13 +1,13 @@
 package counselor
 
 import (
-	"github.com/v2pro/plz/countlog"
 	"encoding/json"
 	"fmt"
+	"github.com/v2pro/plz/countlog"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
-	"io/ioutil"
 )
 
 const toggleItemName = "toggle"
@@ -62,7 +62,7 @@ func ShouldUse(namespace string, objectName string, targetKV ...string) bool {
 func SetObjectVariant(namespace string, objectName string, variantName string, dataFormat string, content []byte) {
 	dir := path.Join(SourceDir, namespace, objectName)
 	os.MkdirAll(dir, 0777)
-	err := ioutil.WriteFile(path.Join(dir, variantName), append([]byte("data_format:" + dataFormat+"\n"), content...), 0666)
+	err := ioutil.WriteFile(path.Join(dir, variantName), append([]byte("data_format:"+dataFormat+"\n"), content...), 0666)
 	if err != nil {
 		panic(err)
 	}
@@ -72,7 +72,7 @@ func SetObjectVariant(namespace string, objectName string, variantName string, d
 func SetObjectToggle(namespace string, objectName string, content string) {
 	dir := path.Join(SourceDir, namespace, objectName)
 	os.MkdirAll(dir, 0777)
-	err := ioutil.WriteFile(path.Join(dir, toggleItemName), []byte("data_format:toggle\n" + content), 0666)
+	err := ioutil.WriteFile(path.Join(dir, toggleItemName), []byte("data_format:toggle\n"+content), 0666)
 	if err != nil {
 		panic(err)
 	}

@@ -1,10 +1,10 @@
 package witch
 
 import (
-	"testing"
+	"bytes"
 	"github.com/stretchr/testify/require"
 	"github.com/v2pro/plz/countlog"
-	"bytes"
+	"testing"
 )
 
 type fixedStateExporter struct {

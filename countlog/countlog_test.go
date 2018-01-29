@@ -1,9 +1,9 @@
 package countlog
 
 import (
+	"errors"
 	"testing"
 	"time"
-	"errors"
 )
 
 func TestOsFileLogOutput(t *testing.T) {

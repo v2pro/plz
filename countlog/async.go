@@ -1,10 +1,10 @@
 package countlog
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"runtime"
-	"fmt"
-	"context"
 )
 
 type Executor interface {

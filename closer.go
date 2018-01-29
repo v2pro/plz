@@ -1,10 +1,10 @@
 package plz
 
 import (
-	"io"
-	"runtime"
 	"fmt"
 	"github.com/v2pro/plz/countlog"
+	"io"
+	"runtime"
 )
 
 type MultiError []error

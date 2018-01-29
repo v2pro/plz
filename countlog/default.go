@@ -1,9 +1,9 @@
 package countlog
 
 import (
-	"os"
-	"fmt"
 	"bytes"
+	"fmt"
+	"os"
 )
 
 var defaultLogWriter = &directLogWriter{

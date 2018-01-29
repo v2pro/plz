@@ -1,20 +1,20 @@
 package witch
 
 import (
-	"github.com/v2pro/plz/countlog"
-	"os"
-	"net/http"
-	"github.com/json-iterator/go"
-	"sync/atomic"
-	"fmt"
-	"time"
 	"encoding/json"
+	"fmt"
+	"github.com/json-iterator/go"
+	"github.com/v2pro/plz/countlog"
+	"net/http"
+	"os"
+	"sync/atomic"
+	"time"
 )
 
 var theEventQueue = newEventQueue()
 
 type eventQueue struct {
-	msgChan chan countlog.Event
+	msgChan            chan countlog.Event
 	droppedEventsCount uint64
 }
 
@@ -33,7 +33,7 @@ func (q *eventQueue) WriteLog(level int, event string, properties []interface{})
 	case q.msgChan <- countlog.Event{Level: level, Event: event, Properties: properties}:
 	default:
 		dropped := atomic.AddUint64(&q.droppedEventsCount, 1)
-		if dropped % 10000 == 1 {
+		if dropped%10000 == 1 {
 			os.Stderr.Write([]byte(fmt.Sprintf(
 				"witch event queue overflow, dropped %v events since start\n", dropped)))
 			os.Stderr.Sync()

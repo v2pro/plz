@@ -1,12 +1,12 @@
 package countlog
 
 import (
-	"runtime"
 	"fmt"
-	"strings"
 	"os"
-	"time"
+	"runtime"
+	"strings"
 	"sync"
+	"time"
 )
 
 // push event out
@@ -45,7 +45,7 @@ func ShouldLog(level int) bool {
 }
 
 func Trace(event string, properties ...interface{}) {
-	if LevelTrace < MinLevel{
+	if LevelTrace < MinLevel {
 		return
 	}
 	log(LevelTrace, event, properties)
@@ -56,15 +56,15 @@ func TraceCall(callee string, err error, properties ...interface{}) {
 	if err != nil {
 		level = LevelError
 	}
-	if level < MinLevel{
+	if level < MinLevel {
 		return
 	}
 	callee = callee[len("callee!"):]
-	log(level, "event!call " + callee, append(properties, "callee", callee, "err", err))
+	log(level, "event!call "+callee, append(properties, "callee", callee, "err", err))
 }
 
 func Debug(event string, properties ...interface{}) {
-	if LevelDebug < MinLevel{
+	if LevelDebug < MinLevel {
 		return
 	}
 	log(LevelDebug, event, properties)
@@ -75,15 +75,15 @@ func DebugCall(callee string, err error, properties ...interface{}) {
 	if err != nil {
 		level = LevelError
 	}
-	if level < MinLevel{
+	if level < MinLevel {
 		return
 	}
 	callee = callee[len("callee!"):]
-	log(level, "event!call " + callee, append(properties, "callee", callee, "err", err))
+	log(level, "event!call "+callee, append(properties, "callee", callee, "err", err))
 }
 
 func Info(event string, properties ...interface{}) {
-	if LevelInfo < MinLevel{
+	if LevelInfo < MinLevel {
 		return
 	}
 	log(LevelInfo, event, properties)
@@ -94,11 +94,11 @@ func InfoCall(callee string, err error, properties ...interface{}) {
 	if err != nil {
 		level = LevelError
 	}
-	if level < MinLevel{
+	if level < MinLevel {
 		return
 	}
 	callee = callee[len("callee!"):]
-	log(level, "event!call " + callee, append(properties, "callee", callee, "err", err))
+	log(level, "event!call "+callee, append(properties, "callee", callee, "err", err))
 }
 
 func Warn(event string, properties ...interface{}) {
@@ -152,7 +152,7 @@ func expand(level int, event string, properties []interface{}) (int, string, []i
 		os.Stderr.Write([]byte("countlog event must starts with event! prefix:" + lineNumber + "\n"))
 		os.Stderr.Sync()
 	}
-	expandedProperties := make([]interface{}, 0, len(properties) + 4)
+	expandedProperties := make([]interface{}, 0, len(properties)+4)
 	expandedProperties = append(expandedProperties, "timestamp")
 	expandedProperties = append(expandedProperties, time.Now().UnixNano())
 	skipFramesCount := 3

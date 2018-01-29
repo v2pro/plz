@@ -1,13 +1,13 @@
 package witch
 
 import (
-	"net/http"
-	"github.com/v2pro/plz/countlog"
 	"github.com/json-iterator/go"
-	"unsafe"
-	"reflect"
+	"github.com/v2pro/plz/countlog"
 	"io"
+	"net/http"
+	"reflect"
 	"strconv"
+	"unsafe"
 )
 
 var stateExporterType = reflect.TypeOf((*countlog.StateExporter)(nil)).Elem()

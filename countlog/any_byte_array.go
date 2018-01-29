@@ -1,8 +1,8 @@
 package countlog
 
 import (
-	"unicode/utf8"
 	"encoding/json"
+	"unicode/utf8"
 )
 
 // safeSet holds the value true if the ASCII character with the given array

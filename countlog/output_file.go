@@ -75,7 +75,7 @@ func NewFileLogOutput(logFile string) LogOutput {
 	default:
 		output := &fileLogOutput{
 			windowSize: int64(time.Hour),
-			logFile: logFile,
+			logFile:    logFile,
 		}
 		err := os.MkdirAll(filepath.Dir(logFile), 0755)
 		if err != nil {

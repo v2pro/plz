@@ -1,11 +1,11 @@
 package counselor
 
 import (
-	"testing"
 	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
+	"testing"
 )
 
 func Test_thousand_bucket(t *testing.T) {

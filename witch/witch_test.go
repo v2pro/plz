@@ -1,10 +1,10 @@
 package witch
 
 import (
-	"testing"
-	"time"
 	"github.com/v2pro/plz/countlog"
 	"math/rand"
+	"testing"
+	"time"
 )
 
 type fakeStateExporter struct {

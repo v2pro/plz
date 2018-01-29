@@ -1,15 +1,15 @@
 package counselor
 
 import (
-	"sync"
-	"github.com/v2pro/plz/countlog"
-	"fmt"
-	"errors"
 	"crypto/sha1"
 	"encoding/binary"
-	"math/rand"
+	"errors"
+	"fmt"
+	"github.com/v2pro/plz/countlog"
 	"math"
+	"math/rand"
 	"strconv"
+	"sync"
 )
 
 const paramCreateRule = "create_rule"
@@ -101,7 +101,7 @@ func saltHash(uuid string, salt string, bucketSize int) int {
 	h.Write([]byte(uuid + salt))
 	bytes := h.Sum(nil)
 	size := len(bytes)
-	value := binary.BigEndian.Uint32(bytes[size-4: size])
+	value := binary.BigEndian.Uint32(bytes[size-4 : size])
 	// avoid negative number mod
 	mod := int64(value) % int64(bucketSize)
 	return int(mod)

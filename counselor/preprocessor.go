@@ -1,11 +1,11 @@
 package counselor
 
 import (
+	"crypto/md5"
+	"errors"
+	"fmt"
 	"github.com/v2pro/plz/countlog"
 	"sync"
-	"errors"
-	"crypto/md5"
-	"fmt"
 )
 
 const paramVariants = "variants"

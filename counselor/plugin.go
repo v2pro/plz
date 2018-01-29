@@ -1,8 +1,8 @@
 package counselor
 
 import (
-	"plugin"
 	"path"
+	"plugin"
 )
 
 func loadFn(fn string) (plugin.Symbol, error) {

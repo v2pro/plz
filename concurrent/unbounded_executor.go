@@ -1,12 +1,12 @@
 package concurrent
 
 import (
-	"sync"
-	"github.com/v2pro/plz/countlog"
 	"context"
-	"runtime"
-	"time"
 	"fmt"
+	"github.com/v2pro/plz/countlog"
+	"runtime"
+	"sync"
+	"time"
 )
 
 const StopSignal = "STOP!"

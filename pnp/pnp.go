@@ -1,15 +1,15 @@
 package pnp
 
 import (
-	"net/http"
-	"net"
-	"github.com/v2pro/plz/countlog"
-	"fmt"
-	"encoding/json"
-	"os"
 	"bytes"
-	"time"
+	"encoding/json"
+	"fmt"
+	"github.com/v2pro/plz/countlog"
 	"io/ioutil"
+	"net"
+	"net/http"
+	"os"
+	"time"
 )
 
 func Start(pingUrl string, processInfo map[string]interface{}, handler http.Handler) {

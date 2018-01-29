@@ -1,8 +1,8 @@
 package pnp
 
 import (
-	"testing"
 	"net/http"
+	"testing"
 	"time"
 )
 

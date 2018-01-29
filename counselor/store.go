@@ -1,21 +1,21 @@
 package counselor
 
 import (
-	"sync"
+	"bytes"
+	"github.com/v2pro/plz/countlog"
+	"io/ioutil"
 	"os"
 	"path"
-	"io/ioutil"
-	"github.com/v2pro/plz/countlog"
-	"bytes"
+	"sync"
 )
 
 type objectId struct {
-	namespace string
+	namespace  string
 	objectName string
 }
 
 func (oid *objectId) String() string {
-	return oid.namespace + "/"+ oid.objectName
+	return oid.namespace + "/" + oid.objectName
 }
 
 type itemName string

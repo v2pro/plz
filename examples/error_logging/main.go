@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/v2pro/plz/countlog"
-	"time"
 	"context"
+	"fmt"
 	"github.com/v2pro/plz"
 	"github.com/v2pro/plz/concurrent"
+	"github.com/v2pro/plz/countlog"
 	"os"
-	"fmt"
+	"time"
 )
 
 func main() {
@@ -81,7 +81,7 @@ func doY(ctx context.Context) error {
 }
 
 func doZ(ctx countlog.Context) error {
-	defer func(){
+	defer func() {
 		countlog.LogPanic(recover())
 	}()
 	file, err := os.OpenFile("/tmp/abc", os.O_RDWR, 0666)

@@ -2,17 +2,18 @@ package witch
 
 import "net/http"
 import (
+	"bytes"
 	"github.com/rakyll/statik/fs"
 	"github.com/v2pro/plz/countlog"
-	"io/ioutil"
 	_ "github.com/v2pro/plz/witch/statik"
-	"bytes"
+	"io/ioutil"
 )
 
 var files = []string{
 	"ide.html",
 	"log-viewer.html", "filters.html", "data-sources.html", "columns.html",
 	"state-viewer.html", "snapshots.html"}
+
 //go:generate $GOPATH/bin/statik -src $PWD/webroot
 
 var viewerHtml []byte

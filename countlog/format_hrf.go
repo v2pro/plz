@@ -1,10 +1,10 @@
 package countlog
 
 import (
-	"fmt"
 	"context"
-	"reflect"
 	"encoding/json"
+	"fmt"
+	"reflect"
 )
 
 type HumanReadableFormat struct {
@@ -22,7 +22,7 @@ func (format *HumanReadableFormat) FormatLog(event Event) []byte {
 		msg = append(msg, fmt.Sprintf(
 			"=== [%s] %s ===\n", string(ctx), event.Event)...)
 	}
-	if len(event.Properties) % 2 == 1 {
+	if len(event.Properties)%2 == 1 {
 		msg = append(msg, "wrong number of properties\n"...)
 		return msg
 	}
@@ -34,7 +34,7 @@ func (format *HumanReadableFormat) FormatLog(event Event) []byte {
 			continue
 		}
 		v := event.Properties[i+1]
-		if event.Level <= LevelInfo && (k == "lineNumber" || k == "closedAt"){
+		if event.Level <= LevelInfo && (k == "lineNumber" || k == "closedAt") {
 			continue
 		}
 		if k == "err" && v == nil {

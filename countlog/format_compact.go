@@ -6,7 +6,7 @@ import (
 )
 
 type CompactFormat struct {
-	StringLengthCap      int
+	StringLengthCap int
 }
 
 func (format *CompactFormat) FormatLog(event Event) []byte {
