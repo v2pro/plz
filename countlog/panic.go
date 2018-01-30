@@ -4,16 +4,16 @@ import (
 	"runtime"
 )
 
-var ProvideStacktrace = func() interface{} {
-	buf := make([]byte, 1<<16)
-	runtime.Stack(buf, false)
-	return string(buf)
-}
-
 func LogPanic(recovered interface{}, properties ...interface{}) interface{} {
 	if recovered != nil {
-		properties = append(properties, "err", recovered, "stacktrace", ProvideStacktrace)
-		Fatal("event!panic", properties...)
+		buf := make([]byte, 1<<16)
+		runtime.Stack(buf, false)
+		if len(properties) > 0 {
+			properties = append(properties, "err", recovered, "stacktrace", string(buf))
+			Fatal("event!panic", properties...)
+		} else {
+			Fatal("event!panic", "err", recovered, "stacktrace", string(buf))
+		}
 	}
 	return recovered
 }

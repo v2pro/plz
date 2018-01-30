@@ -16,6 +16,11 @@ type Context struct {
 	context.Context
 }
 
+func (ctx *Context) Trace(event string, properties ...interface{}) {
+	properties = append(properties, "ctx", ctx)
+	Trace(event, properties...)
+}
+
 func (ctx *Context) TraceCall(callee string, err error, properties ...interface{}) {
 	properties = append(properties, "ctx", ctx)
 	TraceCall(callee, err, properties...)

@@ -1,37 +1,53 @@
 package countlog
 
-type LogWriter interface {
-	ShouldLog(level int, event string, properties []interface{}) bool
-	WriteLog(level int, event string, properties []interface{})
+import "unsafe"
+
+var EventSinks = []EventSink{}
+
+type EventSink interface {
+	HandlerOf(level int, eventOrCallee string,
+		callerFile string, callerLine int, sample []interface{}) EventHandler
+	ShouldLog(level int, eventOrCallee string,
+		sample []interface{}) bool
 }
 
-type LogFormatter interface {
-	FormatLog(event Event) []byte
+type EventHandler interface {
+	Handle(ctx *Context, err error, properties []interface{})
 }
 
-type LogOutput interface {
-	OutputLog(level int, timestamp int64, formattedEvent []byte)
-	Close()
-}
+type EventHandlers []EventHandler
 
-type Event struct {
-	Level      int
-	Event      string
-	Properties []interface{}
-}
-
-func (event Event) Get(target string) interface{} {
-	for i := 0; i < len(event.Properties); i += 2 {
-		k, _ := event.Properties[i].(string)
-		if k == target {
-			return event.Properties[i+1]
-		}
+func (handlers EventHandlers) Handle(ctx *Context, err error, properties []interface{}) {
+	for _, handler := range handlers {
+		handler.Handle(ctx, err, properties)
 	}
-	return nil
 }
 
-func (event Event) LevelName() string {
-	return getLevelName(event.Level)
+type Format interface {
+	FormatterOf(level int, eventOrCallee string,
+		callerFile string, callerLine int, sample []interface{}) *DummyFormatter
 }
 
-var LogWriters = []LogWriter{}
+type Formatter interface {
+	Format(space []byte, ctx *Context, err error, properties []interface{}) []byte
+}
+
+type Formatters []Formatter
+
+func (formatters Formatters) Format(space []byte, ctx *Context, err error, properties []interface{}) []byte {
+	for _, formatter := range formatters {
+		space = formatter.Format(space, ctx, err, properties)
+	}
+	return space
+}
+
+type DummyFormatter struct {
+	Formatter Formatter
+}
+
+func (formatter *DummyFormatter) Format(space []byte, ctx *Context, err error, properties []interface{}) []byte {
+	ptr := unsafe.Pointer(&properties)
+	return formatter.Formatter.Format(space, ctx, err, castEmptyInterfaces(uintptr(ptr)))
+}
+
+

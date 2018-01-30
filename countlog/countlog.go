@@ -1,12 +1,9 @@
 package countlog
 
 import (
-	"fmt"
-	"os"
-	"runtime"
-	"strings"
 	"sync"
-	"time"
+	"unsafe"
+	"runtime"
 )
 
 // push event out
@@ -44,136 +41,118 @@ func ShouldLog(level int) bool {
 	return level >= MinLevel
 }
 
+func Trace(event string, properties ...interface{}) {
+	if LevelTrace < MinLevel {
+		return
+	}
+	ptr := unsafe.Pointer(&properties)
+	log(LevelTrace, event, nil, nil, castEmptyInterfaces(uintptr(ptr)))
+}
+
+func castEmptyInterfaces(ptr uintptr) []interface{} {
+	return *(*[]interface{})(unsafe.Pointer(ptr))
+}
+
 func TraceCall(callee string, err error, properties ...interface{}) {
 	if err != nil {
-		logCall(LevelError, callee, err, properties)
+		log(LevelError, callee, nil, err, properties)
 		return
 	}
 	if LevelTrace < MinLevel {
 		return
 	}
-	logCall(LevelTrace, callee, err, properties)
-}
-
-//go:noinline
-func logCall(level int, callee string, err error, properties []interface{}) {
-	callee = callee[len("callee!"):]
-	log(level, "event!call "+callee, append(properties, "callee", callee, "err", err))
+	log(LevelTrace, callee, nil, err, properties)
 }
 
 func Debug(event string, properties ...interface{}) {
 	if LevelDebug < MinLevel {
 		return
 	}
-	log(LevelDebug, event, properties)
+	log(LevelDebug, event, nil, nil, properties)
 }
 
 func DebugCall(callee string, err error, properties ...interface{}) {
 	if err != nil {
-		logCall(LevelError, callee, err, properties)
+		log(LevelError, callee, nil, err, properties)
 		return
 	}
 	if LevelDebug < MinLevel {
 		return
 	}
-	logCall(LevelDebug, callee, err, properties)
+	log(LevelDebug, callee, nil, err, properties)
 }
 
 func Info(event string, properties ...interface{}) {
 	if LevelInfo < MinLevel {
 		return
 	}
-	log(LevelInfo, event, properties)
+	log(LevelInfo, event, nil, nil, properties)
 }
 
 func InfoCall(callee string, err error, properties ...interface{}) {
 	if err != nil {
-		logCall(LevelError, callee, err, properties)
+		log(LevelError, callee, nil, err, properties)
 		return
 	}
 	if LevelInfo < MinLevel {
 		return
 	}
-	logCall(LevelInfo, callee, err, properties)
+	log(LevelInfo, callee, nil, err, properties)
 }
 
 func Warn(event string, properties ...interface{}) {
-	log(LevelWarn, event, properties)
+	log(LevelWarn, event, nil, nil, properties)
 }
 
 func Error(event string, properties ...interface{}) {
-	log(LevelError, event, properties)
+	log(LevelError, event, nil, nil, properties)
 }
 
 func Fatal(event string, properties ...interface{}) {
-	log(LevelFatal, event, properties)
+	log(LevelFatal, event, nil, nil, properties)
 }
 
 func Log(level int, event string, properties ...interface{}) {
-	log(level, event, properties)
+	log(level, event, nil, nil, properties)
 }
 
-func log(level int, event string, properties []interface{}) {
-	var expandedProperties []interface{}
-	if len(LogWriters) == 0 {
-		if expandedProperties == nil {
-			level, event, expandedProperties = expand(level, event, properties)
-			if level < MinLevel {
-				return
-			}
-		}
-		defaultLogWriter.WriteLog(level, event, expandedProperties)
-		return
+var handlerCache = &sync.Map{}
+
+func log(level int, eventOrCallee string, ctx *Context, err error, properties []interface{}) {
+	handler := getHandler(level, eventOrCallee, ctx, properties)
+	handler.Handle(ctx, err, properties)
+}
+
+func getHandler(level int, eventOrCallee string, ctx *Context, properties []interface{}) EventHandler {
+	handler, found := handlerCache.Load(eventOrCallee)
+	if found {
+		return handler.(EventHandler)
 	}
-	for _, logWriter := range LogWriters {
-		if !logWriter.ShouldLog(level, event, properties) {
+	skipFramesCount := 3
+	if ctx != nil {
+		skipFramesCount = 5
+	}
+	_, callerFile, callerLine, _ := runtime.Caller(skipFramesCount)
+	var handlers EventHandlers
+	for _, sink := range EventSinks {
+		if !sink.ShouldLog(level, eventOrCallee, properties) {
 			continue
 		}
-		if expandedProperties == nil {
-			level, event, expandedProperties = expand(level, event, properties)
-			if level < MinLevel {
-				return
-			}
-		}
-		logWriter.WriteLog(level, event, expandedProperties)
+		handler := sink.HandlerOf(level, eventOrCallee, callerFile, callerLine, properties)
+		handlers = append(handlers, handler)
 	}
-}
-func expand(level int, event string, properties []interface{}) (int, string, []interface{}) {
-	if strings.HasPrefix(event, "event!") {
-		event = event[len("event!"):]
-	} else {
-		_, file, line, _ := runtime.Caller(3)
-		// this format allows intellij to jump to that line
-		lineNumber := fmt.Sprintf("%s:%d", file, line)
-		os.Stderr.Write([]byte("countlog event must starts with event! prefix:" + lineNumber + "\n"))
-		os.Stderr.Sync()
+	switch len(handlers) {
+	case 0:
+		handler := DefaultEventSink.HandlerOf(level, eventOrCallee, ctx, callerFile, callerLine, properties)
+		handlerCache.Store(eventOrCallee, handler)
+		return handler
+	case 1:
+		handlerCache.Store(eventOrCallee, handlers[0])
+		return handlers[0]
+	default:
+		handlerCache.Store(eventOrCallee, handlers)
+		return handlers
 	}
-	expandedProperties := make([]interface{}, 0, len(properties)+4)
-	expandedProperties = append(expandedProperties, "timestamp")
-	expandedProperties = append(expandedProperties, time.Now().UnixNano())
-	skipFramesCount := 3
-	for _, prop := range properties {
-		switch typedProp := prop.(type) {
-		case func() interface{}:
-			expandedProperties = append(expandedProperties, typedProp())
-		case []byte:
-			// []byte is likely being reused, need to make a copy here
-			expandedProperties = append(expandedProperties, encodeAnyByteArray(typedProp))
-		case Context:
-			skipFramesCount = 5
-			expandedProperties = append(expandedProperties, prop)
-		default:
-			expandedProperties = append(expandedProperties, prop)
-		}
-	}
-	_, file, line, ok := runtime.Caller(skipFramesCount)
-	if ok {
-		expandedProperties = append(expandedProperties, "lineNumber")
-		// this format allows intellij to jump to that line
-		lineNumber := fmt.Sprintf("%s:%d", file, line)
-		expandedProperties = append(expandedProperties, lineNumber)
-	}
-	return level, event, expandedProperties
 }
 
 // pull state callbacks
