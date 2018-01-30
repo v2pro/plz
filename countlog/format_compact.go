@@ -1,6 +1,12 @@
 package countlog
 
-import "strings"
+import (
+	"strings"
+	"time"
+	"github.com/json-iterator/go"
+)
+
+var fakeNow *time.Time
 
 type CompactFormat struct {
 	StringLengthCap int
@@ -12,12 +18,15 @@ func (format *CompactFormat) FormatterOf(level int, eventOrCallee string,
 	if strings.HasPrefix(eventOrCallee, "event!") {
 		formatters = append(formatters, &tagFormatter{eventOrCallee[len("event!"):]})
 	}
+	formatters = append(formatters, &timestampFormatter{})
 	for i := 0; i < len(sample); i+=2 {
 		key := sample[i].(string)
 		value := sample[i+1]
 		switch value.(type) {
 		case string:
 			formatters = append(formatters, &stringFormatter{"||" + key + "=", i+1})
+		case []byte:
+			formatters = append(formatters, &bytesFormatter{"||" + key + "=", i+1})
 		}
 	}
 	return &DummyFormatter{formatters}
@@ -40,6 +49,41 @@ func (formatter *stringFormatter) Format(space []byte, ctx *Context, err error, 
 	space = append(space, formatter.key...)
 	return append(space, properties[formatter.idx].(string)...)
 }
+
+type timestampFormatter struct {
+}
+
+func (formatter *timestampFormatter) Format(space []byte, ctx *Context, err error, properties []interface{}) []byte {
+	space = append(space, "||timestamp="...)
+	now := time.Now()
+	if fakeNow != nil {
+		now = *fakeNow
+	}
+	return now.AppendFormat(space, time.RFC3339)
+}
+
+type bytesFormatter struct {
+	key string
+	idx int
+}
+
+func (formatter *bytesFormatter) Format(space []byte, ctx *Context, err error, properties []interface{}) []byte {
+	space = append(space, formatter.key...)
+	return encodeAnyByteArray(space, properties[formatter.idx].([]byte))
+}
+
+type defaultFormatter struct {
+	key string
+	idx int
+	jsonApi jsoniter.API
+}
+
+func (formatter *defaultFormatter) Format(space []byte, ctx *Context, err error, properties []interface{}) []byte {
+	space = append(space, formatter.key...)
+	return encodeAnyByteArray(space, properties[formatter.idx].([]byte))
+}
+
+
 //
 //func (format *CompactFormat) FormatLog(event Event) []byte {
 //	line := []byte{}

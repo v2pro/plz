@@ -1,7 +1,6 @@
 package countlog
 
 import (
-	"encoding/json"
 	"unicode/utf8"
 )
 
@@ -14,7 +13,7 @@ import (
 var safeSet = [utf8.RuneSelf]bool{
 	' ':      true,
 	'!':      true,
-	'"':      false,
+	'"':      true,
 	'#':      true,
 	'$':      true,
 	'%':      true,
@@ -72,7 +71,7 @@ var safeSet = [utf8.RuneSelf]bool{
 	'Y':      true,
 	'Z':      true,
 	'[':      true,
-	'\\':     false,
+	'\\':     true,
 	']':      true,
 	'^':      true,
 	'_':      true,
@@ -111,8 +110,7 @@ var safeSet = [utf8.RuneSelf]bool{
 }
 var hex = "0123456789abcdef"
 
-func encodeAnyByteArray(s []byte) json.RawMessage {
-	encoded := []byte{'"'}
+func encodeAnyByteArray(space []byte, s []byte) []byte {
 	i := 0
 	start := i
 	for i < len(s) {
@@ -122,24 +120,11 @@ func encodeAnyByteArray(s []byte) json.RawMessage {
 				continue
 			}
 			if start < i {
-				encoded = append(encoded, s[start:i]...)
+				space = append(space, s[start:i]...)
 			}
-			switch b {
-			case '\\':
-				encoded = append(encoded, `\\x5c`...)
-			case '"':
-				encoded = append(encoded, `\"`...)
-			case '\n':
-				encoded = append(encoded, `\n`...)
-			case '\r':
-				encoded = append(encoded, `\r`...)
-			case '\t':
-				encoded = append(encoded, `\t`...)
-			default:
-				encoded = append(encoded, `\\x`...)
-				encoded = append(encoded, hex[b>>4])
-				encoded = append(encoded, hex[b&0xF])
-			}
+			space = append(space, `\\x`...)
+			space = append(space, hex[b>>4])
+			space = append(space, hex[b&0xF])
 			i++
 			start = i
 			continue
@@ -147,12 +132,12 @@ func encodeAnyByteArray(s []byte) json.RawMessage {
 		c, size := utf8.DecodeRune(s[i:])
 		if c == utf8.RuneError {
 			if start < i {
-				encoded = append(encoded, s[start:i]...)
+				space = append(space, s[start:i]...)
 			}
 			for _, b := range s[i : i+size] {
-				encoded = append(encoded, `\\x`...)
-				encoded = append(encoded, hex[b>>4])
-				encoded = append(encoded, hex[b&0xF])
+				space = append(space, `\\x`...)
+				space = append(space, hex[b>>4])
+				space = append(space, hex[b&0xF])
 			}
 			i += size
 			start = i
@@ -161,8 +146,7 @@ func encodeAnyByteArray(s []byte) json.RawMessage {
 		}
 	}
 	if start < len(s) {
-		encoded = append(encoded, s[start:]...)
+		space = append(space, s[start:]...)
 	}
-	encoded = append(encoded, '"')
-	return json.RawMessage(encoded)
+	return space
 }
