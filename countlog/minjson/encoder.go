@@ -31,6 +31,10 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 		return &int64Encoder{}
 	case reflect.Uint64, reflect.Uint:
 		return &uint64Encoder{}
+	case reflect.Float64:
+		return &lossyFloat64Encoder{}
+	case reflect.Float32:
+		return &lossyFloat32Encoder{}
 	}
 	return nil
 }
