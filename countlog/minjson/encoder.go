@@ -61,31 +61,52 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 			length: valType.Len(),
 		}
 	case reflect.Struct:
-		var fields []structEncoderField
-		for i := 0; i < valType.NumField(); i++ {
-			field := valType.Field(i)
-			name := getFieldName(field)
-			if name == "" {
-				continue
-			}
-			prefix := ""
-			if len(fields) != 0 {
-				prefix += ","
-			}
-			prefix += `"`
-			prefix += name
-			prefix += `":`
-			fields = append(fields, structEncoderField{
-				offset: field.Offset,
-				prefix: prefix,
-				encoder: encoderOf(prefix + " ." + name, field.Type),
-			})
-		}
-		return &structEncoder{
-			fields: fields,
-		}
+		return encoderOfStruct(prefix, valType)
+	case reflect.Map:
+		return encoderOfMap(prefix, valType)
 	}
 	return nil
+}
+
+func encoderOfMap(prefix string, valType reflect.Type) *mapEncoder {
+	keyType := valType.Key()
+	keyEncoder := encoderOf(prefix+" [mapKey]", keyType)
+	hasQuote := keyType.Kind() == reflect.String || keyType == bytesType
+	if !hasQuote {
+		keyEncoder = &mapKeyEncoder{keyEncoder}
+	}
+	sampleObj := reflect.MakeMap(valType).Interface()
+	return &mapEncoder{
+		keyEncoder:      keyEncoder,
+		elemEncoder:     encoderOf(prefix + " [mapElem]", valType.Elem()),
+		sampleInterface: *(*emptyInterface)(unsafe.Pointer(&sampleObj)),
+	}
+}
+
+func encoderOfStruct(prefix string, valType reflect.Type) *structEncoder {
+	var fields []structEncoderField
+	for i := 0; i < valType.NumField(); i++ {
+		field := valType.Field(i)
+		name := getFieldName(field)
+		if name == "" {
+			continue
+		}
+		prefix := ""
+		if len(fields) != 0 {
+			prefix += ","
+		}
+		prefix += `"`
+		prefix += name
+		prefix += `":`
+		fields = append(fields, structEncoderField{
+			offset: field.Offset,
+			prefix: prefix,
+			encoder: encoderOf(prefix + " ." + name, field.Type),
+		})
+	}
+	return &structEncoder{
+		fields: fields,
+	}
 }
 
 func getFieldName(field reflect.StructField) string {
