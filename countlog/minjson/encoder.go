@@ -48,6 +48,13 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 			elemEncoder: elemEncoder,
 			elemSize: valType.Elem().Size(),
 		}
+	case reflect.Array:
+		elemEncoder := encoderOf(prefix + " [sliceElem]", valType.Elem())
+		return &arrayEncoder{
+			elemEncoder: elemEncoder,
+			elemSize: valType.Elem().Size(),
+			length: valType.Len(),
+		}
 	}
 	return nil
 }
