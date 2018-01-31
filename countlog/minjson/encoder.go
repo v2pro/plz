@@ -42,6 +42,22 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 		return &lossyFloat32Encoder{}
 	case reflect.String:
 		return &stringEncoder{}
+	case reflect.Slice:
+		elemEncoder := encoderOf(prefix + " [sliceElem]", valType.Elem())
+		return &sliceEncoder{
+			elemEncoder: elemEncoder,
+			elemSize: valType.Elem().Size(),
+		}
 	}
 	return nil
+}
+
+func PtrOf(val interface{}) unsafe.Pointer {
+	return (*emptyInterface)(unsafe.Pointer(&val)).word
+}
+
+// emptyInterface is the header for an interface{} value.
+type emptyInterface struct {
+	typ  unsafe.Pointer
+	word unsafe.Pointer
 }
