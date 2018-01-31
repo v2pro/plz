@@ -97,9 +97,16 @@ func Benchmark_counter_of_2_elem_dimension(b *testing.B) {
 		},
 	}
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		counter.Handle(events[i % 4])
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		i := 0
+		for pb.Next() {
+			counter.Handle(events[i % 4])
+			i++
+		}
+	})
+	//for i := 0; i < b.N; i++ {
+	//	counter.Handle(events[i % 4])
+	//}
 }
 
 func Benchmark_counter_of_0_elem_dimension(b *testing.B) {
@@ -116,7 +123,12 @@ func Benchmark_counter_of_0_elem_dimension(b *testing.B) {
 		},
 	}
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		counter.Handle(event)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			counter.Handle(event)
+		}
+	})
+	//for i := 0; i < b.N; i++ {
+	//	counter.Handle(event)
+	//}
 }

@@ -8,9 +8,11 @@ type countEvent struct {
 }
 
 func (state *countEvent) Handle(event *core.Event) {
-	dimensions := state.Window.MapMonoid
+	lock, dimensions := state.Window.Mutate()
+	lock.Lock()
 	counter := state.extractor.Extract(event, dimensions, NewCounterMonoid)
 	*(counter.(*CounterMonoid)) += CounterMonoid(1)
+	lock.Unlock()
 }
 
 func (state *countEvent) GetWindow() *Window {

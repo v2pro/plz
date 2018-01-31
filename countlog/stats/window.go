@@ -5,6 +5,8 @@ import (
 	"unsafe"
 	"strings"
 	"reflect"
+	"sync"
+	"github.com/v2pro/plz/gls"
 )
 
 type Point struct {
@@ -19,13 +21,29 @@ type Collector interface {
 }
 
 type Window struct {
+	shards [16]windowShard
+}
+
+type windowShard struct {
 	MapMonoid
+	lock *sync.Mutex
 }
 
 func newWindow() *Window {
-	return &Window{
-		MapMonoid: MapMonoid{},
+	window := &Window{}
+	for i := 0; i < 16; i++ {
+		window.shards[i]= windowShard{
+			MapMonoid: MapMonoid{},
+			lock: &sync.Mutex{},
+		}
 	}
+	return window
+}
+
+func (window *Window) Mutate() (*sync.Mutex, MapMonoid) {
+	shardId := gls.GoID() % 16
+	shard := window.shards[shardId]
+	return shard.lock, shard.MapMonoid
 }
 
 func (window *Window) Export(collector Collector) {
