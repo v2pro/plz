@@ -9,8 +9,9 @@ type pointerEncoder struct {
 }
 
 func (encoder *pointerEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
-	if ptr == nil {
+	ptrTo := *(*unsafe.Pointer)(ptr)
+	if ptrTo == nil {
 		return append(space, 'n', 'u', 'l', 'l')
 	}
-	return encoder.elemEncoder.Encode(space, *(*unsafe.Pointer)(ptr))
+	return encoder.elemEncoder.Encode(space, ptrTo)
 }

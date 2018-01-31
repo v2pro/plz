@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 	"unicode"
+	"sync"
 )
 
 var bytesType = reflect.TypeOf([]byte(nil))
@@ -13,8 +14,19 @@ type Encoder interface {
 	Encode(space []byte, ptr unsafe.Pointer) []byte
 }
 
+var encoderCache = &sync.Map{}
+
 func EncoderOf(valType reflect.Type) Encoder {
-	return encoderOf("", valType)
+	encoderObj, found := encoderCache.Load(valType)
+	if found {
+		return encoderObj.(Encoder)
+	}
+	encoder := encoderOf("", valType)
+	if isOnePtr(valType) {
+		encoder = &onePtrInterfaceEncoder{encoder}
+	}
+	encoderCache.Store(valType, encoder)
+	return encoder
 }
 
 func encoderOf(prefix string, valType reflect.Type) Encoder {
@@ -64,17 +76,14 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 		return encoderOfStruct(prefix, valType)
 	case reflect.Map:
 		return encoderOfMap(prefix, valType)
+	case reflect.Interface:
+		return &emptyInterfaceEncoder{}
 	}
 	return nil
 }
 
 func encoderOfMap(prefix string, valType reflect.Type) *mapEncoder {
-	keyType := valType.Key()
-	keyEncoder := encoderOf(prefix+" [mapKey]", keyType)
-	hasQuote := keyType.Kind() == reflect.String || keyType == bytesType
-	if !hasQuote {
-		keyEncoder = &mapKeyEncoder{keyEncoder}
-	}
+	keyEncoder := encoderOfMapKey(prefix, valType.Key())
 	sampleObj := reflect.MakeMap(valType).Interface()
 	elemType := valType.Elem()
 	elemEncoder := encoderOf(prefix+" [mapElem]", elemType)
@@ -83,9 +92,31 @@ func encoderOfMap(prefix string, valType reflect.Type) *mapEncoder {
 	}
 	return &mapEncoder{
 		keyEncoder:      keyEncoder,
-		elemEncoder:     elemEncoder,
 		sampleInterface: *(*emptyInterface)(unsafe.Pointer(&sampleObj)),
 	}
+}
+
+var mapKeyEncoderCache = &sync.Map{}
+
+func encoderOfMapKey(prefix string, keyType reflect.Type) Encoder {
+	encoderObj, found := mapKeyEncoderCache.Load(keyType)
+	if found {
+		return encoderObj.(Encoder)
+	}
+	encoder := _encoderOfMapKey(prefix, keyType)
+	mapKeyEncoderCache.Store(keyType, encoder)
+	return encoder
+}
+
+func _encoderOfMapKey(prefix string, keyType reflect.Type) Encoder {
+	keyEncoder := encoderOf(prefix+" [mapKey]", keyType)
+	if keyType.Kind() == reflect.String || keyType == bytesType {
+		return &mapStringKeyEncoder{keyEncoder}
+	}
+	if keyType.Kind() == reflect.Interface {
+		return &mapInterfaceKeyEncoder{}
+	}
+	return &mapNumberKeyEncoder{keyEncoder}
 }
 
 func isOnePtr(valType reflect.Type) bool {
