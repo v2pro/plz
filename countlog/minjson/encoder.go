@@ -5,6 +5,8 @@ import (
 	"reflect"
 )
 
+var bytesType = reflect.TypeOf([]byte(nil))
+
 type Encoder interface {
 	Encode(space []byte, ptr unsafe.Pointer) []byte
 }
@@ -14,6 +16,9 @@ func EncoderOf(valType reflect.Type) Encoder {
 }
 
 func encoderOf(prefix string, valType reflect.Type) Encoder {
+	if bytesType == valType {
+		return &bytesEncoder{}
+	}
 	switch valType.Kind() {
 	case reflect.Int8:
 		return &int8Encoder{}
