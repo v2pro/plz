@@ -60,6 +60,9 @@ func newDimensionExtractor(site *core.EventSite) dimensionExtractor {
 	arrayType := reflect.ArrayOf(len(dimensionElems), reflect.TypeOf(""))
 	arrayObj := reflect.New(arrayType).Elem().Interface()
 	sampleInterface := *(*emptyInterface)(unsafe.Pointer(&arrayObj))
+	if len(indices) == 0 {
+		return &dimensionExtractor0{}
+	}
 	if len(indices) <= 2 {
 		return &dimensionExtractor2{
 			sampleInterface: sampleInterface,
@@ -82,6 +85,18 @@ func newDimensionExtractor(site *core.EventSite) dimensionExtractor {
 		sampleInterface: sampleInterface,
 		indices: indices,
 	}
+}
+
+type dimensionExtractor0 struct {
+}
+
+func (extractor *dimensionExtractor0) Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
+	elem := monoid[0]
+	if elem == nil {
+		elem = createElem()
+		monoid[0] = elem
+	}
+	return elem
 }
 
 type dimensionExtractor2 struct {

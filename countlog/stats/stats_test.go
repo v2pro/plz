@@ -51,7 +51,7 @@ func (points *dumpPoint) Collect(event string, timestamp int64, dimension map[st
 	})
 }
 
-func Benchmark_counter(b *testing.B) {
+func Benchmark_counter_of_2_elem_dimension(b *testing.B) {
 	aggregator := &EventAggregator{}
 	counter := aggregator.HandlerOf(&core.EventSite{
 		EventOrCallee: "event!abc",
@@ -62,12 +62,57 @@ func Benchmark_counter(b *testing.B) {
 			"ver", "1.0",
 		},
 	}).(State)
+	events := []*core.Event{
+		{
+			Properties: []interface{}{
+				"agg", "counter",
+				"dim", "city,ver",
+				"city", "beijing",
+				"ver", "1.0",
+			},
+		},
+		{
+			Properties: []interface{}{
+				"agg", "counter",
+				"dim", "city,ver",
+				"city", "hangzhou",
+				"ver", "1.0",
+			},
+		},
+		{
+			Properties: []interface{}{
+				"agg", "counter",
+				"dim", "city,ver",
+				"city", "hangzhou",
+				"ver", "2.0",
+			},
+		},
+		{
+			Properties: []interface{}{
+				"agg", "counter",
+				"dim", "city,ver",
+				"city", "hangzhou",
+				"ver", "3.0",
+			},
+		},
+	}
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		counter.Handle(events[i % 4])
+	}
+}
+
+func Benchmark_counter_of_0_elem_dimension(b *testing.B) {
+	aggregator := &EventAggregator{}
+	counter := aggregator.HandlerOf(&core.EventSite{
+		EventOrCallee: "event!abc",
+		Sample: []interface{}{
+			"agg", "counter",
+		},
+	}).(State)
 	event := &core.Event{
 		Properties: []interface{}{
 			"agg", "counter",
-			"dim", "city,ver",
-			"city", "beijing",
-			"ver", "1.0",
 		},
 	}
 	b.ReportAllocs()
