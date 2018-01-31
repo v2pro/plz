@@ -45,20 +45,20 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 	case reflect.String:
 		return &stringEncoder{}
 	case reflect.Ptr:
-		elemEncoder := encoderOf(prefix + " [ptrElem]", valType.Elem())
-		return &pointerEncoder{elemEncoder:elemEncoder}
+		elemEncoder := encoderOf(prefix+" [ptrElem]", valType.Elem())
+		return &pointerEncoder{elemEncoder: elemEncoder}
 	case reflect.Slice:
-		elemEncoder := encoderOf(prefix + " [sliceElem]", valType.Elem())
+		elemEncoder := encoderOf(prefix+" [sliceElem]", valType.Elem())
 		return &sliceEncoder{
 			elemEncoder: elemEncoder,
-			elemSize: valType.Elem().Size(),
+			elemSize:    valType.Elem().Size(),
 		}
 	case reflect.Array:
-		elemEncoder := encoderOf(prefix + " [sliceElem]", valType.Elem())
+		elemEncoder := encoderOf(prefix+" [sliceElem]", valType.Elem())
 		return &arrayEncoder{
 			elemEncoder: elemEncoder,
-			elemSize: valType.Elem().Size(),
-			length: valType.Len(),
+			elemSize:    valType.Elem().Size(),
+			length:      valType.Len(),
 		}
 	case reflect.Struct:
 		return encoderOfStruct(prefix, valType)
@@ -76,11 +76,33 @@ func encoderOfMap(prefix string, valType reflect.Type) *mapEncoder {
 		keyEncoder = &mapKeyEncoder{keyEncoder}
 	}
 	sampleObj := reflect.MakeMap(valType).Interface()
+	elemType := valType.Elem()
+	elemEncoder := encoderOf(prefix+" [mapElem]", elemType)
+	if isOnePtr(elemType) {
+		elemEncoder = &onePtrInterfaceEncoder{elemEncoder}
+	}
 	return &mapEncoder{
 		keyEncoder:      keyEncoder,
-		elemEncoder:     encoderOf(prefix + " [mapElem]", valType.Elem()),
+		elemEncoder:     elemEncoder,
 		sampleInterface: *(*emptyInterface)(unsafe.Pointer(&sampleObj)),
 	}
+}
+
+func isOnePtr(valType reflect.Type) bool {
+	if valType.Kind() == reflect.Ptr {
+		return true
+	}
+	if valType.Kind() == reflect.Struct &&
+		valType.NumField() == 1 &&
+		valType.Field(0).Type.Kind() == reflect.Ptr {
+		return true
+	}
+	if valType.Kind() == reflect.Array &&
+		valType.Len() == 1 &&
+		valType.Elem().Kind() == reflect.Ptr {
+		return true
+	}
+	return false
 }
 
 func encoderOfStruct(prefix string, valType reflect.Type) *structEncoder {
@@ -99,9 +121,9 @@ func encoderOfStruct(prefix string, valType reflect.Type) *structEncoder {
 		prefix += name
 		prefix += `":`
 		fields = append(fields, structEncoderField{
-			offset: field.Offset,
-			prefix: prefix,
-			encoder: encoderOf(prefix + " ." + name, field.Type),
+			offset:  field.Offset,
+			prefix:  prefix,
+			encoder: encoderOf(prefix+" ."+name, field.Type),
 		})
 	}
 	return &structEncoder{
