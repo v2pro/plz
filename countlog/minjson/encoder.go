@@ -77,6 +77,9 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 	case reflect.Map:
 		return encoderOfMap(prefix, valType)
 	case reflect.Interface:
+		if valType.NumMethod() != 0 {
+			return &nonEmptyInterfaceEncoder{}
+		}
 		return &emptyInterfaceEncoder{}
 	}
 	return nil

@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/v2pro/plz/countlog/minjson"
 	"reflect"
+	"io"
 )
 
 func Test_map_of_number_key(t *testing.T) {
@@ -45,5 +46,13 @@ func Test_map_of_interface_elem(t *testing.T) {
 	encoder := minjson.EncoderOf(reflect.TypeOf(map[int]interface{}{1: 1}))
 	should.Equal(`{"1":1}`, string(encoder.Encode(nil, minjson.PtrOf(map[int]interface{}{
 		1: 1,
+	}))))
+}
+
+func Test_map_of_non_empty_interface_value(t *testing.T) {
+	should := require.New(t)
+	encoder := minjson.EncoderOf(reflect.TypeOf(map[int]io.Closer{1: nil}))
+	should.Equal(`{"1":1}`, string(encoder.Encode(nil, minjson.PtrOf(map[int]io.Closer{
+		1: TestCloser(1),
 	}))))
 }
