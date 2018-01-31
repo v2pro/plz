@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode"
 	"sync"
+	"fmt"
 )
 
 var bytesType = reflect.TypeOf([]byte(nil))
@@ -82,7 +83,15 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 		}
 		return &emptyInterfaceEncoder{}
 	}
-	return nil
+	return &unsupportedEncoder{fmt.Sprintf(`"can not encode %s %s to json"`, valType.String(), prefix)}
+}
+
+type unsupportedEncoder struct {
+	msg string
+}
+
+func (encoder *unsupportedEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+	return append(space, encoder.msg...)
 }
 
 func encoderOfMap(prefix string, valType reflect.Type) *mapEncoder {
