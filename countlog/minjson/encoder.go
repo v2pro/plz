@@ -42,6 +42,9 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 		return &lossyFloat32Encoder{}
 	case reflect.String:
 		return &stringEncoder{}
+	case reflect.Ptr:
+		elemEncoder := encoderOf(prefix + " [ptrElem]", valType.Elem())
+		return &pointerEncoder{elemEncoder:elemEncoder}
 	case reflect.Slice:
 		elemEncoder := encoderOf(prefix + " [sliceElem]", valType.Elem())
 		return &sliceEncoder{
