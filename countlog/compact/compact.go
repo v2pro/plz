@@ -3,6 +3,8 @@ package compact
 import (
 	"strings"
 	"github.com/v2pro/plz/countlog/core"
+	"github.com/v2pro/plz/countlog/minjson"
+	"reflect"
 )
 
 type Format struct {
@@ -25,7 +27,8 @@ func (format *Format) FormatterOf(level int, eventOrCallee string,
 		case []byte:
 			formatters = append(formatters, &bytesFormatter{prefix, i + 1})
 		default:
-			formatters = append(formatters, &bytesFormatter{prefix, i + 1})
+			formatters = append(formatters, &defaultFormatter{prefix, i + 1,
+			minjson.EncoderOf(reflect.TypeOf(value))})
 		}
 	}
 	return formatters

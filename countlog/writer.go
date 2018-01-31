@@ -3,38 +3,68 @@ package countlog
 import (
 	"github.com/v2pro/plz/countlog/core"
 	"io"
-	"github.com/v2pro/plz/countlog/compact"
-	"os"
 	"sync"
 )
 
-var DefaultEventSink = &WriteEventSink{
-	Format: &compact.Format{},
-	Writer: os.Stdout,
+type eventWriter struct {
+	shouldLog func(level int, eventOrCallee string,
+		sample []interface{}) bool
+	format core.Format
+	writer io.Writer
 }
 
-type WriteEventSink struct {
-	Format core.Format
-	Writer io.Writer
+type EventWriterConfig struct {
+	ShouldLog func(level int, eventOrCallee string,
+		sample []interface{}) bool
+	Format   core.Format
+	Writer   io.Writer
+	Executor Executor
 }
 
-func (sink *WriteEventSink) ShouldLog(level int, eventOrCallee string, ctx *Context,
-	sample []interface{}) bool {
-	return true
-}
-
-func (sink *WriteEventSink) HandlerOf(level int, eventOrCallee string, ctx *Context,
-	callerFile string, callerLine int, sample []interface{}) core.EventHandler {
-	formatter := sink.Format.FormatterOf(level, eventOrCallee, callerFile, callerLine, sample)
-	return &WriteEventHandler{
-		Formatter: formatter,
-		Writer:    sink.Writer,
+func NewEventWriter(cfg EventWriterConfig) EventSink {
+	shouldLog := cfg.ShouldLog
+	if shouldLog == nil {
+		shouldLog = func(level int, eventOrCallee string, sample []interface{}) bool {
+			return true
+		}
+	}
+	var writer io.Writer = &recylceWriter{cfg.Writer}
+	if cfg.Executor != nil {
+		writer = newAsyncWriter(cfg.Executor, writer)
+	}
+	return &eventWriter{
+		shouldLog: shouldLog,
+		format:    cfg.Format,
+		writer:    writer,
 	}
 }
 
-type WriteEventHandler struct {
-	Formatter core.Formatter
-	Writer    io.Writer
+func (sink *eventWriter) ShouldLog(level int, eventOrCallee string,
+	sample []interface{}) bool {
+	return sink.shouldLog(level, eventOrCallee, sample)
+}
+
+func (sink *eventWriter) HandlerOf(level int, eventOrCallee string,
+	callerFile string, callerLine int, sample []interface{}) core.EventHandler {
+	formatter := sink.format.FormatterOf(level, eventOrCallee, callerFile, callerLine, sample)
+	return &writeEvent{
+		formatter: formatter,
+		writer:    sink.writer,
+	}
+}
+
+type writeEvent struct {
+	formatter core.Formatter
+	writer    io.Writer
+}
+
+func (handler *writeEvent) Handle(event *core.Event) {
+	space := bufPool.Get().([]byte)[:0]
+	formatted := handler.formatter.Format(space, event)
+	_, err := handler.writer.Write(formatted)
+	if err != nil {
+		// TODO: show error
+	}
 }
 
 var bufPool = &sync.Pool{
@@ -43,14 +73,14 @@ var bufPool = &sync.Pool{
 	},
 }
 
-func (handler *WriteEventHandler) Handle(event *core.Event) {
-	space := bufPool.Get().([]byte)[:0]
-	formatted := handler.Formatter.Format(space, event)
-	_, err := handler.Writer.Write(formatted)
-	bufPool.Put(formatted)
-	if err != nil {
-		// TODO: show error
-	}
+type recylceWriter struct {
+	writer io.Writer
+}
+
+func (writer *recylceWriter) Write(buf []byte) (int, error) {
+	n, err := writer.writer.Write(buf)
+	bufPool.Put(buf)
+	return n, err
 }
 
 //

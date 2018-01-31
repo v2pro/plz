@@ -165,7 +165,7 @@ func newHandler(level int, eventOrCalleeObj string, ctx *Context, properties []i
 	}
 	switch len(handlers) {
 	case 0:
-		handler := DefaultEventSink.HandlerOf(level, eventOrCallee, ctx, callerFile, callerLine, properties)
+		handler := DefaultEventSink.HandlerOf(level, eventOrCallee, callerFile, callerLine, properties)
 		handlerCache.Store(eventOrCallee, handler)
 		return handler
 	case 1:
