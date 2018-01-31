@@ -99,7 +99,7 @@ package countlog
 //}
 //
 //func NewAsyncLogWriter(minLevel int, output LogOutput) *AsyncLogWriter {
-//	writer := &AsyncLogWriter{
+//	Writer := &AsyncLogWriter{
 //		MinLevel:       minLevel,
 //		eventChan:      make(chan Event, 1024),
 //		isClosed:       make(chan bool),
@@ -107,5 +107,5 @@ package countlog
 //		LogOutput:      output,
 //		EventWhitelist: map[string]bool{},
 //	}
-//	return writer
+//	return Writer
 //}

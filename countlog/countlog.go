@@ -4,6 +4,8 @@ import (
 	"sync"
 	"unsafe"
 	"runtime"
+	"github.com/v2pro/plz/countlog/core"
+	"time"
 )
 
 // push event out
@@ -120,20 +122,40 @@ var handlerCache = &sync.Map{}
 
 func log(level int, eventOrCallee string, ctx *Context, err error, properties []interface{}) {
 	handler := getHandler(level, eventOrCallee, ctx, properties)
-	handler.Handle(ctx, err, properties)
+	event := &core.Event{
+		Context: ctx,
+		Error: err,
+		Timestamp: time.Now(),
+		Properties: properties,
+	}
+	ptr := unsafe.Pointer(event)
+	handler.Handle(castEvent(uintptr(ptr)))
 }
 
-func getHandler(level int, eventOrCallee string, ctx *Context, properties []interface{}) EventHandler {
+func castEvent(ptr uintptr) *core.Event {
+	return (*core.Event)(unsafe.Pointer(ptr))
+}
+func castString(ptr uintptr) string {
+	return *(*string)(unsafe.Pointer(ptr))
+}
+
+func getHandler(level int, eventOrCallee string, ctx *Context, properties []interface{}) core.EventHandler {
 	handler, found := handlerCache.Load(eventOrCallee)
 	if found {
-		return handler.(EventHandler)
+		return handler.(core.EventHandler)
 	}
+	return newHandler(level, eventOrCallee, ctx, properties)
+}
+
+func newHandler(level int, eventOrCalleeObj string, ctx *Context, properties []interface{}) core.EventHandler {
+	ptr := unsafe.Pointer(&eventOrCalleeObj)
+	eventOrCallee := castString(uintptr(ptr))
 	skipFramesCount := 3
 	if ctx != nil {
 		skipFramesCount = 5
 	}
 	_, callerFile, callerLine, _ := runtime.Caller(skipFramesCount)
-	var handlers EventHandlers
+	var handlers core.EventHandlers
 	for _, sink := range EventSinks {
 		if !sink.ShouldLog(level, eventOrCallee, properties) {
 			continue

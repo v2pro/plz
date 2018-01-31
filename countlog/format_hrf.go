@@ -12,9 +12,9 @@ package countlog
 //	StringLengthCap      int
 //}
 //
-//func (format *HumanReadableFormat) FormatLog(event Event) []byte {
+//func (Format *HumanReadableFormat) FormatLog(event Event) []byte {
 //	msg := make([]byte, 0, 64)
-//	ctx := format.describeContext(event)
+//	ctx := Format.describeContext(event)
 //	if len(ctx) == 0 {
 //		msg = append(msg, fmt.Sprintf(
 //			"=== %s ===\n", event.Event)...)
@@ -44,10 +44,10 @@ package countlog
 //		if formattedV == "" {
 //			continue
 //		}
-//		if event.Level < LevelWarn && format.StringLengthCap > 0 {
+//		if event.Level < LevelWarn && Format.StringLengthCap > 0 {
 //			lenCap := len(formattedV)
-//			if format.StringLengthCap < lenCap {
-//				lenCap = format.StringLengthCap
+//			if Format.StringLengthCap < lenCap {
+//				lenCap = Format.StringLengthCap
 //				formattedV = formattedV[:lenCap] + "...more, capped"
 //			}
 //		}
@@ -95,10 +95,10 @@ package countlog
 //	}
 //}
 //
-//func (format *HumanReadableFormat) describeContext(event Event) []byte {
+//func (Format *HumanReadableFormat) describeContext(event Event) []byte {
 //	var msg []byte
 //	ctx, _ := event.Get("ctx").(context.Context)
-//	for _, propName := range format.ContextPropertyNames {
+//	for _, propName := range Format.ContextPropertyNames {
 //		propValue := event.Get(propName)
 //		if propValue == nil && ctx != nil {
 //			propValue = ctx.Value(propName)

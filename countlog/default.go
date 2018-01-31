@@ -1,20 +1,57 @@
 package countlog
 
-var DefaultEventSink = &defaultEventSink{}
+import (
+	"github.com/v2pro/plz/countlog/core"
+	"io"
+	"github.com/v2pro/plz/countlog/compact"
+	"os"
+	"sync"
+)
 
-type defaultEventSink struct {
+var DefaultEventSink = &WriteEventSink{
+	Format: &compact.Format{},
+	Writer: os.Stdout,
 }
 
-func (sink *defaultEventSink) ShouldLog(level int, eventOrCallee string, ctx *Context,
+type WriteEventSink struct {
+	Format core.Format
+	Writer io.Writer
+}
+
+func (sink *WriteEventSink) ShouldLog(level int, eventOrCallee string, ctx *Context,
 	sample []interface{}) bool {
 	return true
 }
 
-func (sink *defaultEventSink) HandlerOf(level int, eventOrCallee string, ctx *Context,
-callerFile string, callerLine int, sample []interface{}) EventHandler {
-	return nil
+func (sink *WriteEventSink) HandlerOf(level int, eventOrCallee string, ctx *Context,
+	callerFile string, callerLine int, sample []interface{}) core.EventHandler {
+	formatter := sink.Format.FormatterOf(level, eventOrCallee, callerFile, callerLine, sample)
+	return &WriteEventHandler{
+		Formatter: formatter,
+		Writer:    sink.Writer,
+	}
 }
 
+type WriteEventHandler struct {
+	Formatter core.Formatter
+	Writer    io.Writer
+}
+
+var bufPool = &sync.Pool{
+	New: func() interface{} {
+		return make([]byte, 0, 128)
+	},
+}
+
+func (handler *WriteEventHandler) Handle(event *core.Event) {
+	space := bufPool.Get().([]byte)[:0]
+	formatted := handler.Formatter.Format(space, event)
+	_, err := handler.Writer.Write(formatted)
+	bufPool.Put(formatted)
+	if err != nil {
+		// TODO: show error
+	}
+}
 
 //
 //import (
