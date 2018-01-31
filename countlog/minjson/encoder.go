@@ -3,6 +3,8 @@ package minjson
 import (
 	"unsafe"
 	"reflect"
+	"strings"
+	"unicode"
 )
 
 var bytesType = reflect.TypeOf([]byte(nil))
@@ -58,8 +60,50 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 			elemSize: valType.Elem().Size(),
 			length: valType.Len(),
 		}
+	case reflect.Struct:
+		var fields []structEncoderField
+		for i := 0; i < valType.NumField(); i++ {
+			field := valType.Field(i)
+			name := getFieldName(field)
+			if name == "" {
+				continue
+			}
+			prefix := ""
+			if len(fields) != 0 {
+				prefix += ","
+			}
+			prefix += `"`
+			prefix += name
+			prefix += `":`
+			fields = append(fields, structEncoderField{
+				offset: field.Offset,
+				prefix: prefix,
+				encoder: encoderOf(prefix + " ." + name, field.Type),
+			})
+		}
+		return &structEncoder{
+			fields: fields,
+		}
 	}
 	return nil
+}
+
+func getFieldName(field reflect.StructField) string {
+	if !unicode.IsUpper(rune(field.Name[0])) {
+		return ""
+	}
+	jsonTag := field.Tag.Get("json")
+	if jsonTag == "" {
+		return field.Name
+	}
+	parts := strings.Split(jsonTag, ",")
+	if parts[0] == "-" {
+		return ""
+	}
+	if parts[0] == "" {
+		return field.Name
+	}
+	return parts[0]
 }
 
 func PtrOf(val interface{}) unsafe.Pointer {
