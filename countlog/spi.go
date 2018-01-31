@@ -9,10 +9,7 @@ import (
 var EventSinks = []EventSink{}
 
 type EventSink interface {
-	HandlerOf(level int, eventOrCallee string,
-		callerFile string, callerLine int, sample []interface{}) core.EventHandler
-	ShouldLog(level int, eventOrCallee string,
-		sample []interface{}) bool
+	HandlerOf(site *core.EventSite) core.EventHandler
 }
 
 var DefaultEventSink = NewEventWriter(EventWriterConfig{

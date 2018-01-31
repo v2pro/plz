@@ -5,6 +5,16 @@ import (
 	"time"
 )
 
+// EventSite is the location of log in the source code
+type EventSite struct {
+	File string
+	Line int
+	Level int
+	EventOrCallee string
+	Agg string
+	Sample []interface{}
+}
+
 type Event struct {
 	Context context.Context
 	Error error
@@ -25,8 +35,7 @@ func (handlers EventHandlers) Handle(event *Event) {
 }
 
 type Format interface {
-	FormatterOf(level int, eventOrCallee string,
-		callerFile string, callerLine int, sample []interface{}) Formatter
+	FormatterOf(site *EventSite) Formatter
 }
 
 type Formatter interface {

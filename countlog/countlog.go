@@ -118,14 +118,28 @@ func Log(level int, event string, properties ...interface{}) {
 	log(level, event, nil, nil, properties)
 }
 
+func LogPanic(recovered interface{}, properties ...interface{}) interface{} {
+	if recovered != nil {
+		buf := make([]byte, 1<<16)
+		runtime.Stack(buf, false)
+		if len(properties) > 0 {
+			properties = append(properties, "err", recovered, "stacktrace", string(buf))
+			Fatal("event!panic", properties...)
+		} else {
+			Fatal("event!panic", "err", recovered, "stacktrace", string(buf))
+		}
+	}
+	return recovered
+}
+
 var handlerCache = &sync.Map{}
 
 func log(level int, eventOrCallee string, ctx *Context, err error, properties []interface{}) {
 	handler := getHandler(level, eventOrCallee, ctx, properties)
 	event := &core.Event{
-		Context: ctx,
-		Error: err,
-		Timestamp: time.Now(),
+		Context:    ctx,
+		Error:      err,
+		Timestamp:  time.Now(),
 		Properties: properties,
 	}
 	ptr := unsafe.Pointer(event)
@@ -157,10 +171,10 @@ func newHandler(level int, eventOrCalleeObj string, ctx *Context, properties []i
 	_, callerFile, callerLine, _ := runtime.Caller(skipFramesCount)
 	var handlers core.EventHandlers
 	for _, sink := range EventSinks {
-		if !sink.ShouldLog(level, eventOrCallee, properties) {
+		handler := sink.HandlerOf(level, eventOrCallee, callerFile, callerLine, properties)
+		if handler == nil {
 			continue
 		}
-		handler := sink.HandlerOf(level, eventOrCallee, callerFile, callerLine, properties)
 		handlers = append(handlers, handler)
 	}
 	switch len(handlers) {

@@ -7,46 +7,29 @@ import (
 )
 
 type eventWriter struct {
-	shouldLog func(level int, eventOrCallee string,
-		sample []interface{}) bool
 	format core.Format
 	writer io.Writer
 }
 
 type EventWriterConfig struct {
-	ShouldLog func(level int, eventOrCallee string,
-		sample []interface{}) bool
 	Format   core.Format
 	Writer   io.Writer
 	Executor Executor
 }
 
 func NewEventWriter(cfg EventWriterConfig) EventSink {
-	shouldLog := cfg.ShouldLog
-	if shouldLog == nil {
-		shouldLog = func(level int, eventOrCallee string, sample []interface{}) bool {
-			return true
-		}
-	}
 	var writer io.Writer = &recylceWriter{cfg.Writer}
 	if cfg.Executor != nil {
 		writer = newAsyncWriter(cfg.Executor, writer)
 	}
 	return &eventWriter{
-		shouldLog: shouldLog,
 		format:    cfg.Format,
 		writer:    writer,
 	}
 }
 
-func (sink *eventWriter) ShouldLog(level int, eventOrCallee string,
-	sample []interface{}) bool {
-	return sink.shouldLog(level, eventOrCallee, sample)
-}
-
-func (sink *eventWriter) HandlerOf(level int, eventOrCallee string,
-	callerFile string, callerLine int, sample []interface{}) core.EventHandler {
-	formatter := sink.format.FormatterOf(level, eventOrCallee, callerFile, callerLine, sample)
+func (sink *eventWriter) HandlerOf(site *core.EventSite) core.EventHandler {
+	formatter := sink.format.FormatterOf(site)
 	return &writeEvent{
 		formatter: formatter,
 		writer:    sink.writer,

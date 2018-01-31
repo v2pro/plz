@@ -10,8 +10,9 @@ import (
 type Format struct {
 }
 
-func (format *Format) FormatterOf(level int, eventOrCallee string,
-	callerFile string, callerLine int, sample []interface{}) core.Formatter {
+func (format *Format) FormatterOf(site *core.EventSite) core.Formatter {
+	eventOrCallee := site.EventOrCallee
+	sample := site.Sample
 	var formatters core.Formatters
 	if strings.HasPrefix(eventOrCallee, "event!") {
 		formatters = append(formatters, &tagFormatter{eventOrCallee[len("event!"):]})
