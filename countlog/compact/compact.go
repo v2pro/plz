@@ -15,6 +15,12 @@ func (format *Format) FormatterOf(level int, eventOrCallee string,
 	var formatters core.Formatters
 	if strings.HasPrefix(eventOrCallee, "event!") {
 		formatters = append(formatters, &tagFormatter{eventOrCallee[len("event!"):]})
+	} else if strings.HasPrefix(eventOrCallee, "callee!") {
+		tag := "call " + eventOrCallee[len("callee!"):]
+		formatters = append(formatters, &tagFormatter{tag})
+	} else {
+		// TODO: notify wrong prefix
+		formatters = append(formatters, &tagFormatter{eventOrCallee})
 	}
 	formatters = append(formatters, &timestampFormatter{})
 	for i := 0; i < len(sample); i += 2 {

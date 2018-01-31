@@ -20,6 +20,11 @@ func Test_trace(t *testing.T) {
 	time.Sleep(time.Second)
 }
 
+func Test_trace_call(t *testing.T) {
+	MinLevel = LevelTrace
+	TraceCall("callee!func", nil)
+}
+
 func Benchmark_trace(b *testing.B) {
 	DefaultEventSink = NewEventWriter(EventWriterConfig{
 		Format: &compact.Format{},
