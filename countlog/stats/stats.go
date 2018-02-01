@@ -15,8 +15,12 @@ type EventAggregatorConfig struct {
 }
 
 func NewEventAggregator(cfg EventAggregatorConfig) *EventAggregator {
+	executor := cfg.Executor
+	if executor == nil {
+		executor = DefaultExecutor
+	}
 	return &EventAggregator{
-		executor:  cfg.Executor,
+		executor:  executor,
 		collector: cfg.Collector,
 	}
 }

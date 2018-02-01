@@ -20,7 +20,7 @@ const LevelFatal = spi.LevelFatal
 
 func SetMinLevel(level int) {
 	spi.MinLevel = level
-	spi.SuccinctLevel = level + 5
+	spi.MinCallLevel = level + 5
 }
 
 func ShouldLog(level int) bool {
@@ -137,7 +137,7 @@ func LogPanic(recovered interface{}, properties ...interface{}) interface{} {
 var handlerCache = &sync.Map{}
 
 func log(level int, eventName string, agg string, ctx *Context, err error, properties []interface{}) error {
-	handler := getHandler(level, eventName, agg, ctx, properties)
+	handler := getHandler(eventName, agg, properties)
 	event := &spi.Event{
 		Level:      level,
 		Context:    ctx,
@@ -162,48 +162,26 @@ func castString(ptr uintptr) string {
 	return *(*string)(unsafe.Pointer(ptr))
 }
 
-func getHandler(level int, event string, agg string, ctx *Context, properties []interface{}) spi.EventHandler {
+func getHandler(event string, agg string, properties []interface{}) spi.EventHandler {
 	handler, found := handlerCache.Load(event)
 	if found {
 		return handler.(spi.EventHandler)
 	}
-	return newHandler(level, event, agg, ctx, properties)
+	return newHandler(event, agg, properties)
 }
 
-func newHandler(level int, eventName string, agg string, ctx *Context, properties []interface{}) spi.EventHandler {
-	skipFramesCount := 3
-	if ctx != nil {
-		skipFramesCount = 5
-	}
-	_, callerFile, callerLine, _ := runtime.Caller(skipFramesCount)
+func newHandler(eventName string, agg string, properties []interface{}) spi.EventHandler {
+	_, callerFile, callerLine, _ := runtime.Caller(3)
 	site := &spi.LogSite{
-		Level:  level,
 		Event:  eventName,
 		Agg:    agg,
 		File:   callerFile,
 		Line:   callerLine,
 		Sample: properties,
 	}
-	var handlers spi.EventHandlers
-	for _, sink := range EventSinks {
-		handler := sink.HandlerOf(site)
-		if handler == nil {
-			continue
-		}
-		handlers = append(handlers, handler)
-	}
-	switch len(handlers) {
-	case 0:
-		handler := DevelopmentEventSink.HandlerOf(site)
-		handlerCache.Store(eventName, handler)
-		return handler
-	case 1:
-		handlerCache.Store(eventName, handlers[0])
-		return handlers[0]
-	default:
-		handlerCache.Store(eventName, handlers)
-		return handlers
-	}
+	handler := newRootHandler(site, nomalModeOnPanic)
+	handlerCache.Store(eventName, handler)
+	return handler
 }
 
 // TODO: remove StateExporter in favor of expvar

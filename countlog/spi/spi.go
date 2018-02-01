@@ -7,9 +7,9 @@ import (
 
 // MinLevel exists to minimize the overhead of Trace/Debug logging
 var MinLevel = LevelTrace
-// Succinct event handler need level above SuccinctLevel to output
-// it is half level above MinLevel
-var SuccinctLevel = LevelDebugCall
+// MinCallLevel will be half level higher than MinLevel
+// to minimize the xxxCall output
+var MinCallLevel = LevelDebugCall
 
 // LevelTraceCall is lowest logging level
 // enable this will print every TraceCall, which is a LOT
@@ -63,8 +63,6 @@ func LevelName(level int) string {
 type LogSite struct {
 	File string
 	Line int
-	// Level might change, the actual event can have different level
-	Level  int
 	Event  string
 	Agg    string
 	Sample []interface{}
