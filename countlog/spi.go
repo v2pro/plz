@@ -11,6 +11,7 @@ import (
 var EventSinks = []spi.EventSink{}
 
 // DevelopmentEventSink is used to for unit test
+// if EventSinks are set, this sink will be ignored
 var DevelopmentEventSink = NewEventSink(func(cfg *Config) {
 	cfg.Collector = nil // set Collector to enable stats
 	cfg.Format = &compact.Format{}

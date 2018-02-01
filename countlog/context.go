@@ -21,18 +21,17 @@ func (ctx *Context) Trace(event string, properties ...interface{}) {
 	if LevelTrace < spi.MinLevel {
 		return
 	}
-	log(LevelTrace, event, ctx, nil, properties)
+	log(LevelTrace, event, "", ctx, nil, properties)
 }
 
 func (ctx *Context) TraceCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		log(LevelError, event, ctx, err, properties)
-		return err
+		return log(LevelError, event, "call", ctx, err, properties)
 	}
 	if LevelTrace < spi.MinLevel {
 		return nil
 	}
-	log(LevelTrace, event, ctx, err, properties)
+	log(LevelTrace, event, "call", ctx, err, properties)
 	return nil
 }
 
@@ -40,46 +39,46 @@ func (ctx *Context) Debug(event string, properties ...interface{}) {
 	if LevelDebug < spi.MinLevel {
 		return
 	}
-	log(LevelDebug, event, ctx, nil, properties)
+	log(LevelDebug, event, "", ctx, nil, properties)
 }
 
-func (ctx *Context) DebugCall(event string, err error, properties ...interface{}) {
+func (ctx *Context) DebugCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		log(LevelError, event, ctx, err, properties)
-		return
+		return log(LevelError, event, "call", ctx, err, properties)
 	}
 	if LevelDebug < spi.MinLevel {
-		return
+		return nil
 	}
-	log(LevelDebug, event, ctx, err, properties)
+	log(LevelDebug, event, "call", ctx, err, properties)
+	return nil
 }
 
 func (ctx *Context) Info(event string, properties ...interface{}) {
 	if LevelInfo < spi.MinLevel {
 		return
 	}
-	log(LevelInfo, event, ctx, nil, properties)
+	log(LevelInfo, event, "", ctx, nil, properties)
 }
 
-func (ctx *Context) InfoCall(event string, err error, properties ...interface{}) {
+func (ctx *Context) InfoCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		log(LevelError, event, ctx, err, properties)
-		return
+		return log(LevelError, event, "call", ctx, err, properties)
 	}
 	if LevelInfo < spi.MinLevel {
-		return
+		return nil
 	}
-	log(LevelInfo, event, ctx, err, properties)
+	log(LevelInfo, event, "call", ctx, err, properties)
+	return nil
 }
 
 func (ctx *Context) Warn(event string, properties ...interface{}) {
-	log(LevelWarn, event, ctx, nil, properties)
+	log(LevelWarn, event, "", ctx, nil, properties)
 }
 
 func (ctx *Context) Error(event string, properties ...interface{}) {
-	log(LevelError, event, ctx, nil, properties)
+	log(LevelError, event, "", ctx, nil, properties)
 }
 
 func (ctx *Context) Fatal(event string, properties ...interface{}) {
-	log(LevelFatal, event, ctx, nil, properties)
+	log(LevelFatal, event, "", ctx, nil, properties)
 }

@@ -37,7 +37,7 @@ func (aggregator *EventAggregator) HandlerOf(site *spi.LogSite) spi.EventHandler
 func (aggregator *EventAggregator) createHandler(agg string, site *spi.LogSite) spi.EventHandler {
 	if aggregator.collector == nil {
 		// disable aggregation if collector not set
-		return nil
+		return &spi.DummyEventHandler{}
 	}
 	extractor, dimensionElemCount := newDimensionExtractor(site)
 	window := newWindow(aggregator.executor, aggregator.collector, dimensionElemCount)

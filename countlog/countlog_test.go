@@ -19,7 +19,7 @@ func Test_trace(t *testing.T) {
 }
 
 func Test_trace_call(t *testing.T) {
-	TraceCall("callee!func", nil)
+	DebugCall("callee!func", nil, "k1", "v1")
 }
 
 func Benchmark_trace(b *testing.B) {
