@@ -27,7 +27,7 @@ func doSomething() error {
 }
 
 func main() {
-	countlog.MinLevel = countlog.LevelTrace
+	countlog.SetMinLevel(countlog.LevelTrace)
 	trace_should_be_optimized_away()
 	trace_call_should_combine_the_error_checking()
 }

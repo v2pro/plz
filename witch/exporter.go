@@ -29,11 +29,7 @@ type exporting struct {
 func exportState(respWriter http.ResponseWriter, req *http.Request) {
 	setCurrentGoRoutineIsKoala()
 	defer func() {
-		recovered := recover()
-		if recovered != nil {
-			countlog.Fatal("event!plz.exporter.panic", "err", recovered,
-				"stacktrace", countlog.ProvideStacktrace)
-		}
+		countlog.LogPanic(recover())
 	}()
 	marshalState(countlog.StateExporters(), respWriter)
 }

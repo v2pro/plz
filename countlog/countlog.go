@@ -49,23 +49,18 @@ func Trace(event string, properties ...interface{}) {
 	if LevelTrace < spi.MinLevel {
 		return
 	}
-	ptr := unsafe.Pointer(&properties)
-	log(LevelTrace, event, nil, nil, castEmptyInterfaces(uintptr(ptr)))
+	log(LevelTrace, event, nil, nil, properties)
 }
 
-func castEmptyInterfaces(ptr uintptr) []interface{} {
-	return *(*[]interface{})(unsafe.Pointer(ptr))
-}
-
-func TraceCall(callee string, err error, properties ...interface{}) {
+func TraceCall(event string, err error, properties ...interface{}) {
 	if err != nil {
-		log(LevelError, callee, nil, err, properties)
+		log(LevelError, event, nil, err, properties)
 		return
 	}
 	if LevelTrace < spi.MinLevel {
 		return
 	}
-	log(LevelTrace, callee, nil, err, properties)
+	log(LevelTrace, event, nil, err, properties)
 }
 
 func Debug(event string, properties ...interface{}) {
@@ -75,15 +70,15 @@ func Debug(event string, properties ...interface{}) {
 	log(LevelDebug, event, nil, nil, properties)
 }
 
-func DebugCall(callee string, err error, properties ...interface{}) {
+func DebugCall(event string, err error, properties ...interface{}) {
 	if err != nil {
-		log(LevelError, callee, nil, err, properties)
+		log(LevelError, event, nil, err, properties)
 		return
 	}
 	if LevelDebug < spi.MinLevel {
 		return
 	}
-	log(LevelDebug, callee, nil, err, properties)
+	log(LevelDebug, event, nil, err, properties)
 }
 
 func Info(event string, properties ...interface{}) {
@@ -93,15 +88,15 @@ func Info(event string, properties ...interface{}) {
 	log(LevelInfo, event, nil, nil, properties)
 }
 
-func InfoCall(callee string, err error, properties ...interface{}) {
+func InfoCall(event string, err error, properties ...interface{}) {
 	if err != nil {
-		log(LevelError, callee, nil, err, properties)
+		log(LevelError, event, nil, err, properties)
 		return
 	}
 	if LevelInfo < spi.MinLevel {
 		return
 	}
-	log(LevelInfo, callee, nil, err, properties)
+	log(LevelInfo, event, nil, err, properties)
 }
 
 func Warn(event string, properties ...interface{}) {
@@ -121,24 +116,26 @@ func Log(level int, event string, properties ...interface{}) {
 }
 
 func LogPanic(recovered interface{}, properties ...interface{}) interface{} {
-	if recovered != nil {
-		buf := make([]byte, 1<<16)
-		runtime.Stack(buf, false)
-		if len(properties) > 0 {
-			properties = append(properties, "err", recovered, "stacktrace", string(buf))
-			Fatal("event!panic", properties...)
-		} else {
-			Fatal("event!panic", "err", recovered, "stacktrace", string(buf))
-		}
+	if recovered == nil {
+		return nil
+	}
+	buf := make([]byte, 1<<16)
+	runtime.Stack(buf, false)
+	if len(properties) > 0 {
+		properties = append(properties, "err", recovered, "stacktrace", string(buf))
+		Fatal("event!panic", properties...)
+	} else {
+		Fatal("event!panic", "err", recovered, "stacktrace", string(buf))
 	}
 	return recovered
 }
 
 var handlerCache = &sync.Map{}
 
-func log(level int, eventOrCallee string, ctx *Context, err error, properties []interface{}) {
-	handler := getHandler(level, eventOrCallee, ctx, properties)
+func log(level int, eventName string, ctx *Context, err error, properties []interface{}) {
+	handler := getHandler(level, eventName, ctx, properties)
 	event := &spi.Event{
+		Level:      level,
 		Context:    ctx,
 		Error:      err,
 		Timestamp:  time.Now(),
@@ -146,6 +143,10 @@ func log(level int, eventOrCallee string, ctx *Context, err error, properties []
 	}
 	ptr := unsafe.Pointer(event)
 	handler.Handle(castEvent(uintptr(ptr)))
+}
+
+func castEmptyInterfaces(ptr uintptr) []interface{} {
+	return *(*[]interface{})(unsafe.Pointer(ptr))
 }
 
 func castEvent(ptr uintptr) *spi.Event {
@@ -172,11 +173,11 @@ func newHandler(level int, eventOrCalleeObj string, ctx *Context, properties []i
 	}
 	_, callerFile, callerLine, _ := runtime.Caller(skipFramesCount)
 	site := &spi.LogSite{
-		Level:         level,
-		EventOrCallee: eventOrCallee,
-		File:          callerFile,
-		Line:          callerLine,
-		Sample:        properties,
+		Level:  level,
+		Event:  eventOrCallee,
+		File:   callerFile,
+		Line:   callerLine,
+		Sample: properties,
 	}
 	var handlers spi.EventHandlers
 	for _, sink := range EventSinks {
@@ -200,7 +201,7 @@ func newHandler(level int, eventOrCalleeObj string, ctx *Context, properties []i
 	}
 }
 
-// pull state callbacks
+// TODO: remove StateExporter in favor of expvar
 
 // like JMX MBean
 type StateExporter interface {

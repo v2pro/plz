@@ -12,7 +12,7 @@ func Benchmark_trace_call(b *testing.B) {
 }
 
 func Benchmark_expand(b *testing.B) {
-	countlog.MinLevel = countlog.LevelInfo
+	countlog.SetMinLevel(countlog.LevelInfo)
 	for i := 0; i < b.N; i++ {
 		countlog.Debug("event!some event", "expensive", func() interface{} {
 			return make([]byte, 1024*1024*1024)
@@ -21,7 +21,7 @@ func Benchmark_expand(b *testing.B) {
 }
 
 func Benchmark_no_expand(b *testing.B) {
-	countlog.MinLevel = countlog.LevelInfo
+	countlog.SetMinLevel(countlog.LevelInfo)
 	for i := 0; i < b.N; i++ {
 		countlog.Debug("event!some event", "expensive", "hello")
 	}

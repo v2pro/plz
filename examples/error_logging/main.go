@@ -8,13 +8,17 @@ import (
 	"github.com/v2pro/plz/countlog"
 	"os"
 	"time"
+	"github.com/v2pro/plz/countlog/output/compact"
 )
 
 func main() {
-	defer concurrent.GlobalUnboundedExecutor.StopAndWaitForever()
-	plz.LogFormat = &countlog.HumanReadableFormat{
-		ContextPropertyNames: []string{"traceId"},
-	}
+	executor := concurrent.GlobalUnboundedExecutor
+	defer executor.StopAndWaitForever()
+	countlog.Configure(func(cfg *countlog.Config) {
+		cfg.EventWriterConfig.Executor = executor.Adapt()
+		cfg.Format = &compact.Format{}
+		cfg.Writer = os.Stdout
+	})
 	plz.PlugAndPlay()
 	ctx := context.WithValue(context.Background(), "traceId", "abcd")
 	//err := doSomething(ctx)

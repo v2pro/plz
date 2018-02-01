@@ -18,12 +18,13 @@ const LevelFatal = 60
 
 // LogSite is the location of log in the source code
 type LogSite struct {
-	File          string
-	Line          int
-	Level         int
-	EventOrCallee string
-	Agg           string
-	Sample        []interface{}
+	File   string
+	Line   int
+	// Level might change, the actual event can have different level
+	Level  int
+	Event  string
+	Agg    string
+	Sample []interface{}
 }
 
 type Event struct {

@@ -2,6 +2,7 @@ package countlog
 
 import (
 	"context"
+	"github.com/v2pro/plz/countlog/spi"
 )
 
 func Ctx(ctx context.Context) *Context {
@@ -17,51 +18,67 @@ type Context struct {
 }
 
 func (ctx *Context) Trace(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx)
-	Trace(event, properties...)
+	if LevelTrace < spi.MinLevel {
+		return
+	}
+	log(LevelTrace, event, ctx, nil, properties)
 }
 
-func (ctx *Context) TraceCall(callee string, err error, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx)
-	TraceCall(callee, err, properties...)
+func (ctx *Context) TraceCall(event string, err error, properties ...interface{}) {
+	if err != nil {
+		log(LevelError, event, ctx, err, properties)
+		return
+	}
+	if LevelTrace < spi.MinLevel {
+		return
+	}
+	log(LevelTrace, event, ctx, err, properties)
 }
 
 func (ctx *Context) Debug(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx)
-	Debug(event, properties...)
+	if LevelDebug < spi.MinLevel {
+		return
+	}
+	log(LevelDebug, event, ctx, nil, properties)
 }
 
-func (ctx *Context) DebugCall(callee string, err error, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx)
-	DebugCall(callee, err, properties...)
+func (ctx *Context) DebugCall(event string, err error, properties ...interface{}) {
+	if err != nil {
+		log(LevelError, event, ctx, err, properties)
+		return
+	}
+	if LevelDebug < spi.MinLevel {
+		return
+	}
+	log(LevelDebug, event, ctx, err, properties)
 }
 
-func (ctx Context) Info(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx)
-	Info(event, properties...)
+func (ctx *Context) Info(event string, properties ...interface{}) {
+	if LevelInfo < spi.MinLevel {
+		return
+	}
+	log(LevelInfo, event, ctx, nil, properties)
 }
 
-func (ctx *Context) InfoCall(callee string, err error, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx)
-	InfoCall(callee, err, properties...)
+func (ctx *Context) InfoCall(event string, err error, properties ...interface{}) {
+	if err != nil {
+		log(LevelError, event, ctx, err, properties)
+		return
+	}
+	if LevelInfo < spi.MinLevel {
+		return
+	}
+	log(LevelInfo, event, ctx, err, properties)
 }
 
 func (ctx *Context) Warn(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx)
-	Warn(event, properties...)
+	log(LevelWarn, event, ctx, nil, properties)
 }
 
 func (ctx *Context) Error(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx)
-	Error(event, properties...)
+	log(LevelError, event, ctx, nil, properties)
 }
 
 func (ctx *Context) Fatal(event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx)
-	Fatal(event, properties...)
-}
-
-func (ctx *Context) Log(level int, event string, properties ...interface{}) {
-	properties = append(properties, "ctx", ctx)
-	Log(level, event, properties...)
+	log(LevelFatal, event, ctx, nil, properties)
 }
