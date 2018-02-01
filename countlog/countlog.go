@@ -31,19 +31,22 @@ func Trace(event string, properties ...interface{}) {
 	if LevelTrace < spi.MinLevel {
 		return
 	}
-	log(LevelTrace, event, "", nil, nil, properties)
+	ptr := unsafe.Pointer(&properties)
+	log(LevelTrace, event, "", nil, nil, castEmptyInterfaces(uintptr(ptr)))
 }
 
 // TraceCall will calculate stats in TRACE level
 // TraceCall will output individual log entries in TRACE_CALL level
 func TraceCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		return log(LevelWarn, event, "call",nil, err, properties)
+		ptr := unsafe.Pointer(&properties)
+		return log(LevelWarn, event, "call", nil, err, castEmptyInterfaces(uintptr(ptr)))
 	}
 	if LevelTrace < spi.MinLevel {
 		return nil
 	}
-	log(LevelTrace, event, "call", nil, err, properties)
+	ptr := unsafe.Pointer(&properties)
+	log(LevelTrace, event, "call", nil, err, castEmptyInterfaces(uintptr(ptr)))
 	return nil
 }
 
@@ -51,19 +54,22 @@ func Debug(event string, properties ...interface{}) {
 	if LevelDebug < spi.MinLevel {
 		return
 	}
-	log(LevelDebug, event, "", nil, nil, properties)
+	ptr := unsafe.Pointer(&properties)
+	log(LevelDebug, event, "", nil, nil, castEmptyInterfaces(uintptr(ptr)))
 }
 
 // DebugCall will calculate stats in DEBUG level
 // DebugCall will output individual log entries in DEBUG_CALL level (TRACE includes DEBUG_CALL)
 func DebugCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		return log(LevelWarn, event, "call", nil, err, properties)
+		ptr := unsafe.Pointer(&properties)
+		return log(LevelWarn, event, "call", nil, err, castEmptyInterfaces(uintptr(ptr)))
 	}
 	if LevelDebug < spi.MinLevel {
 		return nil
 	}
-	log(LevelDebug, event, "call", nil, err, properties)
+	ptr := unsafe.Pointer(&properties)
+	log(LevelDebug, event, "call", nil, err, castEmptyInterfaces(uintptr(ptr)))
 	return nil
 }
 
@@ -71,36 +77,46 @@ func Info(event string, properties ...interface{}) {
 	if LevelInfo < spi.MinLevel {
 		return
 	}
-	log(LevelInfo, event, "", nil, nil, properties)
+	ptr := unsafe.Pointer(&properties)
+	log(LevelInfo, event, "", nil, nil, castEmptyInterfaces(uintptr(ptr)))
 }
 
 // InfoCall will calculate stats in INFO level
 // InfoCall will output individual log entries in INFO_CALL level (DEBUG includes INFO_CALL)
 func InfoCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		return log(LevelWarn, event, "call", nil, err, properties)
+		ptr := unsafe.Pointer(&properties)
+		return log(LevelWarn, event, "call", nil, err, castEmptyInterfaces(uintptr(ptr)))
 	}
 	if LevelInfo < spi.MinLevel {
 		return nil
 	}
-	log(LevelInfo, event, "call", nil, err, properties)
+	ptr := unsafe.Pointer(&properties)
+	log(LevelInfo, event, "call", nil, err, castEmptyInterfaces(uintptr(ptr)))
 	return nil
 }
 
 func Warn(event string, properties ...interface{}) {
-	log(LevelWarn, event, "", nil, nil, properties)
+	ptr := unsafe.Pointer(&properties)
+	log(LevelWarn, event, "", nil, nil, castEmptyInterfaces(uintptr(ptr)))
 }
 
 func Error(event string, properties ...interface{}) {
-	log(LevelError, event, "", nil, nil, properties)
+	ptr := unsafe.Pointer(&properties)
+	log(LevelError, event, "", nil, nil, castEmptyInterfaces(uintptr(ptr)))
 }
 
 func Fatal(event string, properties ...interface{}) {
-	log(LevelFatal, event, "", nil, nil, properties)
+	ptr := unsafe.Pointer(&properties)
+	log(LevelFatal, event, "", nil, nil, castEmptyInterfaces(uintptr(ptr)))
 }
 
 func Log(level int, event string, properties ...interface{}) {
-	log(level, event, "", nil, nil, properties)
+	if level < spi.MinLevel {
+		return
+	}
+	ptr := unsafe.Pointer(&properties)
+	log(level, event, "", nil, nil, castEmptyInterfaces(uintptr(ptr)))
 }
 
 func LogPanic(recovered interface{}, properties ...interface{}) interface{} {
@@ -130,8 +146,9 @@ func log(level int, eventName string, agg string, ctx *Context, err error, prope
 		Properties: properties,
 	}
 	ptr := unsafe.Pointer(event)
-	handler.Handle(castEvent(uintptr(ptr)))
-	return event.Error
+	castedEvent := castEvent(uintptr(ptr))
+	handler.Handle(castedEvent)
+	return castedEvent.Error
 }
 
 func castEmptyInterfaces(ptr uintptr) []interface{} {
@@ -153,9 +170,7 @@ func getHandler(level int, event string, agg string, ctx *Context, properties []
 	return newHandler(level, event, agg, ctx, properties)
 }
 
-func newHandler(level int, eventNameObj string, agg string, ctx *Context, properties []interface{}) spi.EventHandler {
-	ptr := unsafe.Pointer(&eventNameObj)
-	eventName := castString(uintptr(ptr))
+func newHandler(level int, eventName string, agg string, ctx *Context, properties []interface{}) spi.EventHandler {
 	skipFramesCount := 3
 	if ctx != nil {
 		skipFramesCount = 5

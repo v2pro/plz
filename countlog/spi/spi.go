@@ -8,17 +8,21 @@ import (
 // MinLevel exists to minimize the overhead of Trace/Debug logging
 var MinLevel = LevelTrace
 // Succinct event handler need level above SuccinctLevel to output
+// it is half level above MinLevel
 var SuccinctLevel = LevelDebugCall
 
+// LevelTraceCall is lowest logging level
+// enable this will print every TraceCall, which is a LOT
 const LevelTraceCall = 5
 
-// this should be development default
+// LevelTrace should be development environment default
 const LevelTrace = 10
+
 const LevelDebugCall = 15
 const LevelDebug = 20
 const LevelInfoCall = 25
 
-// this should be the production default
+// LevelInfo should be the production environment default
 const LevelInfo = 30
 
 // LevelWarn is the level for error != nil
@@ -87,34 +91,6 @@ type EventHandlers []EventHandler
 func (handlers EventHandlers) Handle(event *Event) {
 	for _, handler := range handlers {
 		handler.Handle(event)
-	}
-}
-
-type SelectiveEventHandler struct {
-	Verbose  EventHandler
-	Succinct EventHandler
-}
-
-func (handler *SelectiveEventHandler) Handle(event *Event) {
-	if event.Level >= SuccinctLevel {
-		handler.Succinct.Handle(event)
-	}
-	handler.Verbose.Handle(event)
-}
-
-type SelectiveEventSink struct {
-	Verbose  EventSink
-	Succinct EventSink
-}
-
-func (sink *SelectiveEventSink) HandlerOf(site *LogSite) EventHandler {
-	verbose := sink.Verbose.HandlerOf(site)
-	if verbose == nil {
-		return sink.Succinct.HandlerOf(site)
-	}
-	return &SelectiveEventHandler{
-		Verbose:  verbose,
-		Succinct: sink.Succinct.HandlerOf(site),
 	}
 }
 
