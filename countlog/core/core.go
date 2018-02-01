@@ -33,20 +33,3 @@ func (handlers EventHandlers) Handle(event *Event) {
 		handler.Handle(event)
 	}
 }
-
-type Format interface {
-	FormatterOf(site *LogSite) Formatter
-}
-
-type Formatter interface {
-	Format(space []byte, event *Event) []byte
-}
-
-type Formatters []Formatter
-
-func (formatters Formatters) Format(space []byte, event *Event) []byte {
-	for _, formatter := range formatters {
-		space = formatter.Format(space, event)
-	}
-	return space
-}

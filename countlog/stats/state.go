@@ -1,9 +1,25 @@
 package stats
 
-import "github.com/v2pro/plz/countlog/core"
+import (
+	"github.com/v2pro/plz/countlog/core"
+	"time"
+)
+
+
+type Point struct {
+	Event     string
+	Timestamp time.Time
+	Dimension []string
+	Value     float64
+}
+
+type Collector interface {
+	Collect(point *Point)
+}
 
 type Monoid interface {
 	Add(that Monoid)
+	Export() float64
 }
 
 type State interface {
@@ -22,25 +38,21 @@ func (monoid *CounterMonoid) Add(that Monoid) {
 	*monoid += *that.(*CounterMonoid)
 }
 
+func (monoid *CounterMonoid) Export() float64 {
+	value := float64(*monoid)
+	*monoid = 0
+	return value
+}
+
 type MapMonoid map[interface{}]Monoid
 
-func (monoid MapMonoid) Add(that Monoid) {
-	thatMap := that.(MapMonoid)
-	for k, v := range thatMap {
+func (monoid MapMonoid) Add(that MapMonoid) {
+	for k, v := range that {
 		existingV := monoid[k]
 		if existingV == nil {
 			monoid[k] = v
 		} else {
 			existingV.Add(v)
 		}
-	}
-}
-
-type ListMonoid []Monoid
-
-func (monoid ListMonoid) Add(that Monoid) {
-	thatList := that.(ListMonoid)
-	for _, elem := range thatList {
-		monoid[0].Add(elem)
 	}
 }

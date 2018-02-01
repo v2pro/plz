@@ -7,21 +7,15 @@ import (
 	"reflect"
 	"sync"
 	"github.com/v2pro/plz/gls"
+	"time"
+	"context"
 )
 
-type Point struct {
-	Event     string
-	Timestamp int64
-	Dimension map[string]string
-	Value     float64
-}
-
-type Collector interface {
-	Collect(event string, timestamp int64, dimension map[string]string, value float64)
-}
-
 type Window struct {
-	shards [16]windowShard
+	collector          Collector
+	event              string
+	dimensionElemCount int
+	shards             [16]windowShard
 }
 
 type windowShard struct {
@@ -29,15 +23,31 @@ type windowShard struct {
 	lock *sync.Mutex
 }
 
-func newWindow() *Window {
-	window := &Window{}
+func newWindow(executor Executor, collector Collector, dimensionElemCount int) *Window {
+	window := &Window{
+		collector:          collector,
+		dimensionElemCount: dimensionElemCount,
+	}
 	for i := 0; i < 16; i++ {
 		window.shards[i] = windowShard{
 			MapMonoid: MapMonoid{},
 			lock:      &sync.Mutex{},
 		}
 	}
+	executor(window.exportEverySecond)
 	return window
+}
+
+func (window *Window) exportEverySecond(ctx context.Context) {
+	timer := time.NewTimer(time.Second)
+	for {
+		select {
+		case <-timer.C:
+			window.Export(time.Now())
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (window *Window) Mutate() (*sync.Mutex, MapMonoid) {
@@ -46,10 +56,33 @@ func (window *Window) Mutate() (*sync.Mutex, MapMonoid) {
 	return shard.lock, shard.MapMonoid
 }
 
-func (window *Window) Export(collector Collector) {
+func (window *Window) Export(now time.Time) {
+	for i := 0; i < 16; i++ {
+		window.exportShard(now, window.shards[i])
+	}
 }
 
-func (window *Window) Reset() {
+func (window *Window) exportShard(now time.Time, shard windowShard) {
+	shard.lock.Lock()
+	defer shard.lock.Unlock()
+	// batch allocate memory to hold dimensions
+	space := make([]string, len(shard.MapMonoid)*window.dimensionElemCount)
+	for dimensionObj, monoid := range shard.MapMonoid {
+		dimension := space[:window.dimensionElemCount]
+		space = space[window.dimensionElemCount:]
+		slice := &sliceHeader{
+			Cap:  window.dimensionElemCount,
+			Len:  window.dimensionElemCount,
+			Data: (*emptyInterface)(unsafe.Pointer(&dimensionObj)).word,
+		}
+		copy(dimension, *(*[]string)(unsafe.Pointer(slice)))
+		window.collector.Collect(&Point{
+			Event:     window.event,
+			Timestamp: now,
+			Dimension: dimension,
+			Value:     monoid.Export(),
+		})
+	}
 }
 
 type propIdx int
@@ -58,7 +91,7 @@ type dimensionExtractor interface {
 	Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid
 }
 
-func newDimensionExtractor(site *core.LogSite) dimensionExtractor {
+func newDimensionExtractor(site *core.LogSite) (dimensionExtractor, int) {
 	var dimensionElems []string
 	for i := 0; i < len(site.Sample); i += 2 {
 		key := site.Sample[i].(string)
@@ -71,38 +104,39 @@ func newDimensionExtractor(site *core.LogSite) dimensionExtractor {
 		key := site.Sample[i].(string)
 		for _, dimension := range dimensionElems {
 			if key == dimension {
+				indices = append(indices, propIdx(i))
 				indices = append(indices, propIdx(i+1))
 			}
 		}
 	}
-	arrayType := reflect.ArrayOf(len(dimensionElems), reflect.TypeOf(""))
+	arrayType := reflect.ArrayOf(len(indices), reflect.TypeOf(""))
 	arrayObj := reflect.New(arrayType).Elem().Interface()
 	sampleInterface := *(*emptyInterface)(unsafe.Pointer(&arrayObj))
 	if len(indices) == 0 {
-		return &dimensionExtractor0{}
+		return &dimensionExtractor0{}, 0
 	}
 	if len(indices) <= 2 {
 		return &dimensionExtractor2{
 			sampleInterface: sampleInterface,
 			indices:         indices,
-		}
+		}, len(indices)
 	}
 	if len(indices) <= 4 {
 		return &dimensionExtractor4{
 			sampleInterface: sampleInterface,
 			indices:         indices,
-		}
+		}, len(indices)
 	}
 	if len(indices) <= 8 {
 		return &dimensionExtractor8{
 			sampleInterface: sampleInterface,
 			indices:         indices,
-		}
+		}, len(indices)
 	}
 	return &dimensionExtractorAny{
 		sampleInterface: sampleInterface,
 		indices:         indices,
-	}
+	}, len(indices)
 }
 
 type dimensionExtractor0 struct {

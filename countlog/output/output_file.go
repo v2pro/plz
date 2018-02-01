@@ -1,4 +1,4 @@
-package countlog
+package output
 //
 //import (
 //	"os"

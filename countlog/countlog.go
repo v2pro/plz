@@ -169,9 +169,16 @@ func newHandler(level int, eventOrCalleeObj string, ctx *Context, properties []i
 		skipFramesCount = 5
 	}
 	_, callerFile, callerLine, _ := runtime.Caller(skipFramesCount)
+	site := &core.LogSite{
+		Level: level,
+		EventOrCallee: eventOrCallee,
+		File: callerFile,
+		Line: callerLine,
+		Sample: properties,
+	}
 	var handlers core.EventHandlers
 	for _, sink := range EventSinks {
-		handler := sink.HandlerOf(level, eventOrCallee, callerFile, callerLine, properties)
+		handler := sink.HandlerOf(site)
 		if handler == nil {
 			continue
 		}
@@ -179,7 +186,7 @@ func newHandler(level int, eventOrCalleeObj string, ctx *Context, properties []i
 	}
 	switch len(handlers) {
 	case 0:
-		handler := DevelopmentEventSink.HandlerOf(level, eventOrCallee, callerFile, callerLine, properties)
+		handler := DevelopmentEventSink.HandlerOf(site)
 		handlerCache.Store(eventOrCallee, handler)
 		return handler
 	case 1:

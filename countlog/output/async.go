@@ -1,20 +1,15 @@
-package countlog
+package output
 
 import (
 	"context"
 	"io"
 )
 
-type Executor interface {
-	Go(handler func(ctx *Context))
-}
+type Executor func(func(ctx context.Context))
 
-type defaultExecutor struct {
-}
-
-func (executor *defaultExecutor) Go(handler func(ctx *Context)) {
+func DefaultExecutor(handler func(ctx context.Context)) {
 	go func() {
-		handler(Ctx(context.Background()))
+		handler(context.Background())
 	}()
 }
 
@@ -28,11 +23,11 @@ func newAsyncWriter(executor Executor, writer io.Writer) *asyncWriter {
 		queue:  make(chan []byte, 1024),
 		writer: writer,
 	}
-	executor.Go(asyncWriter.asyncWrite)
+	executor(asyncWriter.asyncWrite)
 	return asyncWriter
 }
 
-func (writer *asyncWriter) asyncWrite(ctx *Context) {
+func (writer *asyncWriter) asyncWrite(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():

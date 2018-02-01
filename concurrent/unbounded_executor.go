@@ -92,3 +92,11 @@ func (executor *UnboundedExecutor) checkGoroutines() bool {
 	}
 	return true
 }
+
+func (executor *UnboundedExecutor) Adapt() func(func(ctx context.Context)) {
+	return func(handler func(ctx context.Context)) {
+		executor.Go(func(ctx *countlog.Context) {
+			handler(ctx)
+		})
+	}
+}

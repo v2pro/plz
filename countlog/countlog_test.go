@@ -2,19 +2,18 @@ package countlog
 
 import (
 	"testing"
-	"github.com/v2pro/plz/countlog/compact"
-	"io/ioutil"
 	"time"
 	"os"
+	"github.com/v2pro/plz/countlog/output"
+	"github.com/v2pro/plz/countlog/output/compact"
 )
 
 func Test_trace(t *testing.T) {
 	MinLevel = LevelTrace
-	executor := &defaultExecutor{}
-	DevelopmentEventSink = NewEventWriter(EventWriterConfig{
+	DevelopmentEventSink = output.NewEventWriter(output.EventWriterConfig{
 		Format:   &compact.Format{},
 		Writer:   os.Stdout,
-		Executor: executor,
+		Executor: output.DefaultExecutor,
 	})
 	Trace("event!hello", "a", "b", "int", 100)
 	time.Sleep(time.Second)
@@ -26,9 +25,10 @@ func Test_trace_call(t *testing.T) {
 }
 
 func Benchmark_trace(b *testing.B) {
-	DevelopmentEventSink = NewEventWriter(EventWriterConfig{
-		Format: &compact.Format{},
-		Writer: ioutil.Discard,
+	DevelopmentEventSink = output.NewEventWriter(output.EventWriterConfig{
+		Format:   &compact.Format{},
+		Writer:   os.Stdout,
+		Executor: output.DefaultExecutor,
 	})
 	MinLevel = LevelTrace
 	b.ReportAllocs()

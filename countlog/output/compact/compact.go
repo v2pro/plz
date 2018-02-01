@@ -3,17 +3,18 @@ package compact
 import (
 	"strings"
 	"github.com/v2pro/plz/countlog/core"
-	"github.com/v2pro/plz/countlog/minjson"
 	"reflect"
+	"github.com/v2pro/plz/countlog/output/minjson"
+	"github.com/v2pro/plz/countlog/output"
 )
 
 type Format struct {
 }
 
-func (format *Format) FormatterOf(site *core.LogSite) core.Formatter {
+func (format *Format) FormatterOf(site *core.LogSite) output.Formatter {
 	eventOrCallee := site.EventOrCallee
 	sample := site.Sample
-	var formatters core.Formatters
+	var formatters output.Formatters
 	if strings.HasPrefix(eventOrCallee, "event!") {
 		formatters = append(formatters, &tagFormatter{eventOrCallee[len("event!"):]})
 	} else if strings.HasPrefix(eventOrCallee, "callee!") {

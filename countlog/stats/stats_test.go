@@ -4,11 +4,13 @@ import (
 	"testing"
 	"github.com/v2pro/plz/countlog/core"
 	"github.com/stretchr/testify/require"
+	"time"
 )
 
 func Test_counter(t *testing.T) {
 	should := require.New(t)
-	aggregator := &EventAggregator{}
+	dumpPoints := &dumpPoint{}
+	aggregator := NewEventAggregator(DefaultExecutor, dumpPoints)
 	counter := aggregator.HandlerOf(&core.LogSite{
 		EventOrCallee: "event!abc",
 		Sample: []interface{}{
@@ -35,20 +37,17 @@ func Test_counter(t *testing.T) {
 		},
 	})
 	window := counter.GetWindow()
-	points := &dumpPoint{}
-	window.Export(points)
-	should.Equal(1, len(*points))
+	window.Export(time.Now())
+	points := *dumpPoints
+	should.Equal(1, len(points))
+	should.Equal(float64(2), points[0].Value)
+	should.Equal([]string{"city", "beijing", "ver", "1.0"}, points[0].Dimension)
 }
 
-type dumpPoint []Point
+type dumpPoint []*Point
 
-func (points *dumpPoint) Collect(event string, timestamp int64, dimension map[string]string, value float64) {
-	*points = append(*points, Point{
-		Event:     event,
-		Timestamp: timestamp,
-		Dimension: dimension,
-		Value:     value,
-	})
+func (points *dumpPoint) Collect(point *Point) {
+	*points = append(*points, point)
 }
 
 func Benchmark_counter_of_2_elem_dimension(b *testing.B) {

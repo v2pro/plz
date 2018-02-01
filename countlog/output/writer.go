@@ -1,4 +1,4 @@
-package countlog
+package output
 
 import (
 	"github.com/v2pro/plz/countlog/core"
@@ -6,29 +6,29 @@ import (
 	"sync"
 )
 
-type eventWriter struct {
-	format core.Format
+type EventWriter struct {
+	format Format
 	writer io.Writer
 }
 
 type EventWriterConfig struct {
-	Format   core.Format
+	Format   Format
 	Writer   io.Writer
 	Executor Executor
 }
 
-func NewEventWriter(cfg EventWriterConfig) EventSink {
+func NewEventWriter(cfg EventWriterConfig) *EventWriter {
 	var writer io.Writer = &recylceWriter{cfg.Writer}
 	if cfg.Executor != nil {
 		writer = newAsyncWriter(cfg.Executor, writer)
 	}
-	return &eventWriter{
+	return &EventWriter{
 		format:    cfg.Format,
 		writer:    writer,
 	}
 }
 
-func (sink *eventWriter) HandlerOf(site *core.LogSite) core.EventHandler {
+func (sink *EventWriter) HandlerOf(site *core.LogSite) core.EventHandler {
 	formatter := sink.format.FormatterOf(site)
 	return &writeEvent{
 		formatter: formatter,
@@ -37,7 +37,7 @@ func (sink *eventWriter) HandlerOf(site *core.LogSite) core.EventHandler {
 }
 
 type writeEvent struct {
-	formatter core.Formatter
+	formatter Formatter
 	writer    io.Writer
 }
 

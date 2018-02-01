@@ -1,8 +1,8 @@
 package compact
 
 import (
-	"github.com/v2pro/plz/countlog/minjson"
 	"github.com/v2pro/plz/countlog/core"
+	"github.com/v2pro/plz/countlog/output/minjson"
 )
 
 type defaultFormatter struct {
