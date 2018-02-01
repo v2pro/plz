@@ -9,10 +9,11 @@ import (
 var EventSinks = []EventSink{}
 
 type EventSink interface {
-	HandlerOf(site *core.EventSite) core.EventHandler
+	HandlerOf(site *core.LogSite) core.EventHandler
 }
 
-var DefaultEventSink = NewEventWriter(EventWriterConfig{
+// DevelopmentEventSink is used to for unit test
+var DevelopmentEventSink = NewEventWriter(EventWriterConfig{
 	Format: &compact.Format{},
 	Writer: os.Stdout,
 })

@@ -28,7 +28,7 @@ func NewEventWriter(cfg EventWriterConfig) EventSink {
 	}
 }
 
-func (sink *eventWriter) HandlerOf(site *core.EventSite) core.EventHandler {
+func (sink *eventWriter) HandlerOf(site *core.LogSite) core.EventHandler {
 	formatter := sink.format.FormatterOf(site)
 	return &writeEvent{
 		formatter: formatter,

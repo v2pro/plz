@@ -32,9 +32,9 @@ type windowShard struct {
 func newWindow() *Window {
 	window := &Window{}
 	for i := 0; i < 16; i++ {
-		window.shards[i]= windowShard{
+		window.shards[i] = windowShard{
 			MapMonoid: MapMonoid{},
-			lock: &sync.Mutex{},
+			lock:      &sync.Mutex{},
 		}
 	}
 	return window
@@ -54,11 +54,11 @@ func (window *Window) Reset() {
 
 type propIdx int
 
-type dimensionExtractor interface{
+type dimensionExtractor interface {
 	Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid
 }
 
-func newDimensionExtractor(site *core.EventSite) dimensionExtractor {
+func newDimensionExtractor(site *core.LogSite) dimensionExtractor {
 	var dimensionElems []string
 	for i := 0; i < len(site.Sample); i += 2 {
 		key := site.Sample[i].(string)
@@ -84,24 +84,24 @@ func newDimensionExtractor(site *core.EventSite) dimensionExtractor {
 	if len(indices) <= 2 {
 		return &dimensionExtractor2{
 			sampleInterface: sampleInterface,
-			indices: indices,
+			indices:         indices,
 		}
 	}
 	if len(indices) <= 4 {
 		return &dimensionExtractor4{
 			sampleInterface: sampleInterface,
-			indices: indices,
+			indices:         indices,
 		}
 	}
 	if len(indices) <= 8 {
 		return &dimensionExtractor8{
 			sampleInterface: sampleInterface,
-			indices: indices,
+			indices:         indices,
 		}
 	}
 	return &dimensionExtractorAny{
 		sampleInterface: sampleInterface,
-		indices: indices,
+		indices:         indices,
 	}
 }
 
@@ -119,8 +119,9 @@ func (extractor *dimensionExtractor0) Extract(event *core.Event, monoid MapMonoi
 
 type dimensionExtractor2 struct {
 	sampleInterface emptyInterface
-	indices []propIdx
+	indices         []propIdx
 }
+
 func (extractor *dimensionExtractor2) Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
 	dimensionArr := [2]string{}
 	dimension := dimensionArr[:len(extractor.indices)]
@@ -130,8 +131,9 @@ func (extractor *dimensionExtractor2) Extract(event *core.Event, monoid MapMonoi
 
 type dimensionExtractor4 struct {
 	sampleInterface emptyInterface
-	indices []propIdx
+	indices         []propIdx
 }
+
 func (extractor *dimensionExtractor4) Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
 	dimensionArr := [4]string{}
 	dimension := dimensionArr[:len(extractor.indices)]
@@ -141,8 +143,9 @@ func (extractor *dimensionExtractor4) Extract(event *core.Event, monoid MapMonoi
 
 type dimensionExtractor8 struct {
 	sampleInterface emptyInterface
-	indices []propIdx
+	indices         []propIdx
 }
+
 func (extractor *dimensionExtractor8) Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
 	dimensionArr := [8]string{}
 	dimension := dimensionArr[:len(extractor.indices)]
@@ -152,8 +155,9 @@ func (extractor *dimensionExtractor8) Extract(event *core.Event, monoid MapMonoi
 
 type dimensionExtractorAny struct {
 	sampleInterface emptyInterface
-	indices []propIdx
+	indices         []propIdx
 }
+
 func (extractor *dimensionExtractorAny) Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
 	dimension := make([]string, len(extractor.indices))
 	return extractDimension(extractor.sampleInterface, dimension,
@@ -172,15 +176,24 @@ func extractDimension(
 	elem := monoid[dimensionObj]
 	if elem == nil {
 		elem = createElem()
-		monoid[dimensionObj] = elem
+		monoid[copyDimension(dimensionInterface, dimension)] = elem
 	}
 	return elem
+}
+
+func copyDimension(dimensionInterface emptyInterface, dimension []string) interface{} {
+	copied := make([]string, len(dimension))
+	for i, elem := range dimension {
+		copyOfElem := string(append([]byte(nil), elem...))
+		copied[i] = copyOfElem
+	}
+	dimensionInterface.word = unsafe.Pointer(&copied[0])
+	return *(*interface{})(unsafe.Pointer(&dimensionInterface))
 }
 
 func castEmptyInterface(ptr uintptr) interface{} {
 	return *(*interface{})(unsafe.Pointer(ptr))
 }
-
 
 // emptyInterface is the header for an interface{} value.
 type emptyInterface struct {

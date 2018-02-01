@@ -9,7 +9,7 @@ import (
 func Test_counter(t *testing.T) {
 	should := require.New(t)
 	aggregator := &EventAggregator{}
-	counter := aggregator.HandlerOf(&core.EventSite{
+	counter := aggregator.HandlerOf(&core.LogSite{
 		EventOrCallee: "event!abc",
 		Sample: []interface{}{
 			"agg", "counter",
@@ -53,7 +53,7 @@ func (points *dumpPoint) Collect(event string, timestamp int64, dimension map[st
 
 func Benchmark_counter_of_2_elem_dimension(b *testing.B) {
 	aggregator := &EventAggregator{}
-	counter := aggregator.HandlerOf(&core.EventSite{
+	counter := aggregator.HandlerOf(&core.LogSite{
 		EventOrCallee: "event!abc",
 		Sample: []interface{}{
 			"agg", "counter",
@@ -111,7 +111,7 @@ func Benchmark_counter_of_2_elem_dimension(b *testing.B) {
 
 func Benchmark_counter_of_0_elem_dimension(b *testing.B) {
 	aggregator := &EventAggregator{}
-	counter := aggregator.HandlerOf(&core.EventSite{
+	counter := aggregator.HandlerOf(&core.LogSite{
 		EventOrCallee: "event!abc",
 		Sample: []interface{}{
 			"agg", "counter",

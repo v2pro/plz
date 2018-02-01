@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// EventSite is the location of log in the source code
-type EventSite struct {
+// LogSite is the location of log in the source code
+type LogSite struct {
 	File string
 	Line int
 	Level int
@@ -35,7 +35,7 @@ func (handlers EventHandlers) Handle(event *Event) {
 }
 
 type Format interface {
-	FormatterOf(site *EventSite) Formatter
+	FormatterOf(site *LogSite) Formatter
 }
 
 type Formatter interface {

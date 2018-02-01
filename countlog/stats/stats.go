@@ -17,7 +17,7 @@ var statesAt300 unsafe.Pointer
 type EventAggregator struct {
 }
 
-func (agg *EventAggregator) HandlerOf(site *core.EventSite) core.EventHandler {
+func (agg *EventAggregator) HandlerOf(site *core.LogSite) core.EventHandler {
 	if site.Agg != "" {
 		return createHandler(site.Agg, site)
 	}
@@ -30,7 +30,7 @@ func (agg *EventAggregator) HandlerOf(site *core.EventSite) core.EventHandler {
 	return nil
 }
 
-func createHandler(agg string, site *core.EventSite) core.EventHandler {
+func createHandler(agg string, site *core.LogSite) core.EventHandler {
 	switch agg {
 	case "counter":
 		return &countEvent{

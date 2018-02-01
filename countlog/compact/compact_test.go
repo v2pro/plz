@@ -36,7 +36,7 @@ func Test_callee(t *testing.T) {
 func format(level int, eventOrCallee string,
 	callerFile string, callerLine int, event *core.Event) []byte {
 	format := &Format{}
-	formatter := format.FormatterOf(&core.EventSite{
+	formatter := format.FormatterOf(&core.LogSite{
 		File:          callerFile,
 		Line:          callerLine,
 		Level:         level,
@@ -48,7 +48,7 @@ func format(level int, eventOrCallee string,
 
 func Benchmark_compact_string(b *testing.B) {
 	format := &Format{}
-	formatter := format.FormatterOf(&core.EventSite{
+	formatter := format.FormatterOf(&core.LogSite{
 		File:          "file",
 		Line:          17,
 		Level:         0,

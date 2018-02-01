@@ -11,7 +11,7 @@ import (
 func Test_trace(t *testing.T) {
 	MinLevel = LevelTrace
 	executor := &defaultExecutor{}
-	DefaultEventSink = NewEventWriter(EventWriterConfig{
+	DevelopmentEventSink = NewEventWriter(EventWriterConfig{
 		Format:   &compact.Format{},
 		Writer:   os.Stdout,
 		Executor: executor,
@@ -26,7 +26,7 @@ func Test_trace_call(t *testing.T) {
 }
 
 func Benchmark_trace(b *testing.B) {
-	DefaultEventSink = NewEventWriter(EventWriterConfig{
+	DevelopmentEventSink = NewEventWriter(EventWriterConfig{
 		Format: &compact.Format{},
 		Writer: ioutil.Discard,
 	})
