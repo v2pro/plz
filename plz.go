@@ -26,7 +26,6 @@ var ExportWitch = false
 
 // PlugAndPlay will register the process into the grid
 func PlugAndPlay() {
-	setupLogging()
 	ProcessInfo["Service"] = Service
 	ProcessInfo["Cluster"] = Cluster
 	mux := &http.ServeMux{}

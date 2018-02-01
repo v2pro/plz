@@ -183,39 +183,3 @@ func newHandler(eventName string, agg string, properties []interface{}) spi.Even
 	handlerCache.Store(eventName, handler)
 	return handler
 }
-
-// TODO: remove StateExporter in favor of expvar
-
-// like JMX MBean
-type StateExporter interface {
-	ExportState() map[string]interface{}
-}
-
-var stateExporters = map[string]StateExporter{}
-var stateExportersMutex = &sync.Mutex{}
-
-func RegisterStateExporter(name string, se StateExporter) {
-	stateExportersMutex.Lock()
-	defer stateExportersMutex.Unlock()
-	stateExporters[name] = se
-}
-
-func RegisterStateExporterByFunc(name string, f func() map[string]interface{}) {
-	stateExportersMutex.Lock()
-	defer stateExportersMutex.Unlock()
-	stateExporters[name] = &funcStateExporter{f}
-}
-
-func StateExporters() map[string]StateExporter {
-	stateExportersMutex.Lock()
-	defer stateExportersMutex.Unlock()
-	return stateExporters
-}
-
-type funcStateExporter struct {
-	f func() map[string]interface{}
-}
-
-func (se *funcStateExporter) ExportState() map[string]interface{} {
-	return se.f()
-}

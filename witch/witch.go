@@ -24,7 +24,6 @@ var Mux = &http.ServeMux{}
 
 func init() {
 	Mux.HandleFunc("/witch/more-events", moreEvents)
-	Mux.HandleFunc("/witch/export-state", exportState)
 	Mux.HandleFunc("/witch/", homepage)
 }
 

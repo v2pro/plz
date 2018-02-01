@@ -18,11 +18,7 @@ func Start(pingUrl string, processInfo map[string]interface{}, handler http.Hand
 
 func maintainTunnelInBackground(pingUrl string, processInfo map[string]interface{}, handler http.Handler) {
 	defer func() {
-		recovered := recover()
-		if recovered != nil {
-			countlog.Fatal("event!pnp.maintainTunnelInBackground.panic", "err", recovered,
-				"stacktrace", countlog.ProvideStacktrace)
-		}
+		countlog.LogPanic(recover())
 	}()
 	listener, err := net.Listen("tcp", "127.0.0.1:0") // listen on localhost
 	if err != nil {
@@ -79,11 +75,7 @@ type pingResponse struct {
 
 func serveTunnel(listener net.Listener, handler http.Handler) {
 	defer func() {
-		recovered := recover()
-		if recovered != nil {
-			countlog.Fatal("event!pnp.serveTunnel.panic", "err", recovered,
-				"stacktrace", countlog.ProvideStacktrace)
-		}
+		countlog.LogPanic(recover())
 	}()
 	http.Serve(listener, handler)
 	countlog.Info("event!pnp.tunnel quit")
