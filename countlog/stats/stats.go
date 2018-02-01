@@ -1,22 +1,27 @@
 package stats
 
 import (
-	"github.com/v2pro/plz/countlog/core"
+	"github.com/v2pro/plz/countlog/spi"
 )
 
 type EventAggregator struct {
-	executor Executor
+	executor  Executor
 	collector Collector
 }
 
-func NewEventAggregator(executor Executor, collector Collector) *EventAggregator {
+type EventAggregatorConfig struct {
+	Executor  Executor
+	Collector Collector
+}
+
+func NewEventAggregator(cfg EventAggregatorConfig) *EventAggregator {
 	return &EventAggregator{
-		executor: executor,
-		collector: collector,
+		executor:  cfg.Executor,
+		collector: cfg.Collector,
 	}
 }
 
-func (aggregator *EventAggregator) HandlerOf(site *core.LogSite) core.EventHandler {
+func (aggregator *EventAggregator) HandlerOf(site *spi.LogSite) spi.EventHandler {
 	if site.Agg != "" {
 		return aggregator.createHandler(site.Agg, site)
 	}
@@ -29,13 +34,17 @@ func (aggregator *EventAggregator) HandlerOf(site *core.LogSite) core.EventHandl
 	return nil
 }
 
-func (aggregator *EventAggregator) createHandler(agg string, site *core.LogSite) core.EventHandler {
+func (aggregator *EventAggregator) createHandler(agg string, site *spi.LogSite) spi.EventHandler {
+	if aggregator.collector == nil {
+		// disable aggregation if collector not set
+		return nil
+	}
 	extractor, dimensionElemCount := newDimensionExtractor(site)
 	window := newWindow(aggregator.executor, aggregator.collector, dimensionElemCount)
 	switch agg {
 	case "counter":
 		return &countEvent{
-			Window: window,
+			Window:    window,
 			extractor: extractor,
 		}
 	default:

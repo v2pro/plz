@@ -1,7 +1,7 @@
 package stats
 
 import (
-	"github.com/v2pro/plz/countlog/core"
+	"github.com/v2pro/plz/countlog/spi"
 	"unsafe"
 	"strings"
 	"reflect"
@@ -88,10 +88,10 @@ func (window *Window) exportShard(now time.Time, shard windowShard) {
 type propIdx int
 
 type dimensionExtractor interface {
-	Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid
+	Extract(event *spi.Event, monoid MapMonoid, createElem func() Monoid) Monoid
 }
 
-func newDimensionExtractor(site *core.LogSite) (dimensionExtractor, int) {
+func newDimensionExtractor(site *spi.LogSite) (dimensionExtractor, int) {
 	var dimensionElems []string
 	for i := 0; i < len(site.Sample); i += 2 {
 		key := site.Sample[i].(string)
@@ -142,7 +142,7 @@ func newDimensionExtractor(site *core.LogSite) (dimensionExtractor, int) {
 type dimensionExtractor0 struct {
 }
 
-func (extractor *dimensionExtractor0) Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
+func (extractor *dimensionExtractor0) Extract(event *spi.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
 	elem := monoid[0]
 	if elem == nil {
 		elem = createElem()
@@ -156,7 +156,7 @@ type dimensionExtractor2 struct {
 	indices         []propIdx
 }
 
-func (extractor *dimensionExtractor2) Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
+func (extractor *dimensionExtractor2) Extract(event *spi.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
 	dimensionArr := [2]string{}
 	dimension := dimensionArr[:len(extractor.indices)]
 	return extractDimension(extractor.sampleInterface, dimension,
@@ -168,7 +168,7 @@ type dimensionExtractor4 struct {
 	indices         []propIdx
 }
 
-func (extractor *dimensionExtractor4) Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
+func (extractor *dimensionExtractor4) Extract(event *spi.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
 	dimensionArr := [4]string{}
 	dimension := dimensionArr[:len(extractor.indices)]
 	return extractDimension(extractor.sampleInterface, dimension,
@@ -180,7 +180,7 @@ type dimensionExtractor8 struct {
 	indices         []propIdx
 }
 
-func (extractor *dimensionExtractor8) Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
+func (extractor *dimensionExtractor8) Extract(event *spi.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
 	dimensionArr := [8]string{}
 	dimension := dimensionArr[:len(extractor.indices)]
 	return extractDimension(extractor.sampleInterface, dimension,
@@ -192,7 +192,7 @@ type dimensionExtractorAny struct {
 	indices         []propIdx
 }
 
-func (extractor *dimensionExtractorAny) Extract(event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
+func (extractor *dimensionExtractorAny) Extract(event *spi.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
 	dimension := make([]string, len(extractor.indices))
 	return extractDimension(extractor.sampleInterface, dimension,
 		extractor.indices, event, monoid, createElem)
@@ -200,7 +200,7 @@ func (extractor *dimensionExtractorAny) Extract(event *core.Event, monoid MapMon
 
 func extractDimension(
 	sampleInterface emptyInterface, dimension []string, indices []propIdx,
-	event *core.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
+	event *spi.Event, monoid MapMonoid, createElem func() Monoid) Monoid {
 	for i, idx := range indices {
 		dimension[i] = event.Properties[idx].(string)
 	}

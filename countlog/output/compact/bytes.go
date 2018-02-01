@@ -1,7 +1,7 @@
 package compact
 
 import (
-	"github.com/v2pro/plz/countlog/core"
+	"github.com/v2pro/plz/countlog/spi"
 	"unicode/utf8"
 )
 
@@ -10,7 +10,7 @@ type bytesFormatter struct {
 	idx int
 }
 
-func (formatter *bytesFormatter) Format(space []byte, event *core.Event) []byte {
+func (formatter *bytesFormatter) Format(space []byte, event *spi.Event) []byte {
 	space = append(space, formatter.prefix...)
 	return writeBytes(space, event.Properties[formatter.idx].([]byte))
 }

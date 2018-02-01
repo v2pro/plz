@@ -1,13 +1,13 @@
 package stats
 
-import "github.com/v2pro/plz/countlog/core"
+import "github.com/v2pro/plz/countlog/spi"
 
 type countEvent struct {
 	*Window
 	extractor dimensionExtractor
 }
 
-func (state *countEvent) Handle(event *core.Event) {
+func (state *countEvent) Handle(event *spi.Event) {
 	lock, dimensions := state.Window.Mutate()
 	lock.Lock()
 	counter := state.extractor.Extract(event, dimensions, NewCounterMonoid)

@@ -1,7 +1,7 @@
 package stats
 
 import (
-	"github.com/v2pro/plz/countlog/core"
+	"github.com/v2pro/plz/countlog/spi"
 	"time"
 )
 
@@ -23,7 +23,7 @@ type Monoid interface {
 }
 
 type State interface {
-	core.EventHandler
+	spi.EventHandler
 	GetWindow() *Window
 }
 

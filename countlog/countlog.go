@@ -4,21 +4,18 @@ import (
 	"sync"
 	"unsafe"
 	"runtime"
-	"github.com/v2pro/plz/countlog/core"
 	"time"
+	"github.com/v2pro/plz/countlog/spi"
 )
 
 // push event out
 
-const LevelTrace = 10
-const LevelDebug = 20
-const LevelInfo = 30
-const LevelWarn = 40
-const LevelError = 50
-const LevelFatal = 60
-
-// MinLevel exists to minimize the overhead of Trace/Debug logging
-var MinLevel = LevelDebug
+const LevelTrace = spi.LevelTrace
+const LevelDebug = spi.LevelDebug
+const LevelInfo = spi.LevelInfo
+const LevelWarn = spi.LevelWarn
+const LevelError = spi.LevelError
+const LevelFatal = spi.LevelFatal
 
 func getLevelName(level int) string {
 	switch level {
@@ -39,12 +36,17 @@ func getLevelName(level int) string {
 	}
 }
 
+func SetMinLevel(level int) {
+	spi.MinLevel = level
+	spi.SuccinctLevel = level + 10
+}
+
 func ShouldLog(level int) bool {
-	return level >= MinLevel
+	return level >= spi.MinLevel
 }
 
 func Trace(event string, properties ...interface{}) {
-	if LevelTrace < MinLevel {
+	if LevelTrace < spi.MinLevel {
 		return
 	}
 	ptr := unsafe.Pointer(&properties)
@@ -60,14 +62,14 @@ func TraceCall(callee string, err error, properties ...interface{}) {
 		log(LevelError, callee, nil, err, properties)
 		return
 	}
-	if LevelTrace < MinLevel {
+	if LevelTrace < spi.MinLevel {
 		return
 	}
 	log(LevelTrace, callee, nil, err, properties)
 }
 
 func Debug(event string, properties ...interface{}) {
-	if LevelDebug < MinLevel {
+	if LevelDebug < spi.MinLevel {
 		return
 	}
 	log(LevelDebug, event, nil, nil, properties)
@@ -78,14 +80,14 @@ func DebugCall(callee string, err error, properties ...interface{}) {
 		log(LevelError, callee, nil, err, properties)
 		return
 	}
-	if LevelDebug < MinLevel {
+	if LevelDebug < spi.MinLevel {
 		return
 	}
 	log(LevelDebug, callee, nil, err, properties)
 }
 
 func Info(event string, properties ...interface{}) {
-	if LevelInfo < MinLevel {
+	if LevelInfo < spi.MinLevel {
 		return
 	}
 	log(LevelInfo, event, nil, nil, properties)
@@ -96,7 +98,7 @@ func InfoCall(callee string, err error, properties ...interface{}) {
 		log(LevelError, callee, nil, err, properties)
 		return
 	}
-	if LevelInfo < MinLevel {
+	if LevelInfo < spi.MinLevel {
 		return
 	}
 	log(LevelInfo, callee, nil, err, properties)
@@ -136,7 +138,7 @@ var handlerCache = &sync.Map{}
 
 func log(level int, eventOrCallee string, ctx *Context, err error, properties []interface{}) {
 	handler := getHandler(level, eventOrCallee, ctx, properties)
-	event := &core.Event{
+	event := &spi.Event{
 		Context:    ctx,
 		Error:      err,
 		Timestamp:  time.Now(),
@@ -146,22 +148,22 @@ func log(level int, eventOrCallee string, ctx *Context, err error, properties []
 	handler.Handle(castEvent(uintptr(ptr)))
 }
 
-func castEvent(ptr uintptr) *core.Event {
-	return (*core.Event)(unsafe.Pointer(ptr))
+func castEvent(ptr uintptr) *spi.Event {
+	return (*spi.Event)(unsafe.Pointer(ptr))
 }
 func castString(ptr uintptr) string {
 	return *(*string)(unsafe.Pointer(ptr))
 }
 
-func getHandler(level int, eventOrCallee string, ctx *Context, properties []interface{}) core.EventHandler {
+func getHandler(level int, eventOrCallee string, ctx *Context, properties []interface{}) spi.EventHandler {
 	handler, found := handlerCache.Load(eventOrCallee)
 	if found {
-		return handler.(core.EventHandler)
+		return handler.(spi.EventHandler)
 	}
 	return newHandler(level, eventOrCallee, ctx, properties)
 }
 
-func newHandler(level int, eventOrCalleeObj string, ctx *Context, properties []interface{}) core.EventHandler {
+func newHandler(level int, eventOrCalleeObj string, ctx *Context, properties []interface{}) spi.EventHandler {
 	ptr := unsafe.Pointer(&eventOrCalleeObj)
 	eventOrCallee := castString(uintptr(ptr))
 	skipFramesCount := 3
@@ -169,14 +171,14 @@ func newHandler(level int, eventOrCalleeObj string, ctx *Context, properties []i
 		skipFramesCount = 5
 	}
 	_, callerFile, callerLine, _ := runtime.Caller(skipFramesCount)
-	site := &core.LogSite{
-		Level: level,
+	site := &spi.LogSite{
+		Level:         level,
 		EventOrCallee: eventOrCallee,
-		File: callerFile,
-		Line: callerLine,
-		Sample: properties,
+		File:          callerFile,
+		Line:          callerLine,
+		Sample:        properties,
 	}
-	var handlers core.EventHandlers
+	var handlers spi.EventHandlers
 	for _, sink := range EventSinks {
 		handler := sink.HandlerOf(site)
 		if handler == nil {

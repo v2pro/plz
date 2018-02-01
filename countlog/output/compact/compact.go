@@ -2,7 +2,7 @@ package compact
 
 import (
 	"strings"
-	"github.com/v2pro/plz/countlog/core"
+	"github.com/v2pro/plz/countlog/spi"
 	"reflect"
 	"github.com/v2pro/plz/countlog/output/minjson"
 	"github.com/v2pro/plz/countlog/output"
@@ -11,7 +11,7 @@ import (
 type Format struct {
 }
 
-func (format *Format) FormatterOf(site *core.LogSite) output.Formatter {
+func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 	eventOrCallee := site.EventOrCallee
 	sample := site.Sample
 	var formatters output.Formatters

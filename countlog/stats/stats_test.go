@@ -11,7 +11,7 @@ func Test_counter(t *testing.T) {
 	should := require.New(t)
 	dumpPoints := &dumpPoint{}
 	aggregator := NewEventAggregator(DefaultExecutor, dumpPoints)
-	counter := aggregator.HandlerOf(&core.LogSite{
+	counter := aggregator.HandlerOf(&spi.LogSite{
 		EventOrCallee: "event!abc",
 		Sample: []interface{}{
 			"agg", "counter",
@@ -20,7 +20,7 @@ func Test_counter(t *testing.T) {
 			"ver", "1.0",
 		},
 	}).(State)
-	counter.Handle(&core.Event{
+	counter.Handle(&spi.Event{
 		Properties: []interface{}{
 			"agg", "counter",
 			"dim", "city,ver",
@@ -28,7 +28,7 @@ func Test_counter(t *testing.T) {
 			"ver", "1.0",
 		},
 	})
-	counter.Handle(&core.Event{
+	counter.Handle(&spi.Event{
 		Properties: []interface{}{
 			"agg", "counter",
 			"dim", "city,ver",
@@ -52,7 +52,7 @@ func (points *dumpPoint) Collect(point *Point) {
 
 func Benchmark_counter_of_2_elem_dimension(b *testing.B) {
 	aggregator := &EventAggregator{}
-	counter := aggregator.HandlerOf(&core.LogSite{
+	counter := aggregator.HandlerOf(&spi.LogSite{
 		EventOrCallee: "event!abc",
 		Sample: []interface{}{
 			"agg", "counter",
@@ -61,7 +61,7 @@ func Benchmark_counter_of_2_elem_dimension(b *testing.B) {
 			"ver", "1.0",
 		},
 	}).(State)
-	events := []*core.Event{
+	events := []*spi.Event{
 		{
 			Properties: []interface{}{
 				"agg", "counter",
@@ -110,13 +110,13 @@ func Benchmark_counter_of_2_elem_dimension(b *testing.B) {
 
 func Benchmark_counter_of_0_elem_dimension(b *testing.B) {
 	aggregator := &EventAggregator{}
-	counter := aggregator.HandlerOf(&core.LogSite{
+	counter := aggregator.HandlerOf(&spi.LogSite{
 		EventOrCallee: "event!abc",
 		Sample: []interface{}{
 			"agg", "counter",
 		},
 	}).(State)
-	event := &core.Event{
+	event := &spi.Event{
 		Properties: []interface{}{
 			"agg", "counter",
 		},

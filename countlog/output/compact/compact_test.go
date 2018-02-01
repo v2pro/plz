@@ -10,7 +10,7 @@ import (
 func Test_compact_string(t *testing.T) {
 	should := require.New(t)
 	now := time.Now()
-	formatted := format(0, "event!abc", "file", 17, &core.Event{
+	formatted := format(0, "event!abc", "file", 17, &spi.Event{
 		Timestamp: now,
 		Properties: []interface{}{
 			"k1", "hello",
@@ -25,7 +25,7 @@ func Test_compact_string(t *testing.T) {
 func Test_callee(t *testing.T) {
 	should := require.New(t)
 	now := time.Now()
-	formatted := format(0, "callee!abc", "file", 17, &core.Event{
+	formatted := format(0, "callee!abc", "file", 17, &spi.Event{
 		Timestamp: now,
 		Properties: []interface{}{
 		},
@@ -34,9 +34,9 @@ func Test_callee(t *testing.T) {
 }
 
 func format(level int, eventOrCallee string,
-	callerFile string, callerLine int, event *core.Event) []byte {
+	callerFile string, callerLine int, event *spi.Event) []byte {
 	format := &Format{}
-	formatter := format.FormatterOf(&core.LogSite{
+	formatter := format.FormatterOf(&spi.LogSite{
 		File:          callerFile,
 		Line:          callerLine,
 		Level:         level,
@@ -48,7 +48,7 @@ func format(level int, eventOrCallee string,
 
 func Benchmark_compact_string(b *testing.B) {
 	format := &Format{}
-	formatter := format.FormatterOf(&core.LogSite{
+	formatter := format.FormatterOf(&spi.LogSite{
 		File:          "file",
 		Line:          17,
 		Level:         0,
@@ -58,7 +58,7 @@ func Benchmark_compact_string(b *testing.B) {
 			"k2", []byte(nil),
 		},
 	})
-	event := &core.Event{
+	event := &spi.Event{
 		Properties: []interface{}{
 			"k1", "hello",
 			"k2", []byte("中文"),

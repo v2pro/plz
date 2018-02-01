@@ -1,7 +1,7 @@
 package output
 
 import (
-	"github.com/v2pro/plz/countlog/core"
+	"github.com/v2pro/plz/countlog/spi"
 	"io"
 	"sync"
 )
@@ -28,7 +28,7 @@ func NewEventWriter(cfg EventWriterConfig) *EventWriter {
 	}
 }
 
-func (sink *EventWriter) HandlerOf(site *core.LogSite) core.EventHandler {
+func (sink *EventWriter) HandlerOf(site *spi.LogSite) spi.EventHandler {
 	formatter := sink.format.FormatterOf(site)
 	return &writeEvent{
 		formatter: formatter,
@@ -41,7 +41,7 @@ type writeEvent struct {
 	writer    io.Writer
 }
 
-func (handler *writeEvent) Handle(event *core.Event) {
+func (handler *writeEvent) Handle(event *spi.Event) {
 	space := bufPool.Get().([]byte)[:0]
 	formatted := handler.formatter.Format(space, event)
 	_, err := handler.writer.Write(formatted)
