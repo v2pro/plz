@@ -24,15 +24,16 @@ func (ctx *Context) Trace(event string, properties ...interface{}) {
 	log(LevelTrace, event, ctx, nil, properties)
 }
 
-func (ctx *Context) TraceCall(event string, err error, properties ...interface{}) {
+func (ctx *Context) TraceCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
 		log(LevelError, event, ctx, err, properties)
-		return
+		return err
 	}
 	if LevelTrace < spi.MinLevel {
-		return
+		return nil
 	}
 	log(LevelTrace, event, ctx, err, properties)
+	return nil
 }
 
 func (ctx *Context) Debug(event string, properties ...interface{}) {

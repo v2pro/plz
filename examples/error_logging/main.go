@@ -57,8 +57,7 @@ func doY(ctx context.Context) error {
 		recovered := recover()
 		if recovered != nil {
 			countlog.Fatal("event!doY.panic",
-				"err", recovered,
-				"stacktrace", countlog.ProvideStacktrace)
+				"err", recovered)
 		}
 	}()
 	start := time.Now()
@@ -88,14 +87,21 @@ func doZ(ctx *countlog.Context) error {
 	defer func() {
 		countlog.LogPanic(recover())
 	}()
-	file, err := os.OpenFile("/tmp/abc", os.O_RDWR, 0666)
-	ctx.TraceCall("callee!os.OpenFile", err)
+	path := "/tmp/abc"
+	file, err := os.OpenFile(path, os.O_RDWR, 0666)
+	// add event! prefix to make log message more findable
+	ctx.TraceCall("event!doZ os.OpenFile", err)
 	if err != nil {
 		return err
 	}
 	defer plz.Close(file)
 	_, err = file.Write([]byte("hello"))
-	ctx.TraceCall("callee!file.Write", err)
+	// without event! prefix also works,
+	// but event name must not be dynamic formatted string
+	// TraceCall will also generate new error object with more context
+	// return this error will give user a better clue about what happened
+	err = ctx.TraceCall("doZ write file %(path)s", err,
+		"path", path)
 	if err != nil {
 		return err
 	}
