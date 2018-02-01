@@ -35,10 +35,7 @@ func Test_witch(t *testing.T) {
 	go func() {
 		defer func() {
 			recovered := recover()
-			if recovered != nil {
-				countlog.Fatal("event!witch_test.panic", "err", recovered,
-					"stacktrace", countlog.ProvideStacktrace)
-			}
+			countlog.LogPanic(recovered)
 		}()
 		for {
 			response := []byte{}

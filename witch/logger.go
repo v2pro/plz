@@ -1,36 +1,31 @@
 package witch
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/json-iterator/go"
 	"github.com/v2pro/plz/countlog"
 	"net/http"
 	"os"
 	"sync/atomic"
 	"time"
+	"github.com/json-iterator/go"
 )
 
 var theEventQueue = newEventQueue()
 
 type eventQueue struct {
-	msgChan            chan countlog.Event
+	msgChan            chan []byte
 	droppedEventsCount uint64
 }
 
 func newEventQueue() *eventQueue {
 	return &eventQueue{
-		msgChan: make(chan countlog.Event, 10240),
+		msgChan: make(chan []byte, 10240),
 	}
 }
 
-func (q *eventQueue) ShouldLog(level int, event string, properties []interface{}) bool {
-	return true
-}
-
-func (q *eventQueue) WriteLog(level int, event string, properties []interface{}) {
+func (q *eventQueue) Write(buf []byte) (int, error) {
 	select {
-	case q.msgChan <- countlog.Event{Level: level, Event: event, Properties: properties}:
+	case q.msgChan <- buf:
 	default:
 		dropped := atomic.AddUint64(&q.droppedEventsCount, 1)
 		if dropped%10000 == 1 {
@@ -39,10 +34,11 @@ func (q *eventQueue) WriteLog(level int, event string, properties []interface{})
 			os.Stderr.Sync()
 		}
 	}
+	return len(buf), nil
 }
 
-func (q *eventQueue) consume() []countlog.Event {
-	events := make([]countlog.Event, 0, 4)
+func (q *eventQueue) consume() [][]byte {
+	events := make([][]byte, 0, 4)
 	timer := time.NewTimer(10 * time.Second)
 	select {
 	case event := <-theEventQueue.msgChan:
@@ -68,45 +64,19 @@ func moreEvents(respWriter http.ResponseWriter, req *http.Request) {
 	setCurrentGoRoutineIsKoala()
 	defer func() {
 		recovered := recover()
-		if recovered != nil {
-			countlog.Fatal("event!plz.logger.panic", "err", recovered,
-				"stacktrace", countlog.ProvideStacktrace)
-		}
+		countlog.LogPanic(recovered)
 	}()
 	respWriter.Header().Add("Access-Control-Allow-Origin", "*")
+	respWriter.Write([]byte("["))
+	stream := jsoniter.ConfigDefault.BorrowStream(respWriter)
+	defer jsoniter.ConfigDefault.ReturnStream(stream)
 	events := theEventQueue.consume()
-	stream := jsoniter.ConfigFastest.BorrowStream(respWriter)
-	defer jsoniter.ConfigFastest.ReturnStream(stream)
-	valueFormatter := jsoniter.ConfigFastest.BorrowStream(respWriter)
-	defer jsoniter.ConfigFastest.ReturnStream(valueFormatter)
 	stream.WriteArrayStart()
 	for i, event := range events {
 		if i != 0 {
 			stream.WriteMore()
 		}
-		stream.WriteObjectStart()
-		stream.WriteObjectField("event")
-		stream.WriteVal(event.Event)
-		stream.WriteMore()
-		stream.WriteObjectField("level")
-		stream.WriteVal(event.LevelName())
-		for j := 0; j < len(event.Properties); j += 2 {
-			stream.WriteMore()
-			propKey := event.Properties[j].(string)
-			stream.WriteObjectField(propKey)
-			propValue := event.Properties[j+1]
-			switch typedPropValue := propValue.(type) {
-			case string:
-				stream.WriteVal(typedPropValue)
-			case json.RawMessage:
-				stream.Write(typedPropValue)
-			default:
-				valueFormatter.Reset(nil)
-				valueFormatter.WriteVal(propValue)
-				stream.WriteVal(string(valueFormatter.Buffer()))
-			}
-		}
-		stream.WriteObjectEnd()
+		stream.Write(event)
 	}
 	stream.WriteArrayEnd()
 	stream.Flush()

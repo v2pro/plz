@@ -2,9 +2,9 @@ package test
 
 import (
 	"testing"
-	"github.com/v2pro/plz/countlog/minjson"
 	"reflect"
 	"github.com/stretchr/testify/require"
+	"github.com/v2pro/plz/countlog/output/minjson"
 )
 
 func Test_struct(t *testing.T) {

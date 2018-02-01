@@ -7,6 +7,8 @@ import (
 	"github.com/v2pro/plz/countlog"
 	_ "github.com/v2pro/plz/witch/statik"
 	"io/ioutil"
+	"github.com/v2pro/plz/countlog/output"
+	"github.com/v2pro/plz/countlog/output/minjson"
 )
 
 var files = []string{
@@ -70,7 +72,10 @@ func Start(addr string) {
 		return
 	}
 	countlog.Info("event!witch.viewer started", "addr", addr)
-	countlog.LogWriters = append(countlog.LogWriters, theEventQueue)
+	countlog.EventWriter = output.NewEventWriter(output.EventWriterConfig{
+		Format: &minjson.Format{},
+		Writer: theEventQueue,
+	})
 	if addr != "" {
 		go func() {
 			setCurrentGoRoutineIsKoala()

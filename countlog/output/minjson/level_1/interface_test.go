@@ -3,9 +3,9 @@ package test
 import (
 	"testing"
 	"github.com/stretchr/testify/require"
-	"github.com/v2pro/plz/countlog/minjson"
 	"reflect"
 	"io"
+	"github.com/v2pro/plz/countlog/output/minjson"
 )
 
 func Test_slice_of_empty_interface(t *testing.T) {
