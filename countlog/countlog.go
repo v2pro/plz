@@ -58,7 +58,7 @@ func Debug(event string, properties ...interface{}) {
 // DebugCall will output individual log entries in DEBUG_CALL level (TRACE includes DEBUG_CALL)
 func DebugCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		return log(LevelError, event, "call", nil, err, properties)
+		return log(LevelWarn, event, "call", nil, err, properties)
 	}
 	if LevelDebug < spi.MinLevel {
 		return nil
@@ -78,7 +78,7 @@ func Info(event string, properties ...interface{}) {
 // InfoCall will output individual log entries in INFO_CALL level (DEBUG includes INFO_CALL)
 func InfoCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		return log(LevelError, event, "call", nil, err, properties)
+		return log(LevelWarn, event, "call", nil, err, properties)
 	}
 	if LevelInfo < spi.MinLevel {
 		return nil

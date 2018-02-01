@@ -26,7 +26,7 @@ func (ctx *Context) Trace(event string, properties ...interface{}) {
 
 func (ctx *Context) TraceCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		return log(LevelError, event, "call", ctx, err, properties)
+		return log(LevelWarn, event, "call", ctx, err, properties)
 	}
 	if LevelTrace < spi.MinLevel {
 		return nil
@@ -44,7 +44,7 @@ func (ctx *Context) Debug(event string, properties ...interface{}) {
 
 func (ctx *Context) DebugCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		return log(LevelError, event, "call", ctx, err, properties)
+		return log(LevelWarn, event, "call", ctx, err, properties)
 	}
 	if LevelDebug < spi.MinLevel {
 		return nil
@@ -62,7 +62,7 @@ func (ctx *Context) Info(event string, properties ...interface{}) {
 
 func (ctx *Context) InfoCall(event string, err error, properties ...interface{}) error {
 	if err != nil {
-		return log(LevelError, event, "call", ctx, err, properties)
+		return log(LevelWarn, event, "call", ctx, err, properties)
 	}
 	if LevelInfo < spi.MinLevel {
 		return nil
