@@ -31,6 +31,7 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 			nfmt.FormatterOf(pattern, sample),
 		})
 	}
-	formatters = append(formatters, &fixedFormatter{"\n"})
+	formatters = append(formatters, &fixedFormatter{nfmt.Sprintf(
+		"||location=%(file)s:%(line)s\n", "file", site.File, "line", site.Line)})
 	return formatters
 }

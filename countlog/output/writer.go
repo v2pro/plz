@@ -46,7 +46,7 @@ func (handler *writeEvent) Handle(event *spi.Event) {
 	formatted := handler.formatter.Format(space, event)
 	_, err := handler.writer.Write(formatted)
 	if err != nil {
-		// TODO: show error
+		spi.OnError(err)
 	}
 }
 

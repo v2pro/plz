@@ -10,7 +10,7 @@ import (
 )
 
 var bytesType = reflect.TypeOf([]byte(nil))
-
+var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 type Encoder interface {
 	Encode(space []byte, ptr unsafe.Pointer) []byte
@@ -34,6 +34,12 @@ func EncoderOf(valType reflect.Type) Encoder {
 func encoderOf(prefix string, valType reflect.Type) Encoder {
 	if bytesType == valType {
 		return &bytesEncoder{}
+	}
+	if valType.Implements(errorType) {
+		sampleObj := reflect.New(valType).Elem().Interface()
+		return &errorEncoder{
+			sampleInterface: *(*emptyInterface)(unsafe.Pointer(&sampleObj)),
+		}
 	}
 	switch valType.Kind() {
 	case reflect.Int8:

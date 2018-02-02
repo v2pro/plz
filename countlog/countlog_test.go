@@ -6,6 +6,9 @@ import (
 	"context"
 	"errors"
 	"github.com/stretchr/testify/require"
+	"github.com/v2pro/plz/countlog/output"
+	"github.com/v2pro/plz/countlog/output/compact"
+	"os"
 )
 
 func Test_trace(t *testing.T) {
@@ -26,6 +29,20 @@ func Test_call_with_same_event_but_different_properties(t *testing.T) {
 		ctx.Trace("same event name", "key", 100)
 		Trace("same event name", "key", "value")
 	}
+}
+
+func Test_log_file(t *testing.T) {
+	should := require.New(t)
+	logFile, err := os.OpenFile("/tmp/test.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	should.NoError(err)
+	defer logFile.Close()
+	EventWriter = output.NewEventWriter(output.EventWriterConfig{
+		Format: &compact.Format{},
+		Writer: logFile,
+		Executor: output.DefaultExecutor,
+	})
+	Info("something happened", "input", "abc", "output", "def")
+	time.Sleep(time.Second)
 }
 
 func Benchmark_trace(b *testing.B) {

@@ -3,6 +3,7 @@ package output
 import (
 	"context"
 	"io"
+	"github.com/v2pro/plz/countlog/spi"
 )
 
 type Executor func(func(ctx context.Context))
@@ -35,7 +36,7 @@ func (writer *asyncWriter) asyncWrite(ctx context.Context) {
 		case buf := <-writer.queue:
 			_, err := writer.writer.Write(buf)
 			if err != nil {
-				// TODO: handle error
+				spi.OnError(err)
 			}
 		}
 	}
