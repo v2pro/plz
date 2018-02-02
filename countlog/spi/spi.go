@@ -36,17 +36,11 @@ const LevelFatal = 60
 
 func LevelName(level int) string {
 	switch level {
-	case LevelTraceCall:
-		return "TRACE_CALL"
-	case LevelTrace:
+	case LevelTraceCall, LevelTrace:
 		return "TRACE"
-	case LevelDebugCall:
-		return "DEBUG_CALL"
-	case LevelDebug:
+	case LevelDebugCall, LevelDebug:
 		return "DEBUG"
-	case LevelInfoCall:
-		return "INFO_CALL"
-	case LevelInfo:
+	case LevelInfoCall, LevelInfo:
 		return "INFO"
 	case LevelWarn:
 		return "WARN"
