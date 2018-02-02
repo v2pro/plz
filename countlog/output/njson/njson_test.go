@@ -1,15 +1,14 @@
-package test
+package njson
 
 import (
 	"testing"
-	"github.com/v2pro/plz/countlog/output/minjson"
 	"github.com/v2pro/plz/countlog/spi"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_event(t *testing.T) {
 	should := require.New(t)
-	format := &minjson.Format{}
+	format := &Format{}
 	formatter := format.FormatterOf(&spi.LogSite{
 		Sample: []interface{}{
 			"k1", "v",

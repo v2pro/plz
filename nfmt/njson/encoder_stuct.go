@@ -1,4 +1,4 @@
-package minjson
+package njson
 
 import "unsafe"
 

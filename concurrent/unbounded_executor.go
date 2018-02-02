@@ -22,10 +22,6 @@ type UnboundedExecutor struct {
 // any goroutine want to be shutdown before main exit can be started from this executor
 var GlobalUnboundedExecutor = NewUnboundedExecutor()
 
-func init() {
-	countlog.AsyncLogExecutor = GlobalUnboundedExecutor
-}
-
 func NewUnboundedExecutor() *UnboundedExecutor {
 	ctx, cancel := context.WithCancel(context.TODO())
 	return &UnboundedExecutor{
