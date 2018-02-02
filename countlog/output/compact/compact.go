@@ -4,7 +4,7 @@ import (
 	"strings"
 	"github.com/v2pro/plz/countlog/spi"
 	"reflect"
-	"github.com/v2pro/plz/countlog/output/minjson"
+	"github.com/v2pro/plz/nfmt/njson"
 	"github.com/v2pro/plz/countlog/output"
 )
 
@@ -36,7 +36,7 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 			formatters = append(formatters, &bytesFormatter{prefix, i + 1})
 		default:
 			formatters = append(formatters, &defaultFormatter{prefix, i + 1,
-			minjson.EncoderOf(reflect.TypeOf(value))})
+				njson.EncoderOf(reflect.TypeOf(value))})
 		}
 	}
 	formatters = append(formatters, &tagFormatter{"\n"})

@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"time"
 	"github.com/v2pro/plz/countlog/spi"
+	"github.com/v2pro/plz/nfmt"
+	"errors"
 )
 
 const LevelTraceCall = spi.LevelTraceCall
@@ -148,6 +150,13 @@ func log(level int, eventName string, agg string, ctx *Context, err error, prope
 	ptr := unsafe.Pointer(event)
 	castedEvent := castEvent(uintptr(ptr))
 	handler.Handle(castedEvent)
+	if castedEvent.Error != nil {
+		formatter := nfmt.FormatterOf(eventName, properties)
+		errMsg := formatter.Format(nil, properties)
+		errMsg = append(errMsg, ": "...)
+		errMsg = append(errMsg, castedEvent.Error.Error()...)
+		castedEvent.Error = errors.New(string(errMsg))
+	}
 	return castedEvent.Error
 }
 
