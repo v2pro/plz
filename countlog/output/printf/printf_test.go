@@ -4,6 +4,8 @@ import (
 	"testing"
 	"github.com/v2pro/plz/countlog/spi"
 	"github.com/stretchr/testify/require"
+	"os"
+	"io/ioutil"
 )
 
 func Test_message(t *testing.T) {

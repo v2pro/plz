@@ -5,6 +5,7 @@ import (
 	"os"
 	"sync"
 	"unsafe"
+	"fmt"
 )
 
 var bufPool = &sync.Pool{
@@ -25,32 +26,33 @@ func Sprintf(format string, kvObj ...interface{}) string {
 	return *(*string)(unsafe.Pointer(stringHeader))
 }
 
-func Println(format string, kvObj ...interface{}) (int, error) {
-	ptr := unsafe.Pointer(&kvObj)
-	kv := castEmptyInterfaces(uintptr(ptr))
-	return fprintln(os.Stdout, format, kv...)
+func Println(valuesObj ...interface{}) (int, error) {
+	ptr := unsafe.Pointer(&valuesObj)
+	values := castEmptyInterfaces(uintptr(ptr))
+	return fprintln(os.Stdout, values)
 }
 
-func Fprintln(writer io.Writer, format string, kvObj ...interface{}) (int, error) {
-	ptr := unsafe.Pointer(&kvObj)
-	kv := castEmptyInterfaces(uintptr(ptr))
-	return fprintln(writer, format, kv)
+func Fprintln(writer io.Writer, valuesObj ...interface{}) (int, error) {
+	ptr := unsafe.Pointer(&valuesObj)
+	values := castEmptyInterfaces(uintptr(ptr))
+	return fprintln(writer, values)
 }
 
-func fprintln(writer io.Writer, format string, kv ...interface{}) (int, error) {
-	buf := bufPool.Get().([]byte)[:0]
-	formatter := FormatterOf(format, kv)
-	formatted := formatter.Format(buf, kv)
-	formatted = append(formatted, '\n')
-	n, err := writer.Write(formatted)
-	bufPool.Put(formatted)
-	return n, err
+func fprintln(writer io.Writer, values []interface{}) (int, error) {
+	switch len(values) {
+	case 0:
+		return fmt.Println()
+	case 1:
+		return Fprintf(writer,"%(single_value)s\n", "single_value", values[0])
+	default:
+		return Fprintf(writer, "%(multiple_values)s\n", "multiple_values", values)
+	}
 }
 
 func Printf(format string, kvObj ...interface{}) (int, error) {
 	ptr := unsafe.Pointer(&kvObj)
 	kv := castEmptyInterfaces(uintptr(ptr))
-	return fprintf(os.Stdout, format, kv...)
+	return fprintf(os.Stdout, format, kv)
 }
 
 func Fprintf(writer io.Writer, format string, kvObj ...interface{}) (int, error) {
@@ -59,7 +61,7 @@ func Fprintf(writer io.Writer, format string, kvObj ...interface{}) (int, error)
 	return fprintf(writer, format, kv)
 }
 
-func fprintf(writer io.Writer, format string, kv ...interface{}) (int, error) {
+func fprintf(writer io.Writer, format string, kv []interface{}) (int, error) {
 	buf := bufPool.Get().([]byte)[:0]
 	formatter := FormatterOf(format, kv)
 	formatted := formatter.Format(buf, kv)

@@ -28,7 +28,10 @@ func Test_bytes_to_string(t *testing.T) {
 }
 
 func Test_printf(t *testing.T) {
-	nfmt.Printf("%(key)s", "key", "hello")
+	fmt.Printf("%s\n", "hello")
+	nfmt.Printf("%(key)s\n", "key", "hello")
+	fmt.Println("hello", "world")
+	nfmt.Println("hello", "world")
 }
 
 func Benchmark_string_to_string(b *testing.B) {
