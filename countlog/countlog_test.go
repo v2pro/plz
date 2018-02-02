@@ -9,6 +9,7 @@ import (
 	"github.com/v2pro/plz/countlog/output"
 	"github.com/v2pro/plz/countlog/output/compact"
 	"os"
+	"github.com/v2pro/plz/countlog/output/lumberjack"
 )
 
 func Test_trace(t *testing.T) {
@@ -39,7 +40,8 @@ func Test_log_file(t *testing.T) {
 	EventWriter = output.NewEventWriter(output.EventWriterConfig{
 		Format: &compact.Format{},
 		Writer: output.NewAsyncWriter(output.AsyncWriterConfig{
-			QueueLength: 1,
+			QueueLength: 1024,
+			IsQueueBlocking: false,
 			Writer: logFile,
 		}),
 	})
@@ -47,6 +49,23 @@ func Test_log_file(t *testing.T) {
 		Info("something happened", "input", "abc", "output", "def")
 	}
 	time.Sleep(time.Second)
+}
+
+func Test_rolling_log_file(t *testing.T) {
+	logFile := &lumberjack.Logger{
+		BackupTimeFormat: "2006-01-02T15-04-05.000",
+		Filename:   "/tmp/test.log",
+		MaxSize:    1, // megabytes
+		MaxBackups: 3,
+	}
+	defer logFile.Close()
+	EventWriter = output.NewEventWriter(output.EventWriterConfig{
+		Format: &compact.Format{},
+		Writer: logFile,
+	})
+	for i := 0; i < 10000; i++ {
+		Info("something happened", "input", "abc", "output", "def")
+	}
 }
 
 func Benchmark_trace(b *testing.B) {
