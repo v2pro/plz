@@ -10,11 +10,15 @@ import (
 	"github.com/v2pro/plz/countlog/output/compact"
 	"os"
 	"github.com/v2pro/plz/countlog/output/lumberjack"
+	"github.com/v2pro/plz/countlog/spi"
+	"github.com/v2pro/plz/countlog/output/json"
 )
 
 func Test_trace(t *testing.T) {
-	Trace("event!hello", "a", "b", "int", 100)
-	time.Sleep(time.Second)
+	EventWriter = output.NewEventWriter(output.EventWriterConfig{
+		Format: &json.Format{},
+	})
+	Trace("hello", "a", "b", "int", 100)
 }
 
 func Test_trace_call(t *testing.T) {
@@ -64,8 +68,39 @@ func Test_rolling_log_file(t *testing.T) {
 		Writer: logFile,
 	})
 	for i := 0; i < 10000; i++ {
-		Info("something happened", "input", "abc", "output", "def")
+		Info("something  happened", "input", "abc", "output", "def")
 	}
+}
+
+func Test_different_file(t *testing.T) {
+	should := require.New(t)
+	infoLogFile, err := os.OpenFile("/tmp/test.info.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	should.NoError(err)
+	defer infoLogFile.Close()
+	infoWriter := output.NewEventWriter(output.EventWriterConfig{
+		Format: &compact.Format{},
+		Writer: infoLogFile,
+	})
+	errorLogFile, err := os.OpenFile("/tmp/test.error.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	should.NoError(err)
+	defer errorLogFile.Close()
+	errorWriter := output.NewEventWriter(output.EventWriterConfig{
+		Format: &compact.Format{},
+		Writer: errorLogFile,
+	})
+	EventWriter = spi.FuncEventSink(func(site *spi.LogSite) spi.EventHandler {
+		infoHandler := infoWriter.HandlerOf(site)
+		errorHandler := errorWriter.HandlerOf(site)
+		return spi.FuncEventHandler(func(event *spi.Event) {
+			if event.Level > spi.LevelInfo {
+				errorHandler.Handle(event)
+			} else {
+				infoHandler.Handle(event)
+			}
+		})
+	})
+	Info("something  happened", "input", "abc", "output", "def")
+	Error("some error  happened", "input", "abc", "output", "def")
 }
 
 func Benchmark_trace(b *testing.B) {

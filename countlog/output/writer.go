@@ -4,6 +4,7 @@ import (
 	"github.com/v2pro/plz/countlog/spi"
 	"io"
 	"sync"
+	"os"
 )
 
 type EventWriter struct {
@@ -17,7 +18,11 @@ type EventWriterConfig struct {
 }
 
 func NewEventWriter(cfg EventWriterConfig) *EventWriter {
-	var writer io.Writer = &recylceWriter{cfg.Writer}
+	writer := cfg.Writer
+	if writer == nil {
+		writer = os.Stdout
+	}
+	writer = &recylceWriter{writer}
 	return &EventWriter{
 		format: cfg.Format,
 		writer: writer,

@@ -1,4 +1,4 @@
-package njson
+package json
 
 import (
 	"github.com/v2pro/plz/countlog/output"
@@ -11,7 +11,7 @@ type Format struct {
 }
 
 func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
-	formatter := &formatter{}
+	formatter := &formatter{site: site}
 	for i := 0; i < len(site.Sample); i += 2 {
 		prefix := `"` + site.Sample[i].(string) + `":`
 		formatter.props = append(formatter.props, formatterProp{
@@ -24,6 +24,7 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 }
 
 type formatter struct {
+	site  *spi.LogSite
 	props []formatterProp
 }
 
@@ -34,11 +35,11 @@ type formatterProp struct {
 }
 
 func (formatter *formatter) Format(space []byte, event *spi.Event) []byte {
-	space = append(space, '{')
-	for i, prop := range formatter.props {
-		if i != 0 {
-			space = append(space, ',')
-		}
+	space = append(space, `{"event":"`...)
+	space = append(space, formatter.site.Event...)
+	space = append(space, '"')
+	for _, prop := range formatter.props {
+		space = append(space, ',')
 		space = append(space, prop.prefix...)
 		space = prop.encoder.Encode(space, njson.PtrOf(event.Properties[prop.idx]))
 	}

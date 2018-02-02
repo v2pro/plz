@@ -1,4 +1,4 @@
-package njson
+package json
 
 import (
 	"testing"
