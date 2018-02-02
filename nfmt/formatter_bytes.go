@@ -1,20 +1,12 @@
-package compact
+package nfmt
 
-import (
-	"github.com/v2pro/plz/countlog/spi"
-	"unicode/utf8"
-)
+import "unicode/utf8"
 
-type bytesFormatter struct {
-	prefix string
-	idx int
+type bytesFormatter int
+
+func (formatter bytesFormatter) Format(space []byte, properties []interface{}) []byte {
+	return writeBytes(space, properties[formatter].([]byte))
 }
-
-func (formatter *bytesFormatter) Format(space []byte, event *spi.Event) []byte {
-	space = append(space, formatter.prefix...)
-	return writeBytes(space, event.Properties[formatter.idx].([]byte))
-}
-
 
 // safeSet holds the value true if the ASCII character with the given array
 // position can be represented inside a JSON string without any further

@@ -33,11 +33,11 @@ func FormatterOf(format string, sample []interface{}) Formatter {
 }
 
 type formatCompiler struct {
-	sample []interface{}
-	format string
-	start int
-	lastKey string
-	onByte func(int, byte)
+	sample     []interface{}
+	format     string
+	start      int
+	lastKey    string
+	onByte     func(int, byte)
 	formatters []Formatter
 }
 
@@ -60,7 +60,7 @@ func (compiler *formatCompiler) compile() {
 		compiler.formatters = append(compiler.formatters,
 			fixedFormatter(compiler.format[compiler.start:len(format)]))
 	} else {
-		compiler.invalidFormat(len(format) - 1, "verb not properly ended")
+		compiler.invalidFormat(len(format)-1, "verb not properly ended")
 	}
 }
 
@@ -95,20 +95,22 @@ func (compiler *formatCompiler) afterRightBrace(i int, b byte) {
 	case 's':
 		idx := compiler.findLastKey()
 		if idx == -1 {
-			compiler.invalidFormat(i, compiler.lastKey + " not found in args")
+			compiler.invalidFormat(i, compiler.lastKey+" not found in args")
 			return
 		}
 		sampleValue := compiler.sample[idx]
 		switch sampleValue.(type) {
 		case string:
 			compiler.formatters = append(compiler.formatters, strFormatter(idx))
+		case []byte:
+			compiler.formatters = append(compiler.formatters, bytesFormatter(idx))
 		default:
 			compiler.formatters = append(compiler.formatters, &jsonFormatter{
-				idx: idx,
+				idx:     idx,
 				encoder: njson.EncoderOf(reflect.TypeOf(sampleValue)),
 			})
 		}
-		compiler.start = i+1
+		compiler.start = i + 1
 		compiler.onByte = compiler.normal
 	default:
 		compiler.invalidFormat(i, "verb unknown")
@@ -116,10 +118,10 @@ func (compiler *formatCompiler) afterRightBrace(i int, b byte) {
 }
 
 func (compiler *formatCompiler) findLastKey() int {
-	for i := 0; i < len(compiler.sample); i+=2{
+	for i := 0; i < len(compiler.sample); i += 2 {
 		key := compiler.sample[i].(string)
 		if key == compiler.lastKey {
-			return i+1
+			return i + 1
 		}
 	}
 	return -1
@@ -131,6 +133,3 @@ func (compiler *formatCompiler) invalidFormat(i int, err string) {
 	compiler.formatters = []Formatter{invalidFormatter(fmt.Sprintf(
 		"%s at %d %s", err, i, compiler.format))}
 }
-
-
-

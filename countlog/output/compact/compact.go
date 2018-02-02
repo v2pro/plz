@@ -3,9 +3,8 @@ package compact
 import (
 	"strings"
 	"github.com/v2pro/plz/countlog/spi"
-	"reflect"
-	"github.com/v2pro/plz/nfmt/njson"
 	"github.com/v2pro/plz/countlog/output"
+	"github.com/v2pro/plz/nfmt"
 )
 
 type Format struct {
@@ -16,29 +15,22 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 	sample := site.Sample
 	var formatters output.Formatters
 	if strings.HasPrefix(eventName, "event!") {
-		formatters = append(formatters, &tagFormatter{eventName[len("event!"):]})
+		formatters = append(formatters, &fixedFormatter{eventName[len("event!"):]})
 	} else if strings.HasPrefix(eventName, "callee!") {
 		tag := "call " + eventName[len("callee!"):]
-		formatters = append(formatters, &tagFormatter{tag})
+		formatters = append(formatters, &fixedFormatter{tag})
 	} else {
-		// TODO: notify wrong prefix
-		formatters = append(formatters, &tagFormatter{eventName})
+		formatters = append(formatters,
+			&defaultFormatter{nfmt.FormatterOf(eventName, site.Sample)})
 	}
 	formatters = append(formatters, &timestampFormatter{})
 	for i := 0; i < len(sample); i += 2 {
 		key := sample[i].(string)
-		value := sample[i+1]
-		prefix := "||" + key + "="
-		switch value.(type) {
-		case string:
-			formatters = append(formatters, &stringFormatter{prefix, i + 1})
-		case []byte:
-			formatters = append(formatters, &bytesFormatter{prefix, i + 1})
-		default:
-			formatters = append(formatters, &defaultFormatter{prefix, i + 1,
-				njson.EncoderOf(reflect.TypeOf(value))})
-		}
+		pattern := "||" + key + "=%(" + key + ")s"
+		formatters = append(formatters, &defaultFormatter{
+			nfmt.FormatterOf(pattern, sample),
+		})
 	}
-	formatters = append(formatters, &tagFormatter{"\n"})
+	formatters = append(formatters, &fixedFormatter{"\n"})
 	return formatters
 }

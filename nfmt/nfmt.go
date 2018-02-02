@@ -20,18 +20,46 @@ func Sprintf(format string, kvObj ...interface{}) string {
 	sliceHeader := (*sliceHeader)(unsafe.Pointer(&buf))
 	stringHeader := &stringHeader{
 		Data: sliceHeader.Data,
-		Len: sliceHeader.Len,
+		Len:  sliceHeader.Len,
 	}
 	return *(*string)(unsafe.Pointer(stringHeader))
 }
 
-func Printf(format string, kv ...interface{}) (int, error) {
-	return Fprintf(os.Stdout, format, kv...)
+func Println(format string, kvObj ...interface{}) (int, error) {
+	ptr := unsafe.Pointer(&kvObj)
+	kv := castEmptyInterfaces(uintptr(ptr))
+	return fprintln(os.Stdout, format, kv...)
+}
+
+func Fprintln(writer io.Writer, format string, kvObj ...interface{}) (int, error) {
+	ptr := unsafe.Pointer(&kvObj)
+	kv := castEmptyInterfaces(uintptr(ptr))
+	return fprintln(writer, format, kv)
+}
+
+func fprintln(writer io.Writer, format string, kv ...interface{}) (int, error) {
+	buf := bufPool.Get().([]byte)[:0]
+	formatter := FormatterOf(format, kv)
+	formatted := formatter.Format(buf, kv)
+	formatted = append(formatted, '\n')
+	n, err := writer.Write(formatted)
+	bufPool.Put(formatted)
+	return n, err
+}
+
+func Printf(format string, kvObj ...interface{}) (int, error) {
+	ptr := unsafe.Pointer(&kvObj)
+	kv := castEmptyInterfaces(uintptr(ptr))
+	return fprintf(os.Stdout, format, kv...)
 }
 
 func Fprintf(writer io.Writer, format string, kvObj ...interface{}) (int, error) {
 	ptr := unsafe.Pointer(&kvObj)
 	kv := castEmptyInterfaces(uintptr(ptr))
+	return fprintf(writer, format, kv)
+}
+
+func fprintf(writer io.Writer, format string, kv ...interface{}) (int, error) {
 	buf := bufPool.Get().([]byte)[:0]
 	formatter := FormatterOf(format, kv)
 	formatted := formatter.Format(buf, kv)

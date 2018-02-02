@@ -20,6 +20,13 @@ func Test_int_to_string(t *testing.T) {
 	should.Equal("100", nfmt.Sprintf("%(key)s", "key", 100))
 }
 
+func Test_bytes_to_string(t *testing.T) {
+	should := require.New(t)
+	should.Equal("hello", fmt.Sprintf("%s", []byte("hello")))
+	should.Equal("hello", nfmt.Sprintf("%(key)s", "key", []byte("hello")))
+
+}
+
 func Test_printf(t *testing.T) {
 	nfmt.Printf("%(key)s", "key", "hello")
 }
