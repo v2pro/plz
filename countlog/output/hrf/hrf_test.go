@@ -16,5 +16,5 @@ func Test_message(t *testing.T) {
 	output := formatter.Format(nil, &spi.Event{
 		Properties: []interface{}{"key", "world"},
 	})
-	should.Equal("hello world", string(output))
+	should.Equal("=== hello world ===\nkey: world\n", string(output))
 }

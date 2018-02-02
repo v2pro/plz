@@ -67,6 +67,8 @@ func nomalModeOnPanic(recovered interface{}, event *spi.Event, site *spi.LogSite
 	}
 	handlerCache.Store(site.Event, redirector)
 	newSite := *site
+	newSite.File = "unknown"
+	newSite.Line = 0
 	newSite.Sample = event.Properties
 	newRootHandler(&newSite, fallbackModeOnPanic).Handle(event)
 }

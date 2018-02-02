@@ -3,12 +3,12 @@ package countlog
 import (
 	"os"
 	"github.com/v2pro/plz/countlog/output"
-	"github.com/v2pro/plz/countlog/output/compact"
 	"github.com/v2pro/plz/countlog/stats"
+	"github.com/v2pro/plz/countlog/output/hrf"
 )
 
 var EventWriter = output.NewEventWriter(output.EventWriterConfig{
-	Format: &compact.Format{},
+	Format: &hrf.Format{},
 	Writer: os.Stdout,
 })
 

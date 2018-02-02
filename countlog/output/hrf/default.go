@@ -5,10 +5,10 @@ import (
 	"github.com/v2pro/plz/nfmt"
 )
 
-type msgFormatter struct {
+type defaultFormatter struct {
 	fmt nfmt.Formatter
 }
 
-func (formatter *msgFormatter) Format(space []byte, event *spi.Event) []byte {
+func (formatter *defaultFormatter) Format(space []byte, event *spi.Event) []byte {
 	return formatter.fmt.Format(space, event.Properties)
 }
