@@ -12,16 +12,12 @@ type EventWriter struct {
 }
 
 type EventWriterConfig struct {
-	Format   Format
-	Writer   io.Writer
-	Executor Executor
+	Format Format
+	Writer io.Writer
 }
 
 func NewEventWriter(cfg EventWriterConfig) *EventWriter {
 	var writer io.Writer = &recylceWriter{cfg.Writer}
-	if cfg.Executor != nil {
-		writer = newAsyncWriter(cfg.Executor, writer)
-	}
 	return &EventWriter{
 		format: cfg.Format,
 		writer: writer,

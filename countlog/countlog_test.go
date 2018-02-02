@@ -38,10 +38,14 @@ func Test_log_file(t *testing.T) {
 	defer logFile.Close()
 	EventWriter = output.NewEventWriter(output.EventWriterConfig{
 		Format: &compact.Format{},
-		Writer: logFile,
-		Executor: output.DefaultExecutor,
+		Writer: output.NewAsyncWriter(output.AsyncWriterConfig{
+			QueueLength: 1,
+			Writer: logFile,
+		}),
 	})
-	Info("something happened", "input", "abc", "output", "def")
+	for i := 0; i < 1000; i++ {
+		Info("something happened", "input", "abc", "output", "def")
+	}
 	time.Sleep(time.Second)
 }
 
