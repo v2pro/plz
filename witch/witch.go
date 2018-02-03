@@ -8,7 +8,7 @@ import (
 	_ "github.com/v2pro/plz/witch/statik"
 	"io/ioutil"
 	"github.com/v2pro/plz/countlog/output"
-	"github.com/v2pro/plz/countlog/output/minjson"
+	"github.com/v2pro/plz/countlog/output/json"
 )
 
 var files = []string{
@@ -72,7 +72,7 @@ func Start(addr string) {
 	}
 	countlog.Info("event!witch.viewer started", "addr", addr)
 	countlog.EventWriter = output.NewEventWriter(output.EventWriterConfig{
-		Format: &minjson.Format{},
+		Format: &json.Format{},
 		Writer: theEventQueue,
 	})
 	if addr != "" {

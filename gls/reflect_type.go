@@ -1,0 +1,101 @@
+//+build go1.5
+
+package gls
+
+import (
+	"unsafe"
+	"reflect"
+	"runtime"
+	"strings"
+)
+
+// typelinks1 for 1.4
+//go:linkname typelinks1 reflect.typelinks
+func typelinks1() []unsafe.Pointer
+
+// typelinks2 for 1.5 ~ 1.6
+//go:linkname typelinks2 reflect.typelinks
+func typelinks2() [][]unsafe.Pointer
+
+// typelinks3 for 1.7 ~
+//go:linkname typelinks3 reflect.typelinks
+func typelinks3() (sections []unsafe.Pointer, offset [][]int32)
+
+var types = map[string]reflect.Type{}
+
+func init() {
+	ver := runtime.Version()
+	if ver == "go1.4" || strings.HasPrefix(ver, "go1.4.") {
+		loadGo14Types()
+	} else if ver == "go1.5" || strings.HasPrefix(ver, "go1.5.") {
+		loadGo15Types()
+	} else if ver == "go1.6" || strings.HasPrefix(ver, "go1.6.") {
+		loadGo15Types()
+	} else {
+		loadGo17Types()
+	}
+	gType := TypeForName("runtime.g")
+	if gType == nil {
+		panic("failed to get runtime.g type")
+	}
+	goidField, found := gType.FieldByName("goid")
+	if !found {
+		panic("failed to get goid from runtime.g type")
+	}
+	goidOffset = goidField.Offset
+}
+
+func loadGo14Types() {
+	var obj interface{} = reflect.TypeOf(0)
+	typePtrs := typelinks1()
+	for _, typePtr := range typePtrs {
+		(*emptyInterface)(unsafe.Pointer(&obj)).word = typePtr
+		typ := obj.(reflect.Type)
+		if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Struct {
+			types[typ.Elem().String()] = typ.Elem()
+		}
+	}
+}
+
+func loadGo15Types() {
+	var obj interface{} = reflect.TypeOf(0)
+	typePtrss := typelinks2()
+	for _, typePtrs := range typePtrss {
+		for _, typePtr := range typePtrs {
+			(*emptyInterface)(unsafe.Pointer(&obj)).word = typePtr
+			typ := obj.(reflect.Type)
+			if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Struct {
+				types[typ.Elem().String()] = typ.Elem()
+			}
+			if typ.Kind() == reflect.Slice && typ.Elem().Kind() == reflect.Ptr &&
+				typ.Elem().Elem().Kind() == reflect.Struct {
+				types[typ.Elem().Elem().String()] = typ.Elem().Elem()
+			}
+		}
+	}
+}
+
+func loadGo17Types() {
+	var obj interface{} = reflect.TypeOf(0)
+	sections, offset := typelinks3()
+	for i, offs := range offset {
+		rodata := sections[i]
+		for _, off := range offs {
+			(*emptyInterface)(unsafe.Pointer(&obj)).word = resolveTypeOff(unsafe.Pointer(rodata), off)
+			typ := obj.(reflect.Type)
+			if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Struct {
+				types[typ.Elem().String()] = typ.Elem()
+			}
+		}
+	}
+}
+
+type emptyInterface struct {
+	typ  unsafe.Pointer
+	word unsafe.Pointer
+}
+
+// TypeForName return the type by its name, just like Class.forName in java
+func TypeForName(typeName string) reflect.Type {
+	return types[typeName]
+}
