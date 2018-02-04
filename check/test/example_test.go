@@ -9,6 +9,6 @@ import (
 
 func Test(t *testing.T) {
 	t.Run("1 != 2", Case(func(ctx *Context) {
-		Check(1 == 2)
+		Assert(1 == 2)
 	}))
 }

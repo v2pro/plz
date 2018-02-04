@@ -22,7 +22,7 @@ func Equal(expected interface{}, actual interface{}) {
 }
 
 //go:noinline
-func CheckEqual(expected interface{}, actual interface{}) {
+func AssertEqual(expected interface{}, actual interface{}) {
 	t := check.CurrentT()
 	if assert.Equal(t, expected, actual) {
 		return

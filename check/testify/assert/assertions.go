@@ -227,15 +227,7 @@ func FailNow(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool 
 // Fail reports a failure through
 func Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
 	content := []labeledContent{
-		{"Error Trace", strings.Join(CallerInfo(), "\n\r\t\t\t")},
 		{"Error", failureMessage},
-	}
-
-	// Add test name if the Go version supports it
-	if n, ok := t.(interface {
-		Name() string
-	}); ok {
-		content = append(content, labeledContent{"Test", n.Name()})
 	}
 
 	message := messageFromMsgAndArgs(msgAndArgs...)

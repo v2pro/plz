@@ -3,10 +3,11 @@ package must
 import (
 	"github.com/v2pro/plz/check"
 	"runtime"
+	"github.com/v2pro/plz/check/go-spew/spew"
 )
 
 //go:noinline
-func Check(result bool) {
+func Assert(result bool, kv ...interface{}) {
 	if result {
 		return
 	}
@@ -21,7 +22,7 @@ func Check(result bool) {
 }
 
 //go:noinline
-func Pass(result bool) {
+func Pass(result bool, kv ...interface{}) {
 	if result {
 		return
 	}
@@ -31,6 +32,10 @@ func Pass(result bool) {
 	if !ok {
 		t.Fatal("check failed")
 		return
+	}
+	for i := 0; i < len(kv); i+=2 {
+		key := kv[i].(string)
+		t.Errorf("%s: %s", key, spew.Sdump(kv[i+1]))
 	}
 	t.Fatal(check.ExtractFailedLines(file, line))
 }
