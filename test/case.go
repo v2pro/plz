@@ -1,4 +1,4 @@
-package check
+package test
 
 import (
 	"testing"

@@ -15,8 +15,8 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
-	"github.com/v2pro/plz/check/go-difflib/difflib"
-	"github.com/v2pro/plz/check/go-spew/spew"
+	"github.com/v2pro/plz/test/go-difflib/difflib"
+	"github.com/v2pro/plz/test/go-spew/spew"
 )
 
 //go:generate go run ../_codegen/main.go -output-package=assert -template=assertion_format.go.tmpl

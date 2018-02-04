@@ -2,13 +2,13 @@ package should
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/v2pro/plz/check"
+	"github.com/v2pro/plz/test"
 	"runtime"
 )
 
 //go:noinline
 func Equal(expected interface{}, actual interface{}) {
-	t := check.CurrentT()
+	t := test.CurrentT()
 	if assert.Equal(t, expected, actual) {
 		return
 	}
@@ -18,12 +18,12 @@ func Equal(expected interface{}, actual interface{}) {
 		t.Error("check failed")
 		return
 	}
-	t.Error(check.ExtractFailedLines(file, line))
+	t.Error(test.ExtractFailedLines(file, line))
 }
 
 //go:noinline
 func AssertEqual(expected interface{}, actual interface{}) {
-	t := check.CurrentT()
+	t := test.CurrentT()
 	if assert.Equal(t, expected, actual) {
 		return
 	}
@@ -33,5 +33,5 @@ func AssertEqual(expected interface{}, actual interface{}) {
 		t.Error("check failed")
 		return
 	}
-	t.Error(check.ExtractFailedLines(file, line))
+	t.Error(test.ExtractFailedLines(file, line))
 }

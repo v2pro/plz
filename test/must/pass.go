@@ -1,9 +1,9 @@
 package must
 
 import (
-	"github.com/v2pro/plz/check"
+	"github.com/v2pro/plz/test"
 	"runtime"
-	"github.com/v2pro/plz/check/go-spew/spew"
+	"github.com/v2pro/plz/test/go-spew/spew"
 )
 
 //go:noinline
@@ -11,14 +11,14 @@ func Assert(result bool, kv ...interface{}) {
 	if result {
 		return
 	}
-	t := check.CurrentT()
+	t := test.CurrentT()
 	t.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Fatal("check failed")
 		return
 	}
-	t.Fatal(check.ExtractFailedLines(file, line))
+	t.Fatal(test.ExtractFailedLines(file, line))
 }
 
 //go:noinline
@@ -26,7 +26,7 @@ func Pass(result bool, kv ...interface{}) {
 	if result {
 		return
 	}
-	t := check.CurrentT()
+	t := test.CurrentT()
 	t.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
@@ -37,5 +37,5 @@ func Pass(result bool, kv ...interface{}) {
 		key := kv[i].(string)
 		t.Errorf("%s: %s", key, spew.Sdump(kv[i+1]))
 	}
-	t.Fatal(check.ExtractFailedLines(file, line))
+	t.Fatal(test.ExtractFailedLines(file, line))
 }

@@ -1,63 +1,63 @@
-package should
+package must
 
 import (
-	"github.com/v2pro/plz/check"
-	"github.com/v2pro/plz/check/testify/assert"
+	"github.com/v2pro/plz/test"
+	"github.com/v2pro/plz/test/testify/assert"
 	"runtime"
 )
 
 func Nil(actual interface{}) {
-	t := check.CurrentT()
+	t := test.CurrentT()
 	if assert.Nil(t, actual) {
 		return
 	}
 	t.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
-		t.Error("check failed")
+		t.Fatal("check failed")
 		return
 	}
-	t.Error(check.ExtractFailedLines(file, line))
+	t.Fatal(test.ExtractFailedLines(file, line))
 }
 
 func AssertNil(actual interface{}) {
-	t := check.CurrentT()
+	t := test.CurrentT()
 	if assert.Nil(t, actual) {
 		return
 	}
 	t.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
-		t.Error("check failed")
+		t.Fatal("check failed")
 		return
 	}
-	t.Error(check.ExtractFailedLines(file, line))
+	t.Fatal(test.ExtractFailedLines(file, line))
 }
 
 func NotNil(actual interface{}) {
-	t := check.CurrentT()
+	t := test.CurrentT()
 	if assert.NotNil(t, actual) {
 		return
 	}
 	t.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
-		t.Error("check failed")
+		t.Fatal("check failed")
 		return
 	}
-	t.Error(check.ExtractFailedLines(file, line))
+	t.Fatal(test.ExtractFailedLines(file, line))
 }
 
 func AssertNotNil(actual interface{}) {
-	t := check.CurrentT()
+	t := test.CurrentT()
 	if assert.NotNil(t, actual) {
 		return
 	}
 	t.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
-		t.Error("check failed")
+		t.Fatal("check failed")
 		return
 	}
-	t.Error(check.ExtractFailedLines(file, line))
+	t.Fatal(test.ExtractFailedLines(file, line))
 }

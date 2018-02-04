@@ -1,10 +1,10 @@
-package must
+package should
 
 import (
 	"reflect"
-	"github.com/v2pro/plz/check"
+	"github.com/v2pro/plz/test"
 	"runtime"
-	"github.com/v2pro/plz/check/testify/assert"
+	"github.com/v2pro/plz/test/testify/assert"
 )
 
 type ReturnValue []interface{}
@@ -24,17 +24,17 @@ func Call(f interface{}, argObjs ...interface{}) ReturnValue {
 	if len(retVals) > 0 && retVals[len(retVals)-1].Type().Implements(errorType) {
 		errObj := retVals[len(retVals)-1].Interface()
 		err, _ := errObj.(error)
-		t := check.CurrentT()
+		t := test.CurrentT()
 		if assert.NoError(t, err) {
 			return ReturnValue(retObjs)
 		}
 		t.Helper()
 		_, file, line, ok := runtime.Caller(1)
 		if !ok {
-			t.Fatal("check failed")
+			t.Error("check failed")
 			return ReturnValue(retObjs)
 		}
-		t.Fatal(check.ExtractFailedLines(file, line))
+		t.Error(test.ExtractFailedLines(file, line))
 	}
 	return ReturnValue(retObjs)
 }
