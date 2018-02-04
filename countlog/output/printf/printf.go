@@ -4,20 +4,51 @@ import (
 	"github.com/v2pro/plz/countlog/spi"
 	"github.com/v2pro/plz/nfmt"
 	"github.com/v2pro/plz/countlog/output"
+	"time"
 )
 
 type Format struct {
+	Layout string
 }
 
 func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
-	return &formatter{nfmt.FormatterOf(site.Event, site.Sample)}
+	return &formatter{
+		event:    site.Event,
+		function: site.Func,
+		file:     site.File,
+		line:     site.Line,
+		logFmt: nfmt.FormatterOf(format.Layout + "\n",
+			[]interface{}{
+				"message", []byte{},
+				"timestamp", time.Time{},
+				"level", "",
+				"event", "",
+				"func", "",
+				"file", "",
+				"line", 0,
+			}),
+		messageFmt: nfmt.FormatterOf(site.Event, site.Sample),
+	}
 }
 
 type formatter struct {
-	fmt nfmt.Formatter
+	event      string
+	function   string
+	file       string
+	line       int
+	logFmt     nfmt.Formatter
+	messageFmt nfmt.Formatter
 }
 
 func (formatter *formatter) Format(space []byte, event *spi.Event) []byte {
-	return formatter.fmt.Format(space, event.Properties)
+	return formatter.logFmt.Format(space,
+		[]interface{}{
+			"message", formatter.messageFmt.Format(nil, event.Properties),
+			"timestamp", event.Timestamp,
+			"level", spi.LevelName(event.Level),
+			"event", formatter.event,
+			"func", formatter.function,
+			"file", formatter.file,
+			"line", formatter.line,
+		})
 }
-

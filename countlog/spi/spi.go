@@ -3,6 +3,7 @@ package spi
 import (
 	"context"
 	"time"
+	"fmt"
 )
 
 // MinLevel exists to minimize the overhead of Trace/Debug logging
@@ -55,11 +56,16 @@ func LevelName(level int) string {
 
 // LogSite is the location of log in the source code
 type LogSite struct {
+	Func string
 	File string
 	Line int
 	Event  string
 	Agg    string
 	Sample []interface{}
+}
+
+func (site *LogSite) Location() string {
+	return fmt.Sprintf("%s @ %s:%v", site.Func, site.File, site.Line)
 }
 
 type Event struct {

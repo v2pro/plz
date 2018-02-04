@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/v2pro/plz/nfmt/njson"
 	"reflect"
+	"encoding/json"
 )
 
 var formatterCache = &sync.Map{}
@@ -36,6 +37,7 @@ type formatCompiler struct {
 	sample     []interface{}
 	format     string
 	start      int
+	levels     int
 	lastKey    string
 	onByte     func(int, byte)
 	formatters []Formatter
@@ -56,7 +58,10 @@ func (compiler *formatCompiler) compile() {
 	for i := 0; i < len(format); i++ {
 		compiler.onByte(i, format[i])
 	}
-	if fmt.Sprintf("%v", compiler.onByte) == fmt.Sprintf("%v", compiler.normal) {
+	if reflect.ValueOf(compiler.onByte).Pointer() == reflect.ValueOf(compiler.endState).Pointer() {
+		return
+	}
+	if reflect.ValueOf(compiler.onByte).Pointer() == reflect.ValueOf(compiler.normal).Pointer() {
 		compiler.formatters = append(compiler.formatters,
 			fixedFormatter(compiler.format[compiler.start:len(format)]))
 	} else {
@@ -112,8 +117,48 @@ func (compiler *formatCompiler) afterRightBrace(i int, b byte) {
 		}
 		compiler.start = i + 1
 		compiler.onByte = compiler.normal
+	case '{':
+		compiler.start = i
+		compiler.levels = 1
+		compiler.onByte = compiler.afterLeftCurlyBrace
 	default:
 		compiler.invalidFormat(i, "verb unknown")
+	}
+}
+
+func (compiler *formatCompiler) afterLeftCurlyBrace(i int, b byte) {
+	if b == '"' {
+		compiler.onByte = compiler.afterDoubleQuoteInCurlyBrace
+	} else if b == '}' {
+		compiler.levels -= 1
+		if compiler.levels == 0 {
+			var cfg map[string]interface{}
+			err := json.Unmarshal([]byte(compiler.format[compiler.start:i+1]), &cfg)
+			if err != nil {
+				compiler.invalidFormat(i, "custom format should be specified in valid json: "+err.Error())
+				return
+			}
+			formatter, err := formatterOf(cfg, compiler.lastKey, compiler.sample)
+			if err != nil {
+				compiler.invalidFormat(i, "custom format is invalid: "+err.Error())
+				return
+			}
+			if formatter == nil {
+				compiler.invalidFormat(i, "unknown custom format")
+				return
+			}
+			compiler.formatters = append(compiler.formatters, formatter)
+			compiler.start = i + 1
+			compiler.onByte = compiler.normal
+		}
+	} else if b == '{' {
+		compiler.levels += 1
+	}
+}
+
+func (compiler *formatCompiler) afterDoubleQuoteInCurlyBrace(i int, b byte) {
+	if b == '"' {
+		compiler.onByte = compiler.afterLeftCurlyBrace
 	}
 }
 
@@ -128,8 +173,10 @@ func (compiler *formatCompiler) findLastKey() int {
 }
 
 func (compiler *formatCompiler) invalidFormat(i int, err string) {
-	compiler.onByte = func(i int, b byte) {
-	}
+	compiler.onByte = compiler.endState
 	compiler.formatters = []Formatter{invalidFormatter(fmt.Sprintf(
 		"%s at %d %s", err, i, compiler.format))}
+}
+
+func (compiler *formatCompiler) endState(i int, b byte) {
 }

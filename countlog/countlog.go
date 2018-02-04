@@ -180,8 +180,9 @@ func getHandler(event string, agg string, properties []interface{}) spi.EventHan
 }
 
 func newHandler(eventName string, agg string, properties []interface{}) spi.EventHandler {
-	_, callerFile, callerLine, _ := runtime.Caller(3)
+	pc, callerFile, callerLine, _ := runtime.Caller(4)
 	site := &spi.LogSite{
+		Func: runtime.FuncForPC(pc).Name(),
 		Event:  eventName,
 		Agg:    agg,
 		File:   callerFile,

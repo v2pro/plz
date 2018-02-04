@@ -44,9 +44,9 @@ func Test_log_file(t *testing.T) {
 	EventWriter = output.NewEventWriter(output.EventWriterConfig{
 		Format: &compact.Format{},
 		Writer: output.NewAsyncWriter(output.AsyncWriterConfig{
-			QueueLength: 1024,
+			QueueLength:     1024,
 			IsQueueBlocking: false,
-			Writer: logFile,
+			Writer:          logFile,
 		}),
 	})
 	for i := 0; i < 1000; i++ {
@@ -58,9 +58,9 @@ func Test_log_file(t *testing.T) {
 func Test_rolling_log_file(t *testing.T) {
 	logFile := &lumberjack.Logger{
 		BackupTimeFormat: "2006-01-02T15-04-05.000",
-		Filename:   "/tmp/test.log",
-		MaxSize:    1, // megabytes
-		MaxBackups: 3,
+		Filename:         "/tmp/test.log",
+		MaxSize:          1, // megabytes
+		MaxBackups:       3,
 	}
 	defer logFile.Close()
 	EventWriter = output.NewEventWriter(output.EventWriterConfig{
@@ -107,6 +107,9 @@ func Benchmark_trace(b *testing.B) {
 	SetMinLevel(LevelDebug)
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		TraceCall("event!hello", nil, "a", "b")
+		Trace("trace without if check",
+			"k1", "v1",
+			"k2", "v2",
+			"k3", "v3")
 	}
 }

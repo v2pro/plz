@@ -43,7 +43,7 @@ func getColor(level int) int {
 	case LevelTrace, LevelTraceCall:
 		return cyan
 	case LevelDebug, LevelDebugCall:
-		return gray
+		return blue
 	case LevelInfo, LevelInfoCall:
 		return green
 	case LevelWarn:

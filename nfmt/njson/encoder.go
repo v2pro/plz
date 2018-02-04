@@ -7,10 +7,12 @@ import (
 	"unicode"
 	"sync"
 	"fmt"
+	"encoding/json"
 )
 
 var bytesType = reflect.TypeOf([]byte(nil))
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
+var jsonMarshalerType = reflect.TypeOf((*json.Marshaler)(nil)).Elem()
 
 type Encoder interface {
 	Encode(space []byte, ptr unsafe.Pointer) []byte
@@ -35,9 +37,15 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 	if bytesType == valType {
 		return &bytesEncoder{}
 	}
-	if valType.Implements(errorType) {
+	if valType.Implements(errorType) && valType.Kind() == reflect.Ptr {
 		sampleObj := reflect.New(valType).Elem().Interface()
-		return &errorEncoder{
+		return &pointerEncoder{elemEncoder: &errorEncoder{
+			sampleInterface: *(*emptyInterface)(unsafe.Pointer(&sampleObj)),
+		}}
+	}
+	if valType.Implements(jsonMarshalerType) && valType.Kind() != reflect.Ptr {
+		sampleObj := reflect.New(valType).Elem().Interface()
+		return &jsonMarshalerEncoder{
 			sampleInterface: *(*emptyInterface)(unsafe.Pointer(&sampleObj)),
 		}
 	}

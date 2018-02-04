@@ -11,7 +11,11 @@ type Format struct {
 }
 
 func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
-	formatter := &formatter{site: site}
+	formatter := &formatter{
+		prefix: `{"event":"` + site.Event + `"`,
+		suffix: `,location:"` + site.Location() + `"}` + "\n",
+		timestampEncoder: njson.EncoderOf(reflect.TypeOf(int64(0))),
+	}
 	for i := 0; i < len(site.Sample); i += 2 {
 		prefix := `"` + site.Sample[i].(string) + `":`
 		formatter.props = append(formatter.props, formatterProp{
@@ -24,8 +28,10 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 }
 
 type formatter struct {
-	site  *spi.LogSite
-	props []formatterProp
+	prefix string
+	suffix string
+	props  []formatterProp
+	timestampEncoder njson.Encoder
 }
 
 type formatterProp struct {
@@ -35,14 +41,14 @@ type formatterProp struct {
 }
 
 func (formatter *formatter) Format(space []byte, event *spi.Event) []byte {
-	space = append(space, `{"event":"`...)
-	space = append(space, formatter.site.Event...)
-	space = append(space, '"')
+	space = append(space, formatter.prefix...)
 	for _, prop := range formatter.props {
 		space = append(space, ',')
 		space = append(space, prop.prefix...)
 		space = prop.encoder.Encode(space, njson.PtrOf(event.Properties[prop.idx]))
 	}
-	space = append(space, '}')
+	space = append(space, ",timestamp:"...)
+	space = formatter.timestampEncoder.Encode(space, njson.PtrOf(event.Timestamp.UnixNano()))
+	space = append(space, formatter.suffix...)
 	return space
 }

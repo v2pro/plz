@@ -5,6 +5,7 @@ import (
 	"io"
 	"github.com/v2pro/plz/countlog/spi"
 	"fmt"
+	"time"
 )
 
 type Executor func(func(ctx context.Context))
@@ -33,7 +34,12 @@ type AsyncWriterConfig struct {
 	OnMessageDropped func(msg []byte)
 }
 
-func NewAsyncWriter(cfg AsyncWriterConfig) io.Writer {
+type ClosableWriter interface {
+	io.Closer
+	io.Writer
+}
+
+func NewAsyncWriter(cfg AsyncWriterConfig) ClosableWriter {
 	executor := cfg.Executor
 	if executor == nil {
 		executor = DefaultExecutor
@@ -67,6 +73,7 @@ func NewAsyncWriter(cfg AsyncWriterConfig) io.Writer {
 		},
 		onMessageDropped: onMessageDropped,
 	}
+	executor(asyncWriter.asyncWrite)
 	return asyncWriter
 }
 
@@ -74,6 +81,23 @@ func (writer *blockingQueueWriter) asyncWrite(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			// give 1 second to write remaining logs
+			timer := time.NewTimer(time.Second)
+			for {
+				select {
+				case <-timer.C:
+					// time is up
+					return
+				case buf := <-writer.queue:
+					_, err := writer.writer.Write(buf)
+					if err != nil {
+						spi.OnError(err)
+					}
+				default:
+					// all written out
+					return
+				}
+			}
 			return
 		case buf := <-writer.queue:
 			_, err := writer.writer.Write(buf)
@@ -85,16 +109,23 @@ func (writer *blockingQueueWriter) asyncWrite(ctx context.Context) {
 }
 
 func (writer *blockingQueueWriter) Write(buf []byte) (int, error) {
-	writer.queue <- buf
+	writer.queue <- append([]byte(nil), buf...)
 	return len(buf), nil
 }
 
 func (writer *nonBlockingQueueWriter) Write(buf []byte) (int, error) {
 	select {
-	case writer.queue <- buf:
+	case writer.queue <- append([]byte(nil), buf...):
 	default:
 		writer.onMessageDropped(buf)
 	}
 	return len(buf), nil
+}
 
+func (writer *blockingQueueWriter) Close() error {
+	closer, _ := writer.writer.(io.Closer)
+	if closer == nil {
+		return nil
+	}
+	return closer.Close()
 }
