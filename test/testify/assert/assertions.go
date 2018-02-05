@@ -1168,11 +1168,11 @@ func JSONEq(t TestingT, expected string, actual string, msgAndArgs ...interface{
 	var expectedJSONAsInterface, actualJSONAsInterface interface{}
 
 	if err := json.Unmarshal([]byte(expected), &expectedJSONAsInterface); err != nil {
-		return Fail(t, fmt.Sprintf("Expected value ('%s') is not valid json.\jsonfmt parsing error: '%s'", expected, err.Error()), msgAndArgs...)
+		return Fail(t, fmt.Sprintf("Expected value ('%s') is not valid json.\nJSON parsing error: '%s'", expected, err.Error()), msgAndArgs...)
 	}
 
 	if err := json.Unmarshal([]byte(actual), &actualJSONAsInterface); err != nil {
-		return Fail(t, fmt.Sprintf("Input ('%s') needs to be valid json.\jsonfmt parsing error: '%s'", actual, err.Error()), msgAndArgs...)
+		return Fail(t, fmt.Sprintf("Input ('%s') needs to be valid json.\nJSON parsing error: '%s'", actual, err.Error()), msgAndArgs...)
 	}
 
 	return Equal(t, expectedJSONAsInterface, actualJSONAsInterface, msgAndArgs...)

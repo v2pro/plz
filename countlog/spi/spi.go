@@ -56,12 +56,17 @@ func LevelName(level int) string {
 
 // LogSite is the location of log in the source code
 type LogSite struct {
+	Context context.Context
 	Func string
 	File string
 	Line int
 	Event  string
 	Agg    string
 	Sample []interface{}
+}
+
+func (site *LogSite) GetContext() context.Context {
+	return site.Context
 }
 
 func (site *LogSite) Location() string {

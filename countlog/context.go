@@ -11,11 +11,19 @@ func Ctx(ctx context.Context) *Context {
 	if isWrapped {
 		return wrapped
 	}
-	return &Context{Context: ctx}
+	return &Context{Context: ctx, logContext: &spi.LogContext{}}
 }
 
 type Context struct {
 	context.Context
+	logContext *spi.LogContext
+}
+
+func (ctx *Context) Value(key interface{}) interface{} {
+	if key == spi.LogContextKey {
+		return ctx.logContext
+	}
+	return ctx.Context.Value(key)
 }
 
 func (ctx *Context) Trace(event string, properties ...interface{}) {
