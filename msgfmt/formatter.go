@@ -3,7 +3,7 @@ package msgfmt
 import (
 	"sync"
 	"fmt"
-	"github.com/v2pro/plz/msgfmt/njson"
+	"github.com/v2pro/plz/msgfmt/jsonfmt"
 	"reflect"
 	"strings"
 )
@@ -98,7 +98,7 @@ func (compiler *formatCompiler) afterLeftCurlyBrace(i int, b byte) {
 		default:
 			compiler.formatters = append(compiler.formatters, &jsonFormatter{
 				idx:     idx,
-				encoder: njson.EncoderOf(reflect.TypeOf(sampleValue)),
+				encoder: jsonfmt.EncoderOf(reflect.TypeOf(sampleValue)),
 			})
 		}
 		compiler.start = i + 1

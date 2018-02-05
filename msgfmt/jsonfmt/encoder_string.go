@@ -1,4 +1,4 @@
-package njson
+package jsonfmt
 
 import (
 	"unsafe"

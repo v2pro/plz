@@ -1,17 +1,17 @@
-package njson
+package jsonfmt
 
 import "unsafe"
 
-type sliceEncoder struct {
+type arrayEncoder struct {
 	elemEncoder Encoder
 	elemSize    uintptr
+	length      int
 }
 
-func (encoder *sliceEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
-	slice := (*sliceHeader)(ptr)
+func (encoder *arrayEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
 	space = append(space, '[')
-	offset := uintptr(slice.Data)
-	for i := 0; i < slice.Len; i++ {
+	offset := uintptr(ptr)
+	for i := 0; i < encoder.length; i++ {
 		if i != 0 {
 			space = append(space, ',')
 		}

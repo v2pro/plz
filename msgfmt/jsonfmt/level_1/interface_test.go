@@ -5,13 +5,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"reflect"
 	"io"
-	"github.com/v2pro/plz/msgfmt/njson"
+	"github.com/v2pro/plz/msgfmt/jsonfmt"
 )
 
 func Test_slice_of_empty_interface(t *testing.T) {
 	should := require.New(t)
-	encoder := njson.EncoderOf(reflect.TypeOf(([]interface{})(nil)))
-	should.Equal("[1,null,3]", string(encoder.Encode(nil, njson.PtrOf([]interface{}{
+	encoder := jsonfmt.EncoderOf(reflect.TypeOf(([]interface{})(nil)))
+	should.Equal("[1,null,3]", string(encoder.Encode(nil, jsonfmt.PtrOf([]interface{}{
 		1, nil, 3,
 	}))))
 }
@@ -24,8 +24,8 @@ func (closer TestCloser) Close() error {
 
 func Test_slice_of_non_empty_interface(t *testing.T) {
 	should := require.New(t)
-	encoder := njson.EncoderOf(reflect.TypeOf(([]io.Closer)(nil)))
-	should.Equal("[1,null,3]", string(encoder.Encode(nil, njson.PtrOf([]io.Closer{
+	encoder := jsonfmt.EncoderOf(reflect.TypeOf(([]io.Closer)(nil)))
+	should.Equal("[1,null,3]", string(encoder.Encode(nil, jsonfmt.PtrOf([]io.Closer{
 		TestCloser(1), nil, TestCloser(3),
 	}))))
 }

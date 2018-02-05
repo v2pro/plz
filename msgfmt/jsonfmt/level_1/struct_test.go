@@ -4,7 +4,7 @@ import (
 	"testing"
 	"reflect"
 	"github.com/stretchr/testify/require"
-	"github.com/v2pro/plz/msgfmt/njson"
+	"github.com/v2pro/plz/msgfmt/jsonfmt"
 )
 
 func Test_struct(t *testing.T) {
@@ -13,7 +13,7 @@ func Test_struct(t *testing.T) {
 		Field1 string
 		Field2 int `json:"field_2"`
 	}
-	encoder := njson.EncoderOf(reflect.TypeOf(TestObject{}))
-	output := encoder.Encode(nil, njson.PtrOf(TestObject{"hello", 100}))
+	encoder := jsonfmt.EncoderOf(reflect.TypeOf(TestObject{}))
+	output := encoder.Encode(nil, jsonfmt.PtrOf(TestObject{"hello", 100}))
 	should.Equal(`{"Field1":"hello","field_2":100}`, string(output))
 }
