@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"reflect"
 	"io"
-	"github.com/v2pro/plz/nfmt/njson"
+	"github.com/v2pro/plz/msgfmt/njson"
 )
 
 func Test_map_of_number_key(t *testing.T) {

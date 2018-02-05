@@ -9,15 +9,15 @@ import (
 func main() {
 	EventWriter = output.NewEventWriter(output.EventWriterConfig{
 		Format: &printf.Format{
-			`[%(level)s] ` +
-				`%(timestamp){"format":"time","layout":"15:04:05"} ` +
-				`%(message)s @ %(file)s:%(line)s`},
+			`[{level}] ` +
+				`{timestamp, goTime, 15:04:05} ` +
+				`{message} @ {file}:{line}`},
 	})
-	Info("%(userA)s called %(userB)s at %(sometime)s",
+	Info("{userA} called {userB} at {sometime}",
 		"userA", "lily",
 		"userB", "tom",
 		"sometime", "yesterday")
-	Info("%(userA)s called %(userB)s at %(sometime)s",
+	Info("{userA} called {userB} at {sometime}",
 		"userA", "lily",
 		"userB", "tom",
 		"sometime", "yesterday")

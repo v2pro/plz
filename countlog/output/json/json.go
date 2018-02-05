@@ -4,7 +4,7 @@ import (
 	"github.com/v2pro/plz/countlog/output"
 	"reflect"
 	"github.com/v2pro/plz/countlog/spi"
-	"github.com/v2pro/plz/nfmt/njson"
+	"github.com/v2pro/plz/msgfmt/njson"
 )
 
 type Format struct {

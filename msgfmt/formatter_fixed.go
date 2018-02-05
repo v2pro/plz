@@ -1,4 +1,4 @@
-package nfmt
+package msgfmt
 
 type fixedFormatter string
 

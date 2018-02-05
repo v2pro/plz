@@ -2,10 +2,10 @@ package spi
 
 import (
 	"os"
-	"github.com/v2pro/plz/nfmt"
+	"github.com/v2pro/plz/msgfmt"
 )
 
 var OnError = func(err error) {
-	nfmt.Fprintf(os.Stderr, "countlog encountered error: %(err)s\n", "err", err.Error())
+	msgfmt.Fprintf(os.Stderr, "countlog encountered error: {err}\n", "err", err.Error())
 	os.Stderr.Sync()
 }

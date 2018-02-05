@@ -15,16 +15,16 @@ func main() {
 			Writer: os.Stderr,
 		}),
 	})
-	Trace("trace should be used in %(scenario)s",
+	Trace("trace should be used in {scenario}",
 		"scenario", "unit test",
 		"comment", "we love tracing!")
-	Debug("debug should be used in %(scenario)s",
+	Debug("debug should be used in {scenario}",
 		"scenario", "integration test, debug weird problem in production")
-	Info("info should be used as %(scenario)s",
+	Info("info should be used as {scenario}",
 		"scenario", "the default production logging level")
-	Warn("warn should be used when %(scenario)s",
+	Warn("warn should be used when {scenario}",
 		"scenario", "err != nil")
-	Error("error should be used when %(scenario)s",
+	Error("error should be used when {scenario}",
 		"scenario", "err != nil returned to user")
 	Fatal("fatal is reserved for panic")
 	SetMinLevel(LevelDebug)

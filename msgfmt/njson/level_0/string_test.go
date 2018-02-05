@@ -4,7 +4,7 @@ import (
 	"testing"
 	"github.com/stretchr/testify/require"
 	"reflect"
-	"github.com/v2pro/plz/nfmt/njson"
+	"github.com/v2pro/plz/msgfmt/njson"
 )
 
 func Test_string(t *testing.T) {

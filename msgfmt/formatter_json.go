@@ -1,6 +1,6 @@
-package nfmt
+package msgfmt
 
-import "github.com/v2pro/plz/nfmt/njson"
+import "github.com/v2pro/plz/msgfmt/njson"
 
 type jsonFormatter struct {
 	idx     int

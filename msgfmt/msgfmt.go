@@ -1,4 +1,4 @@
-package nfmt
+package msgfmt
 
 import (
 	"io"
@@ -43,9 +43,9 @@ func fprintln(writer io.Writer, values []interface{}) (int, error) {
 	case 0:
 		return fmt.Println()
 	case 1:
-		return Fprintf(writer,"%(single_value)s\n", "single_value", values[0])
+		return Fprintf(writer,"{single_value}\n", "single_value", values[0])
 	default:
-		return Fprintf(writer, "%(multiple_values)s\n", "multiple_values", values)
+		return Fprintf(writer, "{multiple_values}\n", "multiple_values", values)
 	}
 }
 

@@ -2,7 +2,7 @@ package test
 
 import (
 	"testing"
-	"github.com/v2pro/plz/nfmt/njson"
+	"github.com/v2pro/plz/msgfmt/njson"
 	"reflect"
 	"github.com/stretchr/testify/require"
 )

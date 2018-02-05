@@ -91,7 +91,7 @@ func doZ(ctx *countlog.Context) error {
 	// but event name must not be dynamic formatted string
 	// TraceCall will also generate new error object with more context
 	// return this error will give user a better clue about what happened
-	err = ctx.TraceCall("doZ write file %(path)s", err,
+	err = ctx.TraceCall("doZ write file {path}", err,
 		"path", path)
 	if err != nil {
 		return err

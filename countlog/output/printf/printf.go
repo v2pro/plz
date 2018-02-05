@@ -2,7 +2,7 @@ package printf
 
 import (
 	"github.com/v2pro/plz/countlog/spi"
-	"github.com/v2pro/plz/nfmt"
+	"github.com/v2pro/plz/msgfmt"
 	"github.com/v2pro/plz/countlog/output"
 	"time"
 )
@@ -17,7 +17,7 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 		function: site.Func,
 		file:     site.File,
 		line:     site.Line,
-		logFmt: nfmt.FormatterOf(format.Layout + "\n",
+		logFmt: msgfmt.FormatterOf(format.Layout + "\n",
 			[]interface{}{
 				"message", []byte{},
 				"timestamp", time.Time{},
@@ -27,7 +27,7 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 				"file", "",
 				"line", 0,
 			}),
-		messageFmt: nfmt.FormatterOf(site.Event, site.Sample),
+		messageFmt: msgfmt.FormatterOf(site.Event, site.Sample),
 	}
 }
 
@@ -36,8 +36,8 @@ type formatter struct {
 	function   string
 	file       string
 	line       int
-	logFmt     nfmt.Formatter
-	messageFmt nfmt.Formatter
+	logFmt     msgfmt.Formatter
+	messageFmt msgfmt.Formatter
 }
 
 func (formatter *formatter) Format(space []byte, event *spi.Event) []byte {

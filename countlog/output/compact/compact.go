@@ -4,7 +4,7 @@ import (
 	"strings"
 	"github.com/v2pro/plz/countlog/spi"
 	"github.com/v2pro/plz/countlog/output"
-	"github.com/v2pro/plz/nfmt"
+	"github.com/v2pro/plz/msgfmt"
 	"fmt"
 )
 
@@ -22,14 +22,14 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 		formatters = append(formatters, fixedFormatter(tag))
 	} else {
 		formatters = append(formatters,
-			&defaultFormatter{nfmt.FormatterOf(eventName, site.Sample)})
+			&defaultFormatter{msgfmt.FormatterOf(eventName, site.Sample)})
 	}
 	formatters = append(formatters, &timestampFormatter{})
 	for i := 0; i < len(sample); i += 2 {
 		key := sample[i].(string)
-		pattern := "||" + key + "=%(" + key + ")s"
+		pattern := "||" + key + "={" + key + "}"
 		formatters = append(formatters, &defaultFormatter{
-			nfmt.FormatterOf(pattern, sample),
+			msgfmt.FormatterOf(pattern, sample),
 		})
 	}
 	formatters = append(formatters, fixedFormatter(fmt.Sprintf(

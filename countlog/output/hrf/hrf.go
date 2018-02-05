@@ -3,7 +3,7 @@ package hrf
 import (
 	"github.com/v2pro/plz/countlog/spi"
 	"github.com/v2pro/plz/countlog/output"
-	"github.com/v2pro/plz/nfmt"
+	"github.com/v2pro/plz/msgfmt"
 	"strings"
 )
 
@@ -21,7 +21,7 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 		formatters = append(formatters, fixedFormatter(site.Event[len("callee!"):]))
 	} else {
 		formatters = append(formatters,
-			&defaultFormatter{nfmt.FormatterOf(site.Event, site.Sample)})
+			&defaultFormatter{msgfmt.FormatterOf(site.Event, site.Sample)})
 	}
 	if format.ShowTimestamp {
 		formatters = append(formatters, fixedFormatter("\x1b[90;1m\ntimestamp: "))
@@ -32,7 +32,7 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 		key := site.Sample[i].(string)
 		formatters = append(formatters, fixedFormatter("\x1b[90;1m"))
 		formatters = append(formatters, &defaultFormatter{
-			nfmt.FormatterOf("\n"+key+": %("+key+")s", site.Sample),
+			msgfmt.FormatterOf("\n"+key+":{"+key+"}", site.Sample),
 		})
 		formatters = append(formatters, fixedFormatter("\x1b[0m"))
 	}

@@ -12,7 +12,7 @@ func Test_message(t *testing.T) {
 	should := require.New(t)
 	format := &Format{}
 	formatter := format.FormatterOf(&spi.LogSite{
-		Event: "hello %(key)s",
+		Event: "hello {key}",
 		Sample: []interface{}{"key", "world"},
 	})
 	output := formatter.Format(nil, &spi.Event{

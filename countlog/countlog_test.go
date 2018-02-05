@@ -23,7 +23,7 @@ func Test_trace(t *testing.T) {
 
 func Test_trace_call(t *testing.T) {
 	should := require.New(t)
-	err := DebugCall("call func with %(k1)s", errors.New("failure"),
+	err := DebugCall("call func with {k1}", errors.New("failure"),
 		"k1", "v1")
 	should.Equal("call func with v1: failure", err.Error())
 }

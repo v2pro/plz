@@ -4,7 +4,7 @@ import (
 	"testing"
 	"reflect"
 	"github.com/stretchr/testify/require"
-	"github.com/v2pro/plz/nfmt/njson"
+	"github.com/v2pro/plz/msgfmt/njson"
 )
 
 func Test_struct(t *testing.T) {

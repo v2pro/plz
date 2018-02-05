@@ -37,7 +37,7 @@ func Test_callee(t *testing.T) {
 func Test_format_msg(t *testing.T) {
 	should := require.New(t)
 	now := time.Now()
-	formatted := format(0, "%(k1)s~%(k2)s", "file", 17, &spi.Event{
+	formatted := format(0, "{k1}~{k2}", "file", 17, &spi.Event{
 		Timestamp: now,
 		Properties: []interface{}{
 			"k1", "hello",

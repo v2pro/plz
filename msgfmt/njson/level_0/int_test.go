@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"unsafe"
 	"github.com/stretchr/testify/require"
-	"github.com/v2pro/plz/nfmt/njson"
+	"github.com/v2pro/plz/msgfmt/njson"
 )
 
 func Test_int8(t *testing.T) {

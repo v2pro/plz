@@ -1,11 +1,11 @@
-package nfmt
+package msgfmt
 
 import (
 	"sync"
 	"fmt"
-	"github.com/v2pro/plz/nfmt/njson"
+	"github.com/v2pro/plz/msgfmt/njson"
 	"reflect"
-	"encoding/json"
+	"strings"
 )
 
 var formatterCache = &sync.Map{}
@@ -38,7 +38,7 @@ type formatCompiler struct {
 	format     string
 	start      int
 	levels     int
-	lastKey    string
+	varExpr    varExpr
 	onByte     func(int, byte)
 	formatters []Formatter
 }
@@ -71,36 +71,22 @@ func (compiler *formatCompiler) compile() {
 
 func (compiler *formatCompiler) normal(i int, b byte) {
 	format := compiler.format
-	if format[i] == '%' {
+	if format[i] == '{' {
 		compiler.formatters = append(compiler.formatters,
 			fixedFormatter(format[compiler.start:i]))
-		compiler.onByte = compiler.afterPercent
-	}
-}
-
-func (compiler *formatCompiler) afterPercent(i int, b byte) {
-	if b == '(' {
 		compiler.start = i + 1
-		compiler.onByte = compiler.afterLeftBrace
-	} else {
-		compiler.invalidFormat(i, "expect left brace")
+		compiler.onByte = compiler.afterLeftCurlyBrace
 	}
 }
 
-func (compiler *formatCompiler) afterLeftBrace(i int, b byte) {
-	if b == ')' {
-		compiler.onByte = compiler.afterRightBrace
-	}
-}
-
-func (compiler *formatCompiler) afterRightBrace(i int, b byte) {
-	key := compiler.format[compiler.start:i-1]
-	compiler.lastKey = key
+func (compiler *formatCompiler) afterLeftCurlyBrace(i int, b byte) {
 	switch b {
-	case 's':
-		idx := compiler.findLastKey()
+	case '}':
+		key := compiler.format[compiler.start:i]
+		compiler.varExpr.key = key
+		idx := compiler.findVarExprKey()
 		if idx == -1 {
-			compiler.invalidFormat(i, compiler.lastKey+" not found in args")
+			compiler.invalidFormat(i, compiler.varExpr.key+" not found in args")
 			return
 		}
 		sampleValue := compiler.sample[idx]
@@ -117,55 +103,63 @@ func (compiler *formatCompiler) afterRightBrace(i int, b byte) {
 		}
 		compiler.start = i + 1
 		compiler.onByte = compiler.normal
-	case '{':
-		compiler.start = i
-		compiler.levels = 1
-		compiler.onByte = compiler.afterLeftCurlyBrace
+	case ',':
+		key := compiler.format[compiler.start:i]
+		compiler.varExpr.key = key
+		compiler.start = i + 1
+		compiler.onByte = compiler.afterKey
 	default:
-		compiler.invalidFormat(i, "verb unknown")
+		// nothing
 	}
 }
 
-func (compiler *formatCompiler) afterLeftCurlyBrace(i int, b byte) {
-	if b == '"' {
-		compiler.onByte = compiler.afterDoubleQuoteInCurlyBrace
-	} else if b == '}' {
-		compiler.levels -= 1
-		if compiler.levels == 0 {
-			var cfg map[string]interface{}
-			err := json.Unmarshal([]byte(compiler.format[compiler.start:i+1]), &cfg)
-			if err != nil {
-				compiler.invalidFormat(i, "custom format should be specified in valid json: "+err.Error())
-				return
-			}
-			formatter, err := formatterOf(cfg, compiler.lastKey, compiler.sample)
-			if err != nil {
-				compiler.invalidFormat(i, "custom format is invalid: "+err.Error())
-				return
-			}
-			if formatter == nil {
-				compiler.invalidFormat(i, "unknown custom format")
-				return
-			}
-			compiler.formatters = append(compiler.formatters, formatter)
-			compiler.start = i + 1
-			compiler.onByte = compiler.normal
+func (compiler *formatCompiler) afterKey(i int, b byte) {
+	switch b {
+	case ',':
+		compiler.varExpr.formatName = strings.TrimSpace(compiler.format[compiler.start:i])
+		compiler.start = i + 1
+		compiler.onByte = compiler.afterFormatterName
+	case '}':
+		compiler.varExpr.formatName = strings.TrimSpace(compiler.format[compiler.start:i])
+		compiler.start = i + 1
+		formatter, err := compiler.varExpr.newFormatter(compiler.sample)
+		if err != nil {
+			compiler.invalidFormat(i, err.Error())
+			return
 		}
-	} else if b == '{' {
-		compiler.levels += 1
+		compiler.formatters = append(compiler.formatters, formatter)
+		compiler.onByte = compiler.normal
+	default:
+		// nothing
 	}
 }
 
-func (compiler *formatCompiler) afterDoubleQuoteInCurlyBrace(i int, b byte) {
-	if b == '"' {
-		compiler.onByte = compiler.afterLeftCurlyBrace
+func (compiler *formatCompiler) afterFormatterName(i int, b byte) {
+	switch b {
+	case ',':
+		argName := strings.TrimSpace(compiler.format[compiler.start:i])
+		compiler.start = i + 1
+		compiler.varExpr.formatArgs = append(compiler.varExpr.formatArgs, argName)
+	case '}':
+		argName := strings.TrimSpace(compiler.format[compiler.start:i])
+		compiler.varExpr.formatArgs = append(compiler.varExpr.formatArgs, argName)
+		compiler.start = i + 1
+		formatter, err := compiler.varExpr.newFormatter(compiler.sample)
+		if err != nil {
+			compiler.invalidFormat(i, err.Error())
+			return
+		}
+		compiler.formatters = append(compiler.formatters, formatter)
+		compiler.onByte = compiler.normal
+	default:
+		// nothing
 	}
 }
 
-func (compiler *formatCompiler) findLastKey() int {
+func (compiler *formatCompiler) findVarExprKey() int {
 	for i := 0; i < len(compiler.sample); i += 2 {
 		key := compiler.sample[i].(string)
-		if key == compiler.lastKey {
+		if key == compiler.varExpr.key {
 			return i + 1
 		}
 	}
