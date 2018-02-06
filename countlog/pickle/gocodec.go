@@ -79,6 +79,7 @@ func (cfg Config) Froze() API {
 	return api
 }
 
+var ReadonlyConfig = Config{ReadonlyDecode:true}.Froze()
 var DefaultConfig = Config{}.Froze()
 
 func Marshal(obj interface{}) ([]byte, error) {

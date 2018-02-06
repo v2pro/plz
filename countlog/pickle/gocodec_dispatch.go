@@ -47,21 +47,28 @@ func encoderOfType(cfg *frozenConfig, valType reflect.Type) (RootEncoder, error)
 
 func wrapRootEncoder(encoder ValEncoder) RootEncoder {
 	valType := encoder.Type()
-	valKind := valType.Kind()
 	rootEncoder := rootEncoder{valType, encoder.Signature(), encoder}
+	if needSinglePointerFix(valType) {
+		return &singlePointerEncoder{rootEncoder}
+	}
+	return &rootEncoder
+}
+
+func needSinglePointerFix(valType reflect.Type) bool {
+	valKind := valType.Kind()
 	switch valKind {
 	case reflect.Struct:
 		if valType.NumField() == 1 && valType.Field(0).Type.Kind() == reflect.Ptr {
-			return &singlePointerFix{rootEncoder}
+			return true
 		}
 	case reflect.Array:
 		if valType.Len() == 1 && valType.Elem().Kind() == reflect.Ptr {
-			return &singlePointerFix{rootEncoder}
+			return true
 		}
 	case reflect.Ptr:
-		return &singlePointerFix{rootEncoder}
+		return true
 	}
-	return &rootEncoder
+	return false
 }
 
 func decoderOfType(cfg *frozenConfig, valType reflect.Type) (RootDecoder, error) {
@@ -78,6 +85,9 @@ func decoderOfType(cfg *frozenConfig, valType reflect.Type) (RootDecoder, error)
 		rootDecoder = &rootDecoderWithCopy{valType, decoder.Signature(), decoder}
 	} else {
 		rootDecoder = &rootDecoderWithoutCopy{valType, decoder.Signature(), decoder}
+	}
+	if needSinglePointerFix(valType) {
+		rootDecoder = &singlePointerDecoder{RootDecoder: rootDecoder}
 	}
 	cfg.addDecoderToCache(cacheKey, rootDecoder)
 	return rootDecoder, err
