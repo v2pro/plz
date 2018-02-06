@@ -5,6 +5,7 @@ import "context"
 var LogContextKey = 1010010001
 
 type LogContext struct {
+	Memos      [][]byte
 	Properties []interface{}
 }
 

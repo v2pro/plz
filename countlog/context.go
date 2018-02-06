@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/v2pro/plz/countlog/spi"
 	"unsafe"
+	"github.com/v2pro/plz/countlog/pickle"
 )
 
 func Ctx(ctx context.Context) *Context {
@@ -11,12 +12,18 @@ func Ctx(ctx context.Context) *Context {
 	if isWrapped {
 		return wrapped
 	}
-	return &Context{Context: ctx, logContext: &spi.LogContext{}}
+	return &Context{Context: ctx, logContext: &spi.LogContext{}, stream: pickle.NewStream(nil)}
 }
 
 type Context struct {
 	context.Context
 	logContext *spi.LogContext
+	suppressedMinLevel int
+	stream *pickle.Stream
+}
+
+func (ctx *Context) SuppressLevelsBelow(level int) {
+	ctx.suppressedMinLevel = level
 }
 
 func (ctx *Context) Value(key interface{}) interface{} {
@@ -34,6 +41,10 @@ func (ctx *Context) Trace(event string, properties ...interface{}) {
 		return
 	}
 	ptr := unsafe.Pointer(&properties)
+	if LevelTrace < ctx.suppressedMinLevel {
+		addMemo(LevelTrace, event, "", ctx, nil, castEmptyInterfaces(uintptr(ptr)))
+		return
+	}
 	log(LevelTrace, event, "", ctx, nil, castEmptyInterfaces(uintptr(ptr)))
 }
 

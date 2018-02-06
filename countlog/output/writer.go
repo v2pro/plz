@@ -32,12 +32,14 @@ func NewEventWriter(cfg EventWriterConfig) *EventWriter {
 func (sink *EventWriter) HandlerOf(site *spi.LogSite) spi.EventHandler {
 	formatter := sink.format.FormatterOf(site)
 	return &writeEvent{
+		site: site,
 		formatter: formatter,
 		writer:    sink.writer,
 	}
 }
 
 type writeEvent struct {
+	site *spi.LogSite
 	formatter Formatter
 	writer    io.Writer
 }
@@ -49,6 +51,10 @@ func (handler *writeEvent) Handle(event *spi.Event) {
 	if err != nil {
 		spi.OnError(err)
 	}
+}
+
+func (handler *writeEvent) LogSite() *spi.LogSite {
+	return handler.site
 }
 
 var bufPool = &sync.Pool{

@@ -42,6 +42,10 @@ func (handler *oneHandler) Handle(event *spi.Event) {
 	handler.handler.Handle(event)
 }
 
+func (handler *oneHandler) LogSite() *spi.LogSite {
+	return handler.site
+}
+
 type statsAndOutput struct {
 	site          *spi.LogSite
 	statsHandler  spi.EventHandler
@@ -60,6 +64,10 @@ func (handler *statsAndOutput) Handle(event *spi.Event) {
 		handler.outputHandler.Handle(event)
 	}
 	handler.statsHandler.Handle(event)
+}
+
+func (handler *statsAndOutput) LogSite() *spi.LogSite {
+	return handler.site
 }
 
 func nomalModeOnPanic(recovered interface{}, event *spi.Event, site *spi.LogSite) {

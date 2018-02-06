@@ -4,6 +4,7 @@ import "github.com/v2pro/plz/countlog/spi"
 
 type countEvent struct {
 	*Window
+	site *spi.LogSite
 	extractor dimensionExtractor
 }
 
@@ -17,4 +18,8 @@ func (state *countEvent) Handle(event *spi.Event) {
 
 func (state *countEvent) GetWindow() *Window {
 	return state.Window
+}
+
+func (state *countEvent) LogSite() *spi.LogSite {
+	return state.site
 }

@@ -41,7 +41,7 @@ func (aggregator *EventAggregator) HandlerOf(site *spi.LogSite) spi.EventHandler
 func (aggregator *EventAggregator) createHandler(agg string, site *spi.LogSite) spi.EventHandler {
 	if aggregator.collector == nil {
 		// disable aggregation if collector not set
-		return &spi.DummyEventHandler{}
+		return &spi.DummyEventHandler{Site: site}
 	}
 	extractor, dimensionElemCount := newDimensionExtractor(site)
 	window := newWindow(aggregator.executor, aggregator.collector, dimensionElemCount)
@@ -50,6 +50,7 @@ func (aggregator *EventAggregator) createHandler(agg string, site *spi.LogSite) 
 		return &countEvent{
 			Window:    window,
 			extractor: extractor,
+			site:      site,
 		}
 	default:
 		// TODO: log unknown agg

@@ -160,6 +160,37 @@ func log(level int, eventName string, agg string, ctx *Context, err error, prope
 	return castedEvent.Error
 }
 
+func addMemo(level int, eventName string, agg string, ctx *Context, err error, properties []interface{}) {
+	stream := ctx.stream
+	stream.Reset(stream.Buffer()[:0])
+	handler := getHandler(eventName, agg, ctx, properties)
+	event := &spi.Event{
+		Level:      level,
+		Context:    ctx,
+		Error:      err,
+		Timestamp:  time.Now(),
+		Properties: properties,
+	}
+	ptr := unsafe.Pointer(event)
+	castedEvent := castEvent(uintptr(ptr))
+	if castedEvent.Error != nil {
+		formatter := msgfmt.FormatterOf(eventName, properties)
+		errMsg := formatter.Format(nil, properties)
+		errMsg = append(errMsg, ": "...)
+		errMsg = append(errMsg, castedEvent.Error.Error()...)
+		castedEvent.Error = errors.New(string(errMsg))
+	}
+	stream.Marshal(spi.Memo{
+		Event: event,
+		Site: handler.LogSite(),
+	})
+	if stream.Error != nil {
+		spi.OnError(stream.Error)
+		return
+	}
+	ctx.logContext.Memos = append(ctx.logContext.Memos, append([]byte(nil), stream.Buffer()...))
+}
+
 func castEmptyInterfaces(ptr uintptr) []interface{} {
 	return *(*[]interface{})(unsafe.Pointer(ptr))
 }

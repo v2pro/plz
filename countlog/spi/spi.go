@@ -57,12 +57,12 @@ func LevelName(level int) string {
 // LogSite is the location of log in the source code
 type LogSite struct {
 	Context context.Context
-	Func string
-	File string
-	Line int
-	Event  string
-	Agg    string
-	Sample []interface{}
+	Func    string
+	File    string
+	Line    int
+	Event   string
+	Agg     string
+	Sample  []interface{}
 }
 
 func (site *LogSite) LogContext() *LogContext {
@@ -91,6 +91,7 @@ type EventSink interface {
 
 type EventHandler interface {
 	Handle(event *Event)
+	LogSite() *LogSite
 }
 
 type EventHandlers []EventHandler
@@ -101,8 +102,22 @@ func (handlers EventHandlers) Handle(event *Event) {
 	}
 }
 
+func (handlers EventHandlers) LogSite() *LogSite {
+	return handlers[0].LogSite()
+}
+
 type DummyEventHandler struct {
+	Site *LogSite
 }
 
 func (handler *DummyEventHandler) Handle(event *Event) {
+}
+
+func (handler *DummyEventHandler) LogSite() *LogSite {
+	return handler.Site
+}
+
+type Memo struct {
+	Site  *LogSite
+	Event *Event
 }
