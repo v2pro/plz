@@ -24,15 +24,16 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 			&defaultFormatter{msgfmt.FormatterOf(site.Event, site.Sample)})
 	}
 	if format.ShowTimestamp {
-		formatters = append(formatters, fixedFormatter("\x1b[90;1m\ntimestamp: "))
+		formatters = append(formatters, fixedFormatter("\n\x1b[90;1mtimestamp: "))
 		formatters = append(formatters, &timestampFormatter{})
 		formatters = append(formatters, fixedFormatter("\x1b[0m"))
 	}
+	formatters = append(formatters, &errorFormatter{})
 	for i := 0; i < len(site.Sample); i += 2 {
 		key := site.Sample[i].(string)
 		formatters = append(formatters, fixedFormatter("\x1b[90;1m"))
 		formatters = append(formatters, &defaultFormatter{
-			msgfmt.FormatterOf("\n"+key+":{"+key+"}", site.Sample),
+			msgfmt.FormatterOf("\n"+key+": {"+key+"}", site.Sample),
 		})
 		formatters = append(formatters, fixedFormatter("\x1b[0m"))
 	}
