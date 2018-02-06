@@ -65,8 +65,12 @@ type LogSite struct {
 	Sample []interface{}
 }
 
-func (site *LogSite) GetContext() context.Context {
-	return site.Context
+func (site *LogSite) LogContext() *LogContext {
+	ctx := site.Context
+	if ctx == nil {
+		return nil
+	}
+	return GetLogContext(ctx)
 }
 
 func (site *LogSite) Location() string {

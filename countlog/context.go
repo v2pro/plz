@@ -20,6 +20,9 @@ type Context struct {
 }
 
 func (ctx *Context) Value(key interface{}) interface{} {
+	if ctx == nil {
+		return nil
+	}
 	if key == spi.LogContextKey {
 		return ctx.logContext
 	}
@@ -102,4 +105,9 @@ func (ctx *Context) Error(event string, properties ...interface{}) {
 func (ctx *Context) Fatal(event string, properties ...interface{}) {
 	ptr := unsafe.Pointer(&properties)
 	log(LevelFatal, event, "", ctx, nil, castEmptyInterfaces(uintptr(ptr)))
+}
+
+func (ctx *Context) Add(key string, value interface{}) {
+	ctx.logContext.Properties = append(ctx.logContext.Properties, key)
+	ctx.logContext.Properties = append(ctx.logContext.Properties, value)
 }

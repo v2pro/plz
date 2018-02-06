@@ -139,7 +139,7 @@ func LogPanic(recovered interface{}, properties ...interface{}) interface{} {
 var handlerCache = &sync.Map{}
 
 func log(level int, eventName string, agg string, ctx *Context, err error, properties []interface{}) error {
-	handler := getHandler(eventName, agg, properties)
+	handler := getHandler(eventName, agg, ctx, properties)
 	event := &spi.Event{
 		Level:      level,
 		Context:    ctx,
@@ -171,17 +171,18 @@ func castString(ptr uintptr) string {
 	return *(*string)(unsafe.Pointer(ptr))
 }
 
-func getHandler(event string, agg string, properties []interface{}) spi.EventHandler {
+func getHandler(event string, agg string, ctx *Context, properties []interface{}) spi.EventHandler {
 	handler, found := handlerCache.Load(event)
 	if found {
 		return handler.(spi.EventHandler)
 	}
-	return newHandler(event, agg, properties)
+	return newHandler(event, agg, ctx, properties)
 }
 
-func newHandler(eventName string, agg string, properties []interface{}) spi.EventHandler {
+func newHandler(eventName string, agg string, ctx *Context, properties []interface{}) spi.EventHandler {
 	pc, callerFile, callerLine, _ := runtime.Caller(4)
 	site := &spi.LogSite{
+		Context: ctx,
 		Func: runtime.FuncForPC(pc).Name(),
 		Event:  eventName,
 		Agg:    agg,

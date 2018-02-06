@@ -21,7 +21,7 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 		formatters = append(formatters, fixedFormatter(site.Event[len("callee!"):]))
 	} else {
 		formatters = append(formatters,
-			&defaultFormatter{msgfmt.FormatterOf(site.Event, site.Sample)})
+			&propFormatter{msgfmt.FormatterOf(site.Event, site.Sample)})
 	}
 	if format.ShowTimestamp {
 		formatters = append(formatters, fixedFormatter("\n\x1b[90;1mtimestamp: "))
@@ -29,16 +29,27 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 		formatters = append(formatters, fixedFormatter("\x1b[0m"))
 	}
 	formatters = append(formatters, &errorFormatter{})
+	ctx := site.LogContext()
+	if ctx != nil {
+		for i := 0; i < len(ctx.Properties); i += 2 {
+			key := ctx.Properties[i].(string)
+			formatters = append(formatters, fixedFormatter("\x1b[90;1m"))
+			formatters = append(formatters, &ctxFormatter{
+				msgfmt.FormatterOf("\n"+key+": {"+key+"}", ctx.Properties),
+			})
+			formatters = append(formatters, fixedFormatter("\x1b[0m"))
+		}
+	}
 	for i := 0; i < len(site.Sample); i += 2 {
 		key := site.Sample[i].(string)
 		formatters = append(formatters, fixedFormatter("\x1b[90;1m"))
-		formatters = append(formatters, &defaultFormatter{
+		formatters = append(formatters, &propFormatter{
 			msgfmt.FormatterOf("\n"+key+": {"+key+"}", site.Sample),
 		})
 		formatters = append(formatters, fixedFormatter("\x1b[0m"))
 	}
 	formatters = append(formatters, fixedFormatter("\x1b[90;1m"))
-	formatters = append(formatters, locationFormatter("\nlocation: " + site.Location()))
+	formatters = append(formatters, locationFormatter("\nlocation: "+site.Location()))
 	formatters = append(formatters, fixedFormatter("\x1b[0m"))
 	formatters = append(formatters, fixedFormatter("\n"))
 	return formatters
