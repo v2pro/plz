@@ -92,6 +92,19 @@ func (ctx *Context) InfoCall(event string, err error, properties ...interface{})
 	return nil
 }
 
+func (ctx *Context) LogAccess(event string, err error, properties ...interface{}) error {
+	if err != nil {
+		ptr := unsafe.Pointer(&properties)
+		return log(LevelError, event, "call", ctx, err, castEmptyInterfaces(uintptr(ptr)))
+	}
+	if LevelInfo < spi.MinLevel {
+		return nil
+	}
+	ptr := unsafe.Pointer(&properties)
+	log(LevelInfo, event, "call", ctx, err, castEmptyInterfaces(uintptr(ptr)))
+	return nil
+}
+
 func (ctx *Context) Warn(event string, properties ...interface{}) {
 	ptr := unsafe.Pointer(&properties)
 	log(LevelWarn, event, "", ctx, nil, castEmptyInterfaces(uintptr(ptr)))

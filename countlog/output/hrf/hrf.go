@@ -43,9 +43,13 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 	for i := 0; i < len(site.Sample); i += 2 {
 		key := site.Sample[i].(string)
 		formatters = append(formatters, fixedFormatter("\x1b[90;1m"))
-		formatters = append(formatters, &propFormatter{
-			msgfmt.FormatterOf("\n"+key+": {"+key+"}", site.Sample),
-		})
+		if key == "timer" {
+			formatters = append(formatters, &timerFormatter{idx: i+1})
+		} else {
+			formatters = append(formatters, &propFormatter{
+				msgfmt.FormatterOf("\n"+key+": {"+key+"}", site.Sample),
+			})
+		}
 		formatters = append(formatters, fixedFormatter("\x1b[0m"))
 	}
 	formatters = append(formatters, fixedFormatter("\x1b[90;1m"))
