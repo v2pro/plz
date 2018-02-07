@@ -18,6 +18,10 @@ func (encoder *rootEncoder) EncodeEmptyInterface(ptr unsafe.Pointer, stream *Str
 	encoder.encoder.Encode(ptr, stream)
 }
 
+func (encoder *rootEncoder)  Encode(ptr unsafe.Pointer, stream *Stream) {
+	encoder.encoder.Encode(ptr, stream)
+}
+
 func (encoder *rootEncoder) Signature() uint64 {
 	return encoder.signature
 }
@@ -47,6 +51,10 @@ func (decoder *rootDecoderWithCopy) DecodeEmptyInterface(ptr *emptyInterface, it
 	decoder.decoder.Decode(iter)
 }
 
+func (decoder *rootDecoderWithCopy) Decode(iter *Iterator) {
+	decoder.decoder.Decode(iter)
+}
+
 type rootDecoderWithoutCopy struct {
 	valType   reflect.Type
 	signature uint64
@@ -65,5 +73,9 @@ func (decoder *rootDecoderWithoutCopy) DecodeEmptyInterface(ptr *emptyInterface,
 	ptr.word = unsafe.Pointer(&iter.buf[16])
 	iter.self = iter.buf[16:]
 	iter.cursor = iter.buf[16:]
+	decoder.decoder.Decode(iter)
+}
+
+func (decoder *rootDecoderWithoutCopy) Decode(iter *Iterator) {
 	decoder.decoder.Decode(iter)
 }

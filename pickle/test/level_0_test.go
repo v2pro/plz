@@ -1,11 +1,11 @@
-package pickle_test
+package test
 
 import (
 	"testing"
 	"github.com/v2pro/plz/test"
 	"github.com/v2pro/plz/test/must"
 	"github.com/v2pro/plz/countlog"
-	"github.com/v2pro/plz/countlog/pickle"
+	"github.com/v2pro/plz/pickle"
 	"github.com/v2pro/plz/test/should"
 )
 

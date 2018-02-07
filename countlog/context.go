@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/v2pro/plz/countlog/spi"
 	"unsafe"
-	"github.com/v2pro/plz/countlog/pickle"
+	"github.com/v2pro/plz/pickle"
 )
 
 func Ctx(ctx context.Context) *Context {

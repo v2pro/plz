@@ -108,7 +108,10 @@ func createEncoderOfType(cfg *frozenConfig, valType reflect.Type) (ValEncoder, e
 	case reflect.String:
 		return &stringCodec{BaseCodec: *newBaseCodec(valType, uint64(valKind))}, nil
 	case reflect.Interface:
-		return &interfaceEncoder{BaseCodec: *newBaseCodec(valType, uint64(valKind))}, nil
+		return &interfaceEncoder{
+			BaseCodec: *newBaseCodec(valType, uint64(valKind)),
+			cfg:       cfg,
+		}, nil
 	case reflect.Struct:
 		signature := uint64(valKind)
 		fields := make([]structFieldEncoder, 0, valType.NumField())
@@ -178,6 +181,11 @@ func createDecoderOfType(cfg *frozenConfig, valType reflect.Type) (ValDecoder, e
 		return &NoopCodec{BaseCodec: *newBaseCodec(valType, uint64(valKind))}, nil
 	case reflect.String:
 		return &stringCodec{BaseCodec: *newBaseCodec(valType, uint64(valKind))}, nil
+	case reflect.Interface:
+		return &interfaceDecoder{
+			BaseCodec: *newBaseCodec(valType, uint64(valKind)),
+			cfg:       cfg,
+		}, nil
 	case reflect.Struct:
 		fields := make([]structFieldDecoder, 0, valType.NumField())
 		signature := uint64(valKind)

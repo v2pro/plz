@@ -10,6 +10,11 @@ type emptyInterface struct {
 	word unsafe.Pointer
 }
 
+type writableEface struct {
+	typ  unsafe.Pointer
+	word uintptr
+}
+
 type stringWritableHeader struct {
 	Data uintptr
 	Len  int

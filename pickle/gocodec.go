@@ -45,6 +45,7 @@ type RootEncoder interface {
 	Type() reflect.Type
 	Signature() uint64
 	EncodeEmptyInterface(ptr unsafe.Pointer, stream *Stream)
+	Encode(ptr unsafe.Pointer, stream *Stream)
 }
 
 type ValDecoder interface {
@@ -59,6 +60,7 @@ type RootDecoder interface {
 	Type() reflect.Type
 	Signature() uint64
 	DecodeEmptyInterface(ptr *emptyInterface, iter *Iterator)
+	Decode(iter *Iterator)
 }
 
 type frozenConfig struct {

@@ -10,11 +10,15 @@ func (encoder *singlePointerEncoder) EncodeEmptyInterface(ptr unsafe.Pointer, st
 	encoder.rootEncoder.EncodeEmptyInterface(unsafe.Pointer(&ptr), stream)
 }
 
+func (encoder *singlePointerEncoder) Encode(ptr unsafe.Pointer, stream *Stream) {
+	encoder.rootEncoder.Encode(unsafe.Pointer(&ptr), stream)
+}
+
 type singlePointerDecoder struct {
 	RootDecoder
 }
 
-func (encoder *singlePointerDecoder) DecodeEmptyInterface(ptr *emptyInterface, iter *Iterator) {
-	encoder.RootDecoder.DecodeEmptyInterface(ptr, iter)
+func (decoder *singlePointerDecoder) DecodeEmptyInterface(ptr *emptyInterface, iter *Iterator) {
+	decoder.RootDecoder.DecodeEmptyInterface(ptr, iter)
 	ptr.word = *(*unsafe.Pointer)(ptr.word)
 }
