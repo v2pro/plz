@@ -18,7 +18,7 @@ func Test_level1(t *testing.T) {
 		must.Equal([]byte{
 			0x8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
 			0x1,
-		}, encoded[12:])
+		}, encoded[16:])
 		decoded := must.Call(pickle.ReadonlyConfig.Unmarshal, encoded)[0]
 		must.Equal(obj, decoded)
 		decoded = must.Call(pickle.Unmarshal, encoded)[0]
@@ -34,7 +34,7 @@ func Test_level1(t *testing.T) {
 			0x9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
 			1,
 			1,
-		}, encoded[12:])
+		}, encoded[16:])
 		decoded := must.Call(pickle.ReadonlyConfig.Unmarshal, encoded)[0]
 		must.Equal(obj, decoded)
 		decoded = must.Call(pickle.Unmarshal, encoded)[0]
@@ -46,7 +46,7 @@ func Test_level1(t *testing.T) {
 			0x18, 0, 0, 0, 0, 0, 0, 0,
 			5, 0, 0, 0, 0, 0, 0, 0,
 			5, 0, 0, 0, 0, 0, 0, 0,
-			'h', 'e', 'l', 'l', 'o'}, encoded[12:])
+			'h', 'e', 'l', 'l', 'o'}, encoded[16:])
 		decoded := must.Call(pickle.ReadonlyConfig.Unmarshal, encoded)[0]
 		must.Equal([]byte("hello"), decoded)
 		decoded = must.Call(pickle.Unmarshal, encoded)[0]
@@ -58,7 +58,7 @@ func Test_level1(t *testing.T) {
 			0x18, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0,
 			1, 0, 0, 0, 0, 0, 0, 0,
 			2, 0, 0, 0, 0, 0, 0, 0,
-			3, 0, 0, 0, 0, 0, 0, 0}, encoded[12:])
+			3, 0, 0, 0, 0, 0, 0, 0}, encoded[16:])
 		decoded := must.Call(pickle.ReadonlyConfig.Unmarshal, encoded)[0]
 		must.Equal([]int{1, 2, 3}, decoded)
 		decoded = must.Call(pickle.Unmarshal, encoded)[0]
@@ -68,7 +68,7 @@ func Test_level1(t *testing.T) {
 		val := 100
 		encoded := must.Call(pickle.Marshal, &val)[0].([]byte)
 		must.Equal([]byte{0x8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 100, 0, 0, 0, 0, 0, 0, 0},
-			encoded[12:])
+			encoded[16:])
 		decoded := must.Call(pickle.ReadonlyConfig.Unmarshal, encoded)[0]
 		must.Equal(&val, decoded)
 		decoded = must.Call(pickle.Unmarshal, encoded)[0]
@@ -78,7 +78,7 @@ func Test_level1(t *testing.T) {
 		encoded := must.Call(pickle.Marshal, "hello")[0].([]byte)
 		must.Equal([]byte{
 			0x10, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0,
-			'h', 'e', 'l', 'l', 'o'}, encoded[12:])
+			'h', 'e', 'l', 'l', 'o'}, encoded[16:])
 		decoded := must.Call(pickle.ReadonlyConfig.Unmarshal, encoded)[0]
 		must.Equal("hello", decoded)
 		decoded = must.Call(pickle.Unmarshal, encoded)[0]
@@ -94,7 +94,7 @@ func Test_level1(t *testing.T) {
 		must.Equal([]byte{
 			0x8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
 			0x1,
-		}, encoded[12:])
+		}, encoded[16:])
 		decoded := must.Call(pickle.ReadonlyConfig.Unmarshal, encoded)[0]
 		should.Equal(obj, decoded)
 		decoded = must.Call(pickle.Unmarshal, encoded)[0]
@@ -113,7 +113,7 @@ func Test_level1(t *testing.T) {
 			0x9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
 			1,
 			1,
-		}, encoded[12:])
+		}, encoded[16:])
 		decoded := must.Call(pickle.ReadonlyConfig.Unmarshal, encoded)[0]
 		should.Equal(obj, decoded)
 		decoded = must.Call(pickle.Unmarshal, encoded)[0]
@@ -133,7 +133,7 @@ func Test_level1(t *testing.T) {
 			0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
 			0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
 			0x3, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-		}, encoded[12:])
+		}, encoded[16:])
 		decoded := must.Call(pickle.ReadonlyConfig.Unmarshal, encoded)[0]
 		should.Equal(obj, decoded)
 		decoded = must.Call(pickle.Unmarshal, encoded)[0]

@@ -41,9 +41,9 @@ func (decoder *rootDecoderWithCopy) Type() reflect.Type {
 }
 
 func (decoder *rootDecoderWithCopy) DecodeEmptyInterface(ptr *emptyInterface, iter *Iterator) {
-	iter.self = iter.allocator.Allocate(iter.objectSeq, iter.buf[12:12+decoder.Type().Size()])
+	iter.self = iter.allocator.Allocate(iter.objectSeq, iter.buf[16:16+decoder.Type().Size()])
 	ptr.word = unsafe.Pointer(&iter.self[0])
-	iter.cursor = iter.buf[12:]
+	iter.cursor = iter.buf[16:]
 	decoder.decoder.Decode(iter)
 }
 
@@ -62,8 +62,8 @@ func (decoder *rootDecoderWithoutCopy) Type() reflect.Type {
 }
 
 func (decoder *rootDecoderWithoutCopy) DecodeEmptyInterface(ptr *emptyInterface, iter *Iterator) {
-	ptr.word = unsafe.Pointer(&iter.buf[12])
-	iter.self = iter.buf[12:]
-	iter.cursor = iter.buf[12:]
+	ptr.word = unsafe.Pointer(&iter.buf[16])
+	iter.self = iter.buf[16:]
+	iter.cursor = iter.buf[16:]
 	decoder.decoder.Decode(iter)
 }

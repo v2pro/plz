@@ -91,14 +91,8 @@ func (iter *Iterator) Unmarshal() interface{} {
 		iter.Error = io.EOF
 		return nil
 	}
-	defer func() {
-		recovered := recover()
-		if recovered != nil {
-			iter.ReportError("Unmarshal", fmt.Errorf("%v", recovered))
-		}
-	}()
 	nextBuf := iter.buf[size:]
-	typeId := *(*uint64)(unsafe.Pointer(&iter.buf[4]))
+	typeId := *(*uint64)(unsafe.Pointer(&iter.buf[8]))
 	valTypeInterface := sampleInterface
 	valTypeInterface.word = unsafe.Pointer(uintptr(typeId))
 	valType := (*(*interface{})(unsafe.Pointer(&valTypeInterface))).(reflect.Type)
@@ -124,14 +118,8 @@ func (iter *Iterator) UnmarshalCandidates(candidatePointers ...interface{}) inte
 		iter.Error = io.EOF
 		return nil
 	}
-	defer func() {
-		recovered := recover()
-		if recovered != nil {
-			iter.ReportError("Unmarshal", fmt.Errorf("%v", recovered))
-		}
-	}()
 	nextBuf := iter.buf[size:]
-	sig := *(*uint64)(unsafe.Pointer(&iter.buf[4]))
+	sig := *(*uint64)(unsafe.Pointer(&iter.buf[8]))
 	var decoder RootDecoder
 	var val interface{}
 	for _, candidatePointer := range candidatePointers {

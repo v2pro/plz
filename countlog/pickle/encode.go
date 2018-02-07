@@ -35,6 +35,7 @@ func (stream *Stream) Marshal(val interface{}) uint32 {
 	baseCursor := len(stream.buf)
 	stream.buf = append(stream.buf, []byte{
 		0, 0, 0, 0, // size
+		0, 0, 0, 0, // crc, not used yet
 		0, 0, 0, 0, 0, 0, 0, 0, // signature
 	}...)
 	encoder.EncodeEmptyInterface(ptrOfEmptyInterface(val), stream)
@@ -44,7 +45,7 @@ func (stream *Stream) Marshal(val interface{}) uint32 {
 	pSize := unsafe.Pointer(&stream.buf[baseCursor])
 	size := uint32(len(stream.buf) - baseCursor)
 	*(*uint32)(pSize) = size
-	pSig := unsafe.Pointer(&stream.buf[baseCursor+4])
+	pSig := unsafe.Pointer(&stream.buf[baseCursor+8])
 	if stream.cfg.useSignature {
 		*(*uint64)(pSig) = encoder.Signature()
 	} else {
