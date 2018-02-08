@@ -45,6 +45,7 @@ func JsonEqual(expected string, actual interface{}) {
 		t.Error("check failed")
 		return
 	}
+	t.Log(string(actualJson))
 	t.Error(test.ExtractFailedLines(file, line))
 }
 

@@ -11,9 +11,13 @@ import (
 func Test_level0(t *testing.T) {
 	t.Run("int8", test.Case(func(ctx *countlog.Context) {
 		must.JsonEqual(`{
-		"type": "int8",
-		"data": {
-			"__ptr__": "ANYTHING"
-		}}`, dump.Var{int8(100)}.String())
+		"__ptr__": "{ptr1}",
+		"{ptr1}": {
+			"type": "int8",
+			"data": {
+				"__ptr__": "{ptr2}"
+			}
+		},
+		"{ptr2}": 100}`, dump.Var{int8(100)}.String())
 	}))
 }
