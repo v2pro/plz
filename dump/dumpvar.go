@@ -15,8 +15,10 @@ var dumper = jsonfmt.Config{
 
 var efaceType = reflect.TypeOf(eface{})
 var efaceEncoderInst = dumper.EncoderOf(reflect.TypeOf(eface{}))
-var addrMapEncoderInst = dumper.EncoderOf(reflect.TypeOf(map[string]json.RawMessage{}))
-var ptrEncoderInst = dumper.EncoderOf(reflect.TypeOf(uint64(0)))
+var addrMapEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(map[string]json.RawMessage{}))
+var strEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(""))
+var ptrEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(uint64(0)))
+var intEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(int(0)))
 
 type Var struct {
 	Object interface{}
@@ -31,6 +33,7 @@ func (v Var) String() string {
 	output = addrMapEncoderInst.Encode(nil, nil, jsonfmt.PtrOf(addrMap))
 	return string(output)
 }
+
 func ptrToStr(rootPtr unsafe.Pointer) string {
 	return string(ptrEncoderInst.Encode(nil, nil, jsonfmt.PtrOf(rootPtr)))
 }
@@ -41,6 +44,10 @@ type dumpExtension struct {
 func (extension *dumpExtension) EncoderOf(prefix string, valType reflect.Type) jsonfmt.Encoder {
 	if valType == efaceType {
 		return &efaceEncoder{}
+	}
+	switch valType.Kind() {
+	case reflect.String:
+		return &stringEncoder{}
 	}
 	return nil
 }
@@ -72,6 +79,28 @@ func (encoder *efaceEncoder) Encode(ctx context.Context, space []byte, ptr unsaf
 	space = append(space, `"}}`...)
 	elemEncoder := dumper.EncoderOf(valType)
 	elem := elemEncoder.Encode(ctx, nil, eface.data)
+	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
+	addrMap[ptrStr] = json.RawMessage(elem)
+	return space
+}
+
+type stringHeader struct {
+	data unsafe.Pointer
+	len  int
+}
+
+type stringEncoder struct {
+}
+
+func (encoder *stringEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
+	header := (*stringHeader)(ptr)
+	space = append(space, `{"data":{"__ptr__":"`...)
+	ptrStr := ptrToStr(unsafe.Pointer(&header.data))
+	space = append(space, ptrStr...)
+	space = append(space, `"},"len":`...)
+	space = intEncoderInst.Encode(ctx, space, unsafe.Pointer(&header.len))
+	space = append(space, `}`...)
+	elem := strEncoderInst.Encode(ctx, nil, ptr)
 	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
 	addrMap[ptrStr] = json.RawMessage(elem)
 	return space

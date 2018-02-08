@@ -36,7 +36,7 @@ func JsonEqual(expected string, actual interface{}) {
 		t.Fatal("actual json is invalid: " + err.Error())
 		return
 	}
-	maskAnything(variables{}, expectedObj, actualObj)
+	substituteVars(variables{}, expectedObj, actualObj)
 	if assert.Equal(t, expectedObj, actualObj) {
 		return
 	}
@@ -87,7 +87,7 @@ func (vars variables) bind(varName string, varValue interface{}) {
 	Equal(v.value, varValue)
 }
 
-func maskAnything(vars variables, expected interface{}, actual interface{}) {
+func substituteVars(vars variables, expected interface{}, actual interface{}) {
 	switch reflect.TypeOf(expected).Kind() {
 	case reflect.Map:
 		if reflect.ValueOf(actual).Kind() != reflect.Map {
@@ -101,9 +101,11 @@ func maskAnything(vars variables, expected interface{}, actual interface{}) {
 			varName, _ := key.Interface().(string)
 			if strings.HasPrefix(varName, "{") && strings.HasSuffix(varName, "}") {
 				vars.sub(varName, func(value interface{}) {
-					elem := expectedVal.MapIndex(key)
+					expectedElem := expectedVal.MapIndex(key)
+					actualElem := actualVal.MapIndex(reflect.ValueOf(value))
+					substituteVars(vars, expectedElem.Interface(), actualElem.Interface())
 					expectedVal.SetMapIndex(key, reflect.ValueOf(nil))
-					expectedVal.SetMapIndex(reflect.ValueOf(value), elem)
+					expectedVal.SetMapIndex(reflect.ValueOf(value), expectedElem)
 				})
 			}
 			actualElem := actualVal.MapIndex(key)
@@ -117,7 +119,7 @@ func maskAnything(vars variables, expected interface{}, actual interface{}) {
 				vars.bind(varName, actualElem.Interface())
 				continue
 			}
-			maskAnything(vars, expectedElem, actualElem.Interface())
+			substituteVars(vars, expectedElem, actualElem.Interface())
 		}
 	}
 }
