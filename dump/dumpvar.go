@@ -27,11 +27,12 @@ func (v Var) String() string {
 	ctx := context.WithValue(context.Background(), addrMapKey, addrMap)
 	rootPtr := unsafe.Pointer(&v.Object)
 	output := efaceEncoderInst.Encode(ctx, nil, rootPtr)
-	rootPtrStr := string(ptrEncoderInst.Encode(nil, nil, jsonfmt.PtrOf(rootPtr)))
-	addrMap["__ptr__"] = json.RawMessage(`"` + rootPtrStr + `"`)
-	addrMap[rootPtrStr] = json.RawMessage(output)
+	addrMap["__root__"] = json.RawMessage(output)
 	output = addrMapEncoderInst.Encode(nil, nil, jsonfmt.PtrOf(addrMap))
 	return string(output)
+}
+func ptrToStr(rootPtr unsafe.Pointer) string {
+	return string(ptrEncoderInst.Encode(nil, nil, jsonfmt.PtrOf(rootPtr)))
 }
 
 type dumpExtension struct {
@@ -66,7 +67,12 @@ func (encoder *efaceEncoder) Encode(ctx context.Context, space []byte, ptr unsaf
 	(*iface)(unsafe.Pointer(&valType)).data = eface.dataType
 	space = append(space, valType.String()...)
 	space = append(space, `","data":{"__ptr__":"`...)
-	space = ptrEncoderInst.Encode(ctx, space, unsafe.Pointer(&eface.data))
+	ptrStr := ptrToStr(unsafe.Pointer(&eface.data))
+	space = append(space, ptrStr...)
 	space = append(space, `"}}`...)
+	elemEncoder := dumper.EncoderOf(valType)
+	elem := elemEncoder.Encode(ctx, nil, eface.data)
+	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
+	addrMap[ptrStr] = json.RawMessage(elem)
 	return space
 }
