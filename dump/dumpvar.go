@@ -48,6 +48,10 @@ func (extension *dumpExtension) EncoderOf(prefix string, valType reflect.Type) j
 	switch valType.Kind() {
 	case reflect.String:
 		return &stringEncoder{}
+	case reflect.Ptr:
+		return &pointerEncoder{
+			elemEncoder: dumper.EncoderOf(valType.Elem()),
+		}
 	}
 	return nil
 }
@@ -101,6 +105,21 @@ func (encoder *stringEncoder) Encode(ctx context.Context, space []byte, ptr unsa
 	space = intEncoderInst.Encode(ctx, space, unsafe.Pointer(&header.len))
 	space = append(space, `}`...)
 	elem := strEncoderInst.Encode(ctx, nil, ptr)
+	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
+	addrMap[ptrStr] = json.RawMessage(elem)
+	return space
+}
+
+type pointerEncoder struct {
+	elemEncoder jsonfmt.Encoder
+}
+
+func (encoder *pointerEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
+	space = append(space, `{"__ptr__":"`...)
+	ptrStr := ptrToStr(ptr)
+	space = append(space, ptrStr...)
+	space = append(space, `"}`...)
+	elem := encoder.elemEncoder.Encode(ctx, nil, *(*unsafe.Pointer)(ptr))
 	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
 	addrMap[ptrStr] = json.RawMessage(elem)
 	return space
