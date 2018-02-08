@@ -59,10 +59,11 @@ func (encoder *mapStringKeyEncoder) Encode(ctx context.Context, space []byte, pt
 }
 
 type mapInterfaceKeyEncoder struct {
+	cfg *frozenConfig
 	prefix string
 }
 
 func (encoder *mapInterfaceKeyEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	keyObj := *(*interface{})(ptr)
-	return encoderOfMapKey("", reflect.TypeOf(keyObj)).Encode(ctx, space, ptr)
+	return encoderOfMapKey(encoder.cfg, encoder.prefix, reflect.TypeOf(keyObj)).Encode(ctx, space, ptr)
 }

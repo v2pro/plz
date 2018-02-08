@@ -20,37 +20,55 @@ type Encoder interface {
 }
 
 type Extension interface {
-	EncoderOf(valType reflect.Type) Encoder
+	EncoderOf(prefix string, valType reflect.Type) Encoder
 }
 
 type Config struct {
 	Extensions []Extension
 }
 
+func (cfg Config) Froze() API {
+	return &frozenConfig{
+		extensions:   cfg.Extensions,
+		encoderCache: &sync.Map{},
+	}
+}
+
+type API interface {
+	EncoderOf(valType reflect.Type) Encoder
+}
+
 type frozenConfig struct {
-	extensions []Extension
+	extensions   []Extension
+	encoderCache *sync.Map
 }
 
-type baseCodec struct {
-	cfg *frozenConfig
-}
-
-var encoderCache = &sync.Map{}
-
-func EncoderOf(valType reflect.Type) Encoder {
-	encoderObj, found := encoderCache.Load(valType)
+func (cfg *frozenConfig) EncoderOf(valType reflect.Type) Encoder {
+	encoderObj, found := cfg.encoderCache.Load(valType)
 	if found {
 		return encoderObj.(Encoder)
 	}
-	encoder := encoderOf("", valType)
+	encoder := encoderOf(cfg, "", valType)
 	if isOnePtr(valType) {
 		encoder = &onePtrInterfaceEncoder{encoder}
 	}
-	encoderCache.Store(valType, encoder)
+	cfg.encoderCache.Store(valType, encoder)
 	return encoder
 }
 
-func encoderOf(prefix string, valType reflect.Type) Encoder {
+var ConfigDefault = Config{}.Froze()
+
+func EncoderOf(valType reflect.Type) Encoder {
+	return ConfigDefault.EncoderOf(valType)
+}
+
+func encoderOf(cfg *frozenConfig, prefix string, valType reflect.Type) Encoder {
+	for _, extension := range cfg.extensions {
+		encoder := extension.EncoderOf(prefix, valType)
+		if encoder != nil {
+			return encoder
+		}
+	}
 	if bytesType == valType {
 		return &bytesEncoder{}
 	}
@@ -90,25 +108,25 @@ func encoderOf(prefix string, valType reflect.Type) Encoder {
 	case reflect.String:
 		return &stringEncoder{}
 	case reflect.Ptr:
-		elemEncoder := encoderOf(prefix+" [ptrElem]", valType.Elem())
+		elemEncoder := encoderOf(cfg, prefix+" [ptrElem]", valType.Elem())
 		return &pointerEncoder{elemEncoder: elemEncoder}
 	case reflect.Slice:
-		elemEncoder := encoderOf(prefix+" [sliceElem]", valType.Elem())
+		elemEncoder := encoderOf(cfg, prefix+" [sliceElem]", valType.Elem())
 		return &sliceEncoder{
 			elemEncoder: elemEncoder,
 			elemSize:    valType.Elem().Size(),
 		}
 	case reflect.Array:
-		elemEncoder := encoderOf(prefix+" [sliceElem]", valType.Elem())
+		elemEncoder := encoderOf(cfg, prefix+" [sliceElem]", valType.Elem())
 		return &arrayEncoder{
 			elemEncoder: elemEncoder,
 			elemSize:    valType.Elem().Size(),
 			length:      valType.Len(),
 		}
 	case reflect.Struct:
-		return encoderOfStruct(prefix, valType)
+		return encoderOfStruct(cfg, prefix, valType)
 	case reflect.Map:
-		return encoderOfMap(prefix, valType)
+		return encoderOfMap(cfg, prefix, valType)
 	case reflect.Interface:
 		if valType.NumMethod() != 0 {
 			return &nonEmptyInterfaceEncoder{}
@@ -126,11 +144,11 @@ func (encoder *unsupportedEncoder) Encode(ctx context.Context, space []byte, ptr
 	return append(space, encoder.msg...)
 }
 
-func encoderOfMap(prefix string, valType reflect.Type) *mapEncoder {
-	keyEncoder := encoderOfMapKey(prefix, valType.Key())
+func encoderOfMap(cfg *frozenConfig, prefix string, valType reflect.Type) *mapEncoder {
+	keyEncoder := encoderOfMapKey(cfg, prefix, valType.Key())
 	sampleObj := reflect.MakeMap(valType).Interface()
 	elemType := valType.Elem()
-	elemEncoder := encoderOf(prefix+" [mapElem]", elemType)
+	elemEncoder := encoderOf(cfg, prefix+" [mapElem]", elemType)
 	if isOnePtr(elemType) {
 		elemEncoder = &onePtrInterfaceEncoder{elemEncoder}
 	}
@@ -142,23 +160,23 @@ func encoderOfMap(prefix string, valType reflect.Type) *mapEncoder {
 
 var mapKeyEncoderCache = &sync.Map{}
 
-func encoderOfMapKey(prefix string, keyType reflect.Type) Encoder {
+func encoderOfMapKey(cfg *frozenConfig, prefix string, keyType reflect.Type) Encoder {
 	encoderObj, found := mapKeyEncoderCache.Load(keyType)
 	if found {
 		return encoderObj.(Encoder)
 	}
-	encoder := _encoderOfMapKey(prefix, keyType)
+	encoder := _encoderOfMapKey(cfg, prefix, keyType)
 	mapKeyEncoderCache.Store(keyType, encoder)
 	return encoder
 }
 
-func _encoderOfMapKey(prefix string, keyType reflect.Type) Encoder {
-	keyEncoder := encoderOf(prefix+" [mapKey]", keyType)
+func _encoderOfMapKey(cfg *frozenConfig, prefix string, keyType reflect.Type) Encoder {
+	keyEncoder := encoderOf(cfg, prefix+" [mapKey]", keyType)
 	if keyType.Kind() == reflect.String || keyType == bytesType {
 		return &mapStringKeyEncoder{keyEncoder}
 	}
 	if keyType.Kind() == reflect.Interface {
-		return &mapInterfaceKeyEncoder{}
+		return &mapInterfaceKeyEncoder{cfg: cfg, prefix: prefix}
 	}
 	return &mapNumberKeyEncoder{keyEncoder}
 }
@@ -180,7 +198,7 @@ func isOnePtr(valType reflect.Type) bool {
 	return false
 }
 
-func encoderOfStruct(prefix string, valType reflect.Type) *structEncoder {
+func encoderOfStruct(cfg *frozenConfig, prefix string, valType reflect.Type) *structEncoder {
 	var fields []structEncoderField
 	for i := 0; i < valType.NumField(); i++ {
 		field := valType.Field(i)
@@ -198,7 +216,7 @@ func encoderOfStruct(prefix string, valType reflect.Type) *structEncoder {
 		fields = append(fields, structEncoderField{
 			offset:  field.Offset,
 			prefix:  prefix,
-			encoder: encoderOf(prefix+" ."+name, field.Type),
+			encoder: encoderOf(cfg, prefix+" ."+name, field.Type),
 		})
 	}
 	return &structEncoder{
