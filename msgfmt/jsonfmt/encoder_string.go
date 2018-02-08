@@ -3,6 +3,7 @@ package jsonfmt
 import (
 	"unsafe"
 	"unicode/utf8"
+	"context"
 )
 
 // safeSet holds the value true if the ASCII character with the given array
@@ -115,7 +116,7 @@ var hex = "0123456789abcdef"
 type stringEncoder struct {
 }
 
-func (encoder *stringEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *stringEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeString(space, *(*string)(ptr))
 }
 

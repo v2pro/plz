@@ -3,13 +3,14 @@ package jsonfmt
 import (
 	"unsafe"
 	"encoding/json"
+	"context"
 )
 
 type jsonMarshalerEncoder struct {
 	sampleInterface emptyInterface
 }
 
-func (encoder *jsonMarshalerEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *jsonMarshalerEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	errInterface := encoder.sampleInterface
 	errInterface.word = ptr
 	obj := *(*interface{})(unsafe.Pointer(&errInterface))

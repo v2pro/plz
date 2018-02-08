@@ -1,6 +1,9 @@
 package jsonfmt
 
-import "unsafe"
+import (
+	"unsafe"
+	"context"
+)
 
 type arrayEncoder struct {
 	elemEncoder Encoder
@@ -8,14 +11,14 @@ type arrayEncoder struct {
 	length      int
 }
 
-func (encoder *arrayEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *arrayEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	space = append(space, '[')
 	offset := uintptr(ptr)
 	for i := 0; i < encoder.length; i++ {
 		if i != 0 {
 			space = append(space, ',')
 		}
-		space = encoder.elemEncoder.Encode(space, unsafe.Pointer(offset))
+		space = encoder.elemEncoder.Encode(ctx, space, unsafe.Pointer(offset))
 		offset += encoder.elemSize
 	}
 	space = append(space, ']')

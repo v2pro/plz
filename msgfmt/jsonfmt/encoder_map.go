@@ -3,6 +3,7 @@ package jsonfmt
 import (
 	"unsafe"
 	"reflect"
+	"context"
 )
 
 type mapEncoder struct {
@@ -10,7 +11,7 @@ type mapEncoder struct {
 	sampleInterface emptyInterface
 }
 
-func (encoder *mapEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *mapEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	mapInterface := encoder.sampleInterface
 	mapInterface.word = ptr
 	mapObj := *(*interface{})(unsafe.Pointer(&mapInterface))
@@ -26,9 +27,9 @@ func (encoder *mapEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
 		}
 		elem := mapVal.MapIndex(key)
 		keyObj := key.Interface()
-		space = encoder.keyEncoder.Encode(space, unsafe.Pointer(&keyObj))
+		space = encoder.keyEncoder.Encode(ctx, space, unsafe.Pointer(&keyObj))
 		elemObj := elem.Interface()
-		space = EncoderOf(reflect.TypeOf(elemObj)).Encode(space, PtrOf(elemObj))
+		space = EncoderOf(reflect.TypeOf(elemObj)).Encode(ctx, space, PtrOf(elemObj))
 	}
 	space = append(space, '}')
 	return space
@@ -38,10 +39,10 @@ type mapNumberKeyEncoder struct {
 	valEncoder Encoder
 }
 
-func (encoder *mapNumberKeyEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *mapNumberKeyEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	space = append(space, '"')
 	keyObj := *(*interface{})(ptr)
-	space = encoder.valEncoder.Encode(space, PtrOf(keyObj))
+	space = encoder.valEncoder.Encode(ctx, space, PtrOf(keyObj))
 	space = append(space, '"', ':')
 	return space
 }
@@ -50,9 +51,9 @@ type mapStringKeyEncoder struct {
 	valEncoder Encoder
 }
 
-func (encoder *mapStringKeyEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *mapStringKeyEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	keyObj := *(*interface{})(ptr)
-	space = encoder.valEncoder.Encode(space, PtrOf(keyObj))
+	space = encoder.valEncoder.Encode(ctx, space, PtrOf(keyObj))
 	space = append(space, ':')
 	return space
 }
@@ -61,7 +62,7 @@ type mapInterfaceKeyEncoder struct {
 	prefix string
 }
 
-func (encoder *mapInterfaceKeyEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *mapInterfaceKeyEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	keyObj := *(*interface{})(ptr)
-	return encoderOfMapKey("", reflect.TypeOf(keyObj)).Encode(space, ptr)
+	return encoderOfMapKey("", reflect.TypeOf(keyObj)).Encode(ctx, space, ptr)
 }

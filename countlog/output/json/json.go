@@ -45,10 +45,10 @@ func (formatter *formatter) Format(space []byte, event *spi.Event) []byte {
 	for _, prop := range formatter.props {
 		space = append(space, ',')
 		space = append(space, prop.prefix...)
-		space = prop.encoder.Encode(space, jsonfmt.PtrOf(event.Properties[prop.idx]))
+		space = prop.encoder.Encode(nil, space, jsonfmt.PtrOf(event.Properties[prop.idx]))
 	}
 	space = append(space, ",timestamp:"...)
-	space = formatter.timestampEncoder.Encode(space, jsonfmt.PtrOf(event.Timestamp.UnixNano()))
+	space = formatter.timestampEncoder.Encode(nil, space, jsonfmt.PtrOf(event.Timestamp.UnixNano()))
 	space = append(space, formatter.suffix...)
 	return space
 }

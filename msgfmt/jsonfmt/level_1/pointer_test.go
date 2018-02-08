@@ -10,6 +10,6 @@ import (
 func Test_pointer(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect.TypeOf((*int)(nil)))
-	should.Equal("1", string(encoder.Encode(nil, jsonfmt.PtrOf(1))))
-	should.Equal("null", string(encoder.Encode(nil, jsonfmt.PtrOf(nil))))
+	should.Equal("1", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(1))))
+	should.Equal("null", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(nil))))
 }

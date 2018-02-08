@@ -8,5 +8,5 @@ type jsonFormatter struct {
 }
 
 func (formatter *jsonFormatter) Format(space []byte, kv []interface{}) []byte {
-	return formatter.encoder.Encode(space, jsonfmt.PtrOf(kv[formatter.idx]))
+	return formatter.encoder.Encode(nil, space, jsonfmt.PtrOf(kv[formatter.idx]))
 }

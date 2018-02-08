@@ -4,6 +4,7 @@ import (
 	"unsafe"
 	"math"
 	"strconv"
+	"context"
 )
 
 var pow10 []uint64
@@ -15,14 +16,14 @@ func init() {
 type lossyFloat64Encoder struct {
 }
 
-func (encoder *lossyFloat64Encoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *lossyFloat64Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeFloat64Lossy(space, *(*float64)(ptr))
 }
 
 type lossyFloat32Encoder struct {
 }
 
-func (encoder *lossyFloat32Encoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *lossyFloat32Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeFloat32Lossy(space, *(*float32)(ptr))
 }
 

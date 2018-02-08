@@ -1,3 +1,3 @@
 # pickle
 
-encode/decode golang object
+encode/decode golang object with type information

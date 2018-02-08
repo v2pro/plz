@@ -11,3 +11,7 @@ type FuncEventHandler func(event *Event)
 func (handler FuncEventHandler) Handle(event *Event) {
 	handler(event)
 }
+
+func (handler FuncEventHandler) LogSite() *LogSite {
+	return nil
+}

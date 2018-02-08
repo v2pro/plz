@@ -3,31 +3,32 @@ package jsonfmt
 import (
 	"unsafe"
 	"reflect"
+	"context"
 )
 
 type onePtrInterfaceEncoder struct {
 	valEncoder Encoder
 }
 
-func (encoder *onePtrInterfaceEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
-	return encoder.valEncoder.Encode(space, unsafe.Pointer(&ptr))
+func (encoder *onePtrInterfaceEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
+	return encoder.valEncoder.Encode(ctx, space, unsafe.Pointer(&ptr))
 }
 
 type emptyInterfaceEncoder struct {
 }
 
-func (encoder *emptyInterfaceEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *emptyInterfaceEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	obj := *(*interface{})(ptr)
 	if obj == nil {
 		return append(space, 'n', 'u', 'l', 'l')
 	}
-	return EncoderOf(reflect.TypeOf(obj)).Encode(space, PtrOf(obj))
+	return EncoderOf(reflect.TypeOf(obj)).Encode(ctx, space, PtrOf(obj))
 }
 
 type nonEmptyInterfaceEncoder struct {
 }
 
-func (encoder *nonEmptyInterfaceEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *nonEmptyInterfaceEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	nonEmptyInterface := (*nonEmptyInterface)(ptr)
 	var obj interface{}
 	if nonEmptyInterface.itab != nil {
@@ -38,7 +39,7 @@ func (encoder *nonEmptyInterfaceEncoder) Encode(space []byte, ptr unsafe.Pointer
 	if obj == nil {
 		return append(space, 'n', 'u', 'l', 'l')
 	}
-	return EncoderOf(reflect.TypeOf(obj)).Encode(space, PtrOf(obj))
+	return EncoderOf(reflect.TypeOf(obj)).Encode(ctx, space, PtrOf(obj))
 }
 
 // emptyInterface is the header for an interface with method (not interface{})

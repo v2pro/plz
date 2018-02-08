@@ -8,6 +8,7 @@ import (
 	"sync"
 	"fmt"
 	"encoding/json"
+	"context"
 )
 
 var bytesType = reflect.TypeOf([]byte(nil))
@@ -15,7 +16,23 @@ var errorType = reflect.TypeOf((*error)(nil)).Elem()
 var jsonMarshalerType = reflect.TypeOf((*json.Marshaler)(nil)).Elem()
 
 type Encoder interface {
-	Encode(space []byte, ptr unsafe.Pointer) []byte
+	Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte
+}
+
+type Extension interface {
+	EncoderOf(valType reflect.Type) Encoder
+}
+
+type Config struct {
+	Extensions []Extension
+}
+
+type frozenConfig struct {
+	extensions []Extension
+}
+
+type baseCodec struct {
+	cfg *frozenConfig
 }
 
 var encoderCache = &sync.Map{}
@@ -105,7 +122,7 @@ type unsupportedEncoder struct {
 	msg string
 }
 
-func (encoder *unsupportedEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *unsupportedEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return append(space, encoder.msg...)
 }
 

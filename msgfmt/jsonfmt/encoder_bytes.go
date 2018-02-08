@@ -3,12 +3,13 @@ package jsonfmt
 import (
 	"unsafe"
 	"unicode/utf8"
+	"context"
 )
 
 type bytesEncoder struct {
 }
 
-func (encoder *bytesEncoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *bytesEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeBytes(space, *(*[]byte)(ptr))
 }
 

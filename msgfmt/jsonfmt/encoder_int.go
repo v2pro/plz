@@ -1,6 +1,9 @@
 package jsonfmt
 
-import "unsafe"
+import (
+	"unsafe"
+	"context"
+)
 
 var digits []uint32
 
@@ -19,56 +22,56 @@ func init() {
 type int8Encoder struct {
 }
 
-func (encoder *int8Encoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *int8Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeInt8(space, *(*int8)(ptr))
 }
 
 type uint8Encoder struct {
 }
 
-func (encoder *uint8Encoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *uint8Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeUint8(space, *(*uint8)(ptr))
 }
 
 type int16Encoder struct {
 }
 
-func (encoder *int16Encoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *int16Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeInt16(space, *(*int16)(ptr))
 }
 
 type uint16Encoder struct {
 }
 
-func (encoder *uint16Encoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *uint16Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeUint16(space, *(*uint16)(ptr))
 }
 
 type int32Encoder struct {
 }
 
-func (encoder *int32Encoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *int32Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeInt32(space, *(*int32)(ptr))
 }
 
 type uint32Encoder struct {
 }
 
-func (encoder *uint32Encoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *uint32Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeUint32(space, *(*uint32)(ptr))
 }
 
 type int64Encoder struct {
 }
 
-func (encoder *int64Encoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *int64Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeInt64(space, *(*int64)(ptr))
 }
 
 type uint64Encoder struct {
 }
 
-func (encoder *uint64Encoder) Encode(space []byte, ptr unsafe.Pointer) []byte {
+func (encoder *uint64Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return writeUint64(space, *(*uint64)(ptr))
 }
 

@@ -11,7 +11,7 @@ import (
 func Test_slice_of_empty_interface(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect.TypeOf(([]interface{})(nil)))
-	should.Equal("[1,null,3]", string(encoder.Encode(nil, jsonfmt.PtrOf([]interface{}{
+	should.Equal("[1,null,3]", string(encoder.Encode(nil,nil, jsonfmt.PtrOf([]interface{}{
 		1, nil, 3,
 	}))))
 }
@@ -25,7 +25,7 @@ func (closer TestCloser) Close() error {
 func Test_slice_of_non_empty_interface(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect.TypeOf(([]io.Closer)(nil)))
-	should.Equal("[1,null,3]", string(encoder.Encode(nil, jsonfmt.PtrOf([]io.Closer{
+	should.Equal("[1,null,3]", string(encoder.Encode(nil,nil, jsonfmt.PtrOf([]io.Closer{
 		TestCloser(1), nil, TestCloser(3),
 	}))))
 }
