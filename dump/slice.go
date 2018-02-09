@@ -29,8 +29,10 @@ func (encoder *sliceEncoder) Encode(ctx context.Context, space []byte, ptr unsaf
 	space = jsonfmt.WriteInt64(space, int64(slice.cap))
 	space = append(space, `}`...)
 	data := encoder.encodeData(ctx, nil, ptr)
-	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
-	addrMap[ptrStr] = json.RawMessage(data)
+	if uintptr(slice.data) != 0 {
+		addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
+		addrMap[ptrStr] = json.RawMessage(data)
+	}
 	return space
 }
 

@@ -40,15 +40,9 @@ type bmap struct {
 	// Followed by an overflow pointer.
 }
 
-type bmapIntInt struct {
-	tophash  [bucketCnt]uint8
-	keys     [bucketCnt]int
-	elems    [bucketCnt]int
-	overflow unsafe.Pointer
-}
-
 type mapEncoder struct {
 	bucketSize   uintptr
+	keysSize     uintptr
 	keysEncoder  jsonfmt.Encoder
 	elemsEncoder jsonfmt.Encoder
 }
@@ -58,6 +52,7 @@ func newMapEncoder(api jsonfmt.API, valType reflect.Type) *mapEncoder {
 	elemsEncoder := api.EncoderOf(reflect.ArrayOf(bucketCnt, valType.Elem()))
 	return &mapEncoder{
 		bucketSize:   0,
+		keysSize:     valType.Key().Size() * bucketCnt,
 		keysEncoder:  keysEncoder,
 		elemsEncoder: elemsEncoder,
 	}
@@ -109,13 +104,14 @@ func (encoder *mapEncoder) encodeBuckets(ctx context.Context, space []byte, coun
 }
 
 func (encoder *mapEncoder) encodeBucket(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	bmap := (*bmapIntInt)(ptr)
+	bmap := (*bmap)(ptr)
 	space = append(space, `{"tophash":`...)
 	space = jsonfmt.WriteBytes(space, bmap.tophash[:])
 	space = append(space, `,"keys":`...)
-	space = encoder.keysEncoder.Encode(ctx, space, unsafe.Pointer(&bmap.keys))
+	keysPtr := uintptr(ptr) + bucketCnt
+	space = encoder.keysEncoder.Encode(ctx, space, unsafe.Pointer(keysPtr))
 	space = append(space, `,"elems":`...)
-	space = encoder.elemsEncoder.Encode(ctx, space, unsafe.Pointer(&bmap.elems))
+	space = encoder.elemsEncoder.Encode(ctx, space, unsafe.Pointer(keysPtr+encoder.keysSize))
 	space = append(space, '}')
 	return space
 }
