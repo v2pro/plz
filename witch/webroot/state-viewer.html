@@ -5,6 +5,7 @@
               :class="{ 'is-leaf': node.isLeaf, expanded: !node.isLeaf && callbacks.isExpanded(node) }"></span>
             {{ node.label }}
             <span v-if="node.value">: {{ node.value }}</span>
+            <el-button v-if="node.isDumpVar" @click="callbacks.visualize(node,$event)">visualize</el-button>
         </div>
         <state-node v-for="child in node.children" :node="child"
                     :callbacks="callbacks" :key="child.id"
@@ -24,6 +25,23 @@
                 <snapshots ref="snapshots" :selectedSnapshot.sync="selectedSnapshot"></snapshots>
             </el-col>
         </el-row>
+        <el-dialog
+                :title="dialogTitle"
+                :visible.sync="dialogVisible"
+                width="90%">
+            <table border="1">
+                <thead>
+                <th>Field</th>
+                <th>Value</th>
+                </thead>
+                <tbody>
+                <tr v-for="(value, key) in dialogContent">
+                    <td>{{key}}</td>
+                    <td>{{value}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </el-dialog>
     </div>
 </script>
 <script>
@@ -44,7 +62,6 @@
     Node.prototype.addChild = function (options) {
         var child = new Node(options);
         child.root = this.root;
-        child.addrMap = options.addrMap;
         child.id = this.id + '>' + options.label;
         child.indention = this.indention + 18;
         this.children.push(child);
@@ -83,7 +100,8 @@
                 break;
             case 'object':
                 if (v.__root__) {
-                    var childNode = this.addChild({label: label, addrMap:addrMap});
+                    var childNode = this.addChild({
+                        label: label, addrMap:addrMap, isDumpVar:true, data:v.__root__});
                     childNode.addObject(v.__root__, v);
                 } else if (v.__ptr__) {
                     this.addChild({label: label, addrMap:addrMap, data: v})
@@ -105,7 +123,10 @@
                 tree: new Node(), // view model
                 selectedSnapshot: null,
                 callbacks: this,
-                expansion: {}
+                expansion: {},
+                dialogVisible: false,
+                dialogTitle: '',
+                dialogContent: null
             }
         },
         watch: {
@@ -141,6 +162,12 @@
             },
             isExpanded: function (node) {
                 return this.expansion[node.id];
+            },
+            visualize: function (node, event) {
+                event.stopPropagation();
+                this.dialogContent = node.data;
+                this.dialogTitle = node.label;
+                this.dialogVisible = true;
             }
         }
     });
