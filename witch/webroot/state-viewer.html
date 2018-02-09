@@ -106,9 +106,8 @@
                 this.tree = new Node({id: 'root'});
                 this.tree.root = this.tree;
                 this.tree.all_nodes = {};
-                for (var k in this.selectedSnapshot.data.root) {
-                    this.tree.addChild({label: k, data: this.selectedSnapshot.data.root[k]})
-                }
+                console.log(this.selectedSnapshot.data);
+                this.tree.addObject(this.selectedSnapshot.data);
                 for (var nodeId in this.expansion) {
                     var node = this.tree.all_nodes[nodeId];
                     if (node) {

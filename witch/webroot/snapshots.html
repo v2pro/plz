@@ -24,7 +24,7 @@
         methods: {
             pollCurrentState: function() {
                 var me = this;
-                axios.get(window.location.href + '/export-state?ts=' + Date.now())
+                axios.get(window.location.href + '/expvar?ts=' + Date.now())
                     .then(function (resp) {
                         var snapshot = {timestamp: new Date(), data: resp.data, is_selected:false};
                         me.snapshots = [snapshot].concat(me.snapshots);
