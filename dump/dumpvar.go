@@ -16,7 +16,6 @@ var dumper = jsonfmt.Config{
 var efaceType = reflect.TypeOf(eface{})
 var efaceEncoderInst = dumper.EncoderOf(reflect.TypeOf(eface{}))
 var addrMapEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(map[string]json.RawMessage{}))
-var strEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(""))
 var ptrEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(uint64(0)))
 var intEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(int(0)))
 
@@ -34,7 +33,7 @@ func (v Var) String() string {
 	return string(output)
 }
 
-func ptrToStr(rootPtr unsafe.Pointer) string {
+func ptrToStr(rootPtr uintptr) string {
 	return string(ptrEncoderInst.Encode(nil, nil, jsonfmt.PtrOf(rootPtr)))
 }
 
@@ -52,75 +51,16 @@ func (extension *dumpExtension) EncoderOf(prefix string, valType reflect.Type) j
 		return &pointerEncoder{
 			elemEncoder: dumper.EncoderOf(valType.Elem()),
 		}
+	case reflect.Slice:
+		return &sliceEncoder{
+			elemEncoder: dumper.EncoderOf(valType.Elem()),
+			elemSize: valType.Elem().Size(),
+		}
 	}
 	return nil
-}
-
-type eface struct {
-	dataType unsafe.Pointer
-	data     unsafe.Pointer
 }
 
 type iface struct {
 	itab unsafe.Pointer
 	data unsafe.Pointer
-}
-
-var sampleType = reflect.TypeOf("")
-
-type efaceEncoder struct {
-}
-
-func (encoder *efaceEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	space = append(space, `{"type":"`...)
-	eface := (*eface)(ptr)
-	valType := sampleType
-	(*iface)(unsafe.Pointer(&valType)).data = eface.dataType
-	space = append(space, valType.String()...)
-	space = append(space, `","data":{"__ptr__":"`...)
-	ptrStr := ptrToStr(unsafe.Pointer(&eface.data))
-	space = append(space, ptrStr...)
-	space = append(space, `"}}`...)
-	elemEncoder := dumper.EncoderOf(valType)
-	elem := elemEncoder.Encode(ctx, nil, eface.data)
-	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
-	addrMap[ptrStr] = json.RawMessage(elem)
-	return space
-}
-
-type stringHeader struct {
-	data unsafe.Pointer
-	len  int
-}
-
-type stringEncoder struct {
-}
-
-func (encoder *stringEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	header := (*stringHeader)(ptr)
-	space = append(space, `{"data":{"__ptr__":"`...)
-	ptrStr := ptrToStr(unsafe.Pointer(&header.data))
-	space = append(space, ptrStr...)
-	space = append(space, `"},"len":`...)
-	space = intEncoderInst.Encode(ctx, space, unsafe.Pointer(&header.len))
-	space = append(space, `}`...)
-	elem := strEncoderInst.Encode(ctx, nil, ptr)
-	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
-	addrMap[ptrStr] = json.RawMessage(elem)
-	return space
-}
-
-type pointerEncoder struct {
-	elemEncoder jsonfmt.Encoder
-}
-
-func (encoder *pointerEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	space = append(space, `{"__ptr__":"`...)
-	ptrStr := ptrToStr(ptr)
-	space = append(space, ptrStr...)
-	space = append(space, `"}`...)
-	elem := encoder.elemEncoder.Encode(ctx, nil, *(*unsafe.Pointer)(ptr))
-	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
-	addrMap[ptrStr] = json.RawMessage(elem)
-	return space
 }

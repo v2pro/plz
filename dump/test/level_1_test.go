@@ -1,4 +1,4 @@
-package dump_test
+package test
 
 import (
 	"testing"

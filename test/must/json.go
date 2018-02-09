@@ -121,5 +121,19 @@ func substituteVars(vars variables, expected interface{}, actual interface{}) {
 			}
 			substituteVars(vars, expectedElem, actualElem.Interface())
 		}
+	case reflect.Slice:
+		if reflect.ValueOf(actual).Kind() != reflect.Slice {
+			return
+		}
+		expectedVal := reflect.ValueOf(expected)
+		actualVal := reflect.ValueOf(actual)
+		length := expectedVal.Len()
+		for i := 0; i < length; i++ {
+			actualElem := actualVal.Index(i)
+			if !actualElem.IsValid() {
+				continue
+			}
+			substituteVars(vars, expectedVal.Index(i).Interface(), actualElem.Interface())
+		}
 	}
 }
