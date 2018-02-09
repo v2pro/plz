@@ -108,18 +108,31 @@ func substituteVars(vars variables, expected interface{}, actual interface{}) {
 					expectedVal.SetMapIndex(reflect.ValueOf(value), expectedElem)
 				})
 			}
+			expectedElem := expectedVal.MapIndex(key)
+			if !expectedElem.IsValid() {
+				continue
+			}
+			if reflect.TypeOf(expectedElem.Interface()).Kind() == reflect.String {
+				varName, _ = expectedElem.Interface().(string)
+				if varName == "{ANYTHING}" {
+					actualVal.SetMapIndex(key, reflect.ValueOf("{ANYTHING}"))
+					continue
+				}
+				actualElem := actualVal.MapIndex(key)
+				if !actualElem.IsValid() {
+					continue
+				}
+				if strings.HasPrefix(varName, "{") && strings.HasSuffix(varName, "}") {
+					expectedVal.SetMapIndex(key, actualElem)
+					vars.bind(varName, actualElem.Interface())
+					continue
+				}
+			}
 			actualElem := actualVal.MapIndex(key)
 			if !actualElem.IsValid() {
 				continue
 			}
-			expectedElem := expectedVal.MapIndex(key).Interface()
-			varName, _ = expectedElem.(string)
-			if strings.HasPrefix(varName, "{") && strings.HasSuffix(varName, "}") {
-				expectedVal.SetMapIndex(key, actualElem)
-				vars.bind(varName, actualElem.Interface())
-				continue
-			}
-			substituteVars(vars, expectedElem, actualElem.Interface())
+			substituteVars(vars, expectedElem.Interface(), actualElem.Interface())
 		}
 	case reflect.Slice:
 		if reflect.ValueOf(actual).Kind() != reflect.Slice {

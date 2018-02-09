@@ -16,8 +16,6 @@ var dumper = jsonfmt.Config{
 var efaceType = reflect.TypeOf(eface{})
 var efaceEncoderInst = dumper.EncoderOf(reflect.TypeOf(eface{}))
 var addrMapEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(map[string]json.RawMessage{}))
-var ptrEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(uint64(0)))
-var intEncoderInst = jsonfmt.EncoderOf(reflect.TypeOf(int(0)))
 
 type Var struct {
 	Object interface{}
@@ -33,8 +31,8 @@ func (v Var) String() string {
 	return string(output)
 }
 
-func ptrToStr(rootPtr uintptr) string {
-	return string(ptrEncoderInst.Encode(nil, nil, jsonfmt.PtrOf(rootPtr)))
+func ptrToStr(ptr uintptr) string {
+	return string(jsonfmt.WriteUint64(nil, uint64(ptr)))
 }
 
 type dumpExtension struct {
@@ -54,8 +52,10 @@ func (extension *dumpExtension) EncoderOf(prefix string, valType reflect.Type) j
 	case reflect.Slice:
 		return &sliceEncoder{
 			elemEncoder: dumper.EncoderOf(valType.Elem()),
-			elemSize: valType.Elem().Size(),
+			elemSize:    valType.Elem().Size(),
 		}
+	case reflect.Map:
+		return newMapEncoder(dumper, valType)
 	}
 	return nil
 }

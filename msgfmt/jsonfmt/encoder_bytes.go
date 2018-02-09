@@ -10,10 +10,10 @@ type bytesEncoder struct {
 }
 
 func (encoder *bytesEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	return writeBytes(space, *(*[]byte)(ptr))
+	return WriteBytes(space, *(*[]byte)(ptr))
 }
 
-func writeBytes(space []byte, s []byte) []byte {
+func WriteBytes(space []byte, s []byte) []byte {
 	space = append(space, '"')
 	// write string, the fast path, without utf8 and escape support
 	var i int
@@ -39,7 +39,7 @@ func writeBytesSlowPath(space []byte, s []byte) []byte {
 	var b byte
 	for i, b = range s {
 		if b >= utf8.RuneSelf {
-			space = append(space, '\\', 'x', hex[b>>4], hex[b&0xF])
+			space = append(space, '\\', '\\', 'x', hex[b>>4], hex[b&0xF])
 			start = i + 1
 			continue
 		}
@@ -60,7 +60,7 @@ func writeBytesSlowPath(space []byte, s []byte) []byte {
 			space = append(space, '\\', 't')
 		default:
 			// This encodes bytes < 0x20 except for \t, \n and \r.
-			space = append(space, '\\', 'x', hex[b>>4], hex[b&0xF])
+			space = append(space, '\\', '\\', 'x', hex[b>>4], hex[b&0xF])
 		}
 		start = i + 1
 	}

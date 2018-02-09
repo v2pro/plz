@@ -24,7 +24,7 @@ func (encoder *stringEncoder) Encode(ctx context.Context, space []byte, ptr unsa
 	ptrStr := ptrToStr(uintptr(header.data))
 	space = append(space, ptrStr...)
 	space = append(space, `"},"len":`...)
-	space = intEncoderInst.Encode(ctx, space, unsafe.Pointer(&header.len))
+	space = jsonfmt.WriteInt64(space, int64(header.len))
 	space = append(space, `}`...)
 	elem := strEncoderInst.Encode(ctx, nil, ptr)
 	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)

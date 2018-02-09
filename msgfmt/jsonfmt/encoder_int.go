@@ -23,63 +23,63 @@ type int8Encoder struct {
 }
 
 func (encoder *int8Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	return writeInt8(space, *(*int8)(ptr))
+	return WriteInt8(space, *(*int8)(ptr))
 }
 
 type uint8Encoder struct {
 }
 
 func (encoder *uint8Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	return writeUint8(space, *(*uint8)(ptr))
+	return WriteUint8(space, *(*uint8)(ptr))
 }
 
 type int16Encoder struct {
 }
 
 func (encoder *int16Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	return writeInt16(space, *(*int16)(ptr))
+	return WriteInt16(space, *(*int16)(ptr))
 }
 
 type uint16Encoder struct {
 }
 
 func (encoder *uint16Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	return writeUint16(space, *(*uint16)(ptr))
+	return WriteUint16(space, *(*uint16)(ptr))
 }
 
 type int32Encoder struct {
 }
 
 func (encoder *int32Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	return writeInt32(space, *(*int32)(ptr))
+	return WriteInt32(space, *(*int32)(ptr))
 }
 
 type uint32Encoder struct {
 }
 
 func (encoder *uint32Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	return writeUint32(space, *(*uint32)(ptr))
+	return WriteUint32(space, *(*uint32)(ptr))
 }
 
 type int64Encoder struct {
 }
 
 func (encoder *int64Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	return writeInt64(space, *(*int64)(ptr))
+	return WriteInt64(space, *(*int64)(ptr))
 }
 
 type uint64Encoder struct {
 }
 
 func (encoder *uint64Encoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	return writeUint64(space, *(*uint64)(ptr))
+	return WriteUint64(space, *(*uint64)(ptr))
 }
 
-func writeUint8(space []byte, val uint8) []byte {
+func WriteUint8(space []byte, val uint8) []byte {
 	return writeFirstBuf(space, digits[val])
 }
 
-func writeInt8(space []byte, nval int8) []byte {
+func WriteInt8(space []byte, nval int8) []byte {
 	var val uint8
 	if nval < 0 {
 		val = uint8(-nval)
@@ -90,7 +90,7 @@ func writeInt8(space []byte, nval int8) []byte {
 	return writeFirstBuf(space, digits[val])
 }
 
-func writeInt16(space []byte, nval int16) []byte {
+func WriteInt16(space []byte, nval int16) []byte {
 	var val uint16
 	if nval < 0 {
 		val = uint16(-nval)
@@ -98,10 +98,10 @@ func writeInt16(space []byte, nval int16) []byte {
 	} else {
 		val = uint16(nval)
 	}
-	return writeUint16(space, val)
+	return WriteUint16(space, val)
 }
 
-func writeUint16(space []byte, val uint16) []byte {
+func WriteUint16(space []byte, val uint16) []byte {
 	q1 := val / 1000
 	if q1 == 0 {
 		return writeFirstBuf(space, digits[val])
@@ -111,7 +111,7 @@ func writeUint16(space []byte, val uint16) []byte {
 	return writeBuf(space, digits[r1])
 }
 
-func writeInt32(space []byte, nval int32) []byte {
+func WriteInt32(space []byte, nval int32) []byte {
 	var val uint32
 	if nval < 0 {
 		val = uint32(-nval)
@@ -119,10 +119,10 @@ func writeInt32(space []byte, nval int32) []byte {
 	} else {
 		val = uint32(nval)
 	}
-	return writeUint32(space, val)
+	return WriteUint32(space, val)
 }
 
-func writeUint32(space []byte, val uint32) []byte {
+func WriteUint32(space []byte, val uint32) []byte {
 	q1 := val / 1000
 	if q1 == 0 {
 		return writeFirstBuf(space, digits[val])
@@ -146,7 +146,7 @@ func writeUint32(space []byte, val uint32) []byte {
 	return writeBuf(space, digits[r1])
 }
 
-func writeInt64(space []byte, nval int64) []byte {
+func WriteInt64(space []byte, nval int64) []byte {
 	var val uint64
 	if nval < 0 {
 		val = uint64(-nval)
@@ -154,10 +154,10 @@ func writeInt64(space []byte, nval int64) []byte {
 	} else {
 		val = uint64(nval)
 	}
-	return writeUint64(space, val)
+	return WriteUint64(space, val)
 }
 
-func writeUint64(space []byte, val uint64) []byte {
+func WriteUint64(space []byte, val uint64) []byte {
 	q1 := val / 1000
 	if q1 == 0 {
 		return writeFirstBuf(space, digits[val])

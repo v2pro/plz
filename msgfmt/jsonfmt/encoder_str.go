@@ -117,7 +117,7 @@ type stringEncoder struct {
 }
 
 func (encoder *stringEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	return writeString(space, *(*string)(ptr))
+	return WriteString(space, *(*string)(ptr))
 }
 
 type stringHeader struct {
@@ -131,7 +131,7 @@ type sliceHeader struct {
 	Cap  int
 }
 
-func writeString(space []byte, str string) []byte {
+func WriteString(space []byte, str string) []byte {
 	pStr := (*stringHeader)(unsafe.Pointer(&str))
 	s := *(*[]byte)(unsafe.Pointer(&sliceHeader{pStr.Data, pStr.Len, pStr.Len}))
 	space = append(space, '"')
