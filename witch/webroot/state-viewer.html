@@ -3,9 +3,9 @@
         <div @click="callbacks.onNodeClick(node)">
         <span class="el-tree-node__expand-icon el-icon-caret-right"
               :class="{ 'is-leaf': node.isLeaf, expanded: !node.isLeaf && callbacks.isExpanded(node) }"></span>
-            {{ node.label }}
+        {{ node.label }}
             <span v-if="node.value">: {{ node.value }}</span>
-            <el-button v-if="node.isDumpVar" @click="callbacks.visualize(node,$event)">visualize</el-button>
+            <el-button v-if="node.isDumpVar" size="mini" @click="callbacks.visualize(node,$event)">visualize</el-button>
         </div>
         <state-node v-for="child in node.children" :node="child"
                     :callbacks="callbacks" :key="child.id"
@@ -17,7 +17,8 @@
         <el-row>
             <el-col :span="20">
                 <div v-show="selectedSnapshot === null">No snapshot to show, please click "Poll Current State"</div>
-                <div v-if="selectedSnapshot" style="margin-bottom: 8px;">Snapshot Taken At: {{ selectedSnapshot.timestamp }}</div>
+                <div v-if="selectedSnapshot" style="margin-bottom: 8px;">Snapshot Taken
+                    At: {{ selectedSnapshot.timestamp }}</div>
                 <state-node v-for="node in tree.children" :node="node" :callbacks="callbacks" :key="node.id">
                 </state-node>
             </el-col>
@@ -28,19 +29,8 @@
         <el-dialog
                 :title="dialogTitle"
                 :visible.sync="dialogVisible"
-                width="90%">
-            <table border="1">
-                <thead>
-                <th>Field</th>
-                <th>Value</th>
-                </thead>
-                <tbody>
-                <tr v-for="(value, key) in dialogContent">
-                    <td>{{key}}</td>
-                    <td>{{value}}</td>
-                </tr>
-                </tbody>
-            </table>
+                :fullscreen="true">
+            <viz :addrMap="addrMap"></viz>
         </el-dialog>
     </div>
 </script>
@@ -77,36 +67,37 @@
             }
             var v = object[k];
             if (Array.isArray(v)) {
-                var childNode = this.addChild({label: label, addrMap:addrMap});
+                var childNode = this.addChild({label: label, addrMap: addrMap});
                 childNode.addObject(v, addrMap);
             } else if (v === null) {
-                this.addChild({label: label, addrMap:addrMap, value: '<null>', isLeaf: true});
+                this.addChild({label: label, addrMap: addrMap, value: '<null>', isLeaf: true});
                 break;
             } else {
                 this.addValue(label, v, addrMap)
             }
         }
     };
-    Node.prototype.addValue = function(label, v, addrMap) {
+    Node.prototype.addValue = function (label, v, addrMap) {
         switch (typeof v) {
             case 'string':
-                this.addChild({label: label, addrMap:addrMap, value: v, isLeaf: true});
+                this.addChild({label: label, addrMap: addrMap, value: v, isLeaf: true});
                 break;
             case 'boolean':
-                this.addChild({label: label, addrMap:addrMap, value: '' + v, isLeaf: true});
+                this.addChild({label: label, addrMap: addrMap, value: '' + v, isLeaf: true});
                 break;
             case 'number':
-                this.addChild({label: label, addrMap:addrMap, value: '' + v, isLeaf: true});
+                this.addChild({label: label, addrMap: addrMap, value: '' + v, isLeaf: true});
                 break;
             case 'object':
                 if (v.__root__) {
                     var childNode = this.addChild({
-                        label: label, addrMap:addrMap, isDumpVar:true, data:v.__root__});
+                        label: label, addrMap: v, isDumpVar: true, data: v.__root__
+                    });
                     childNode.addObject(v.__root__, v);
                 } else if (v.__ptr__) {
-                    this.addChild({label: label, addrMap:addrMap, data: v})
+                    this.addChild({label: label, addrMap: addrMap, data: v})
                 } else {
-                    var childNode = this.addChild({label: label, addrMap:addrMap});
+                    var childNode = this.addChild({label: label, addrMap: addrMap});
                     childNode.addObject(v, addrMap);
                 }
                 break;
@@ -126,7 +117,7 @@
                 expansion: {},
                 dialogVisible: false,
                 dialogTitle: '',
-                dialogContent: null
+                addrMap: null
             }
         },
         watch: {
@@ -153,7 +144,7 @@
                     var objectAddr = node.data.__ptr__;
                     node.data = null; // avoid reload children
                     var object = node.addrMap[objectAddr];
-                    if((typeof object) === 'object') {
+                    if ((typeof object) === 'object') {
                         node.addObject(object, node.addrMap);
                     } else {
                         node.addValue('value', object, node.addrMap);
@@ -165,7 +156,7 @@
             },
             visualize: function (node, event) {
                 event.stopPropagation();
-                this.dialogContent = node.data;
+                this.addrMap = node.addrMap;
                 this.dialogTitle = node.label;
                 this.dialogVisible = true;
             }

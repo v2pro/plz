@@ -1,0 +1,54 @@
+<script type="text/x-template" id="viz-struct-template">
+    <table border="1">
+        <thead>
+        <th colspan="2">{{title}}</th>
+        </thead>
+        <tbody>
+        <tr v-for="(value, key) in data">
+            <td>{{key}}</td>
+            <td v-if="!isPtr(value)">{{value}}</td>
+            <td v-if="isPtr(value)">
+                <el-button v-if="!(ptrState[value.__ptr__])"
+                           @click="showPtr(value.__ptr__)"
+                           icon="el-icon-plus" size="mini">
+                {{value.__ptr__}}
+                </el-button>
+                <el-button v-if="ptrState[value.__ptr__]"
+                           @click="hidePtr(value.__ptr__)"
+                           icon="el-icon-minus" size="mini">
+                {{value.__ptr__}}
+                </el-button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</script>
+<script>
+    Vue.component('viz-struct', {
+        template: '#viz-struct-template',
+        props: ['data', 'addrMap', 'title'],
+        data: function () {
+            return {
+                ptrState: {}
+            }
+        },
+        methods: {
+            isPtr: function (val) {
+                return val.__ptr__;
+            },
+            ptrBtnIcon: function (ptr) {
+                if (this.ptrState[ptr]) {
+                    return 'el-icon-minus';
+                }
+                return 'el-icon-plus';
+            },
+            showPtr: function (ptr) {
+                Vue.set(this.ptrState, ptr, true);
+                this.$emit('showPtr', ptr);
+            },
+            hidePtr: function (ptr) {
+                Vue.set(this.ptrState, ptr, false);
+            }
+        }
+    });
+</script>

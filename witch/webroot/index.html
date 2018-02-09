@@ -50,6 +50,7 @@
 <script src="http://cdn.jsdeliver.net/npm/vue/dist/vue.js"></script>
 <!-- 引入组件库 -->
 <script src="http://cdn.jsdeliver.net/npm/element-ui/lib/index.js"></script>
+<script src="http://cdn.jsdeliver.net/npm/vue-grid-layout/dist/vue-grid-layout.min.js"></script>
 <script src="http://cdn.jsdeliver.net/npm/vue-scrollto/vue-scrollto.js"></script>
 <script src="http://cdn.jsdeliver.net/npm/axios/dist/axios.min.js"></script>
 <!--http://www.iconfont.cn/collections/detail?spm=a313x.7781069.1998910419.d9df05512&cid=31-->
@@ -57,6 +58,8 @@
 {{ COMPONENTS }}
 <script>
     Vue.use(VueScrollTo);
+    Vue.component('grid-layout', VueGridLayout.GridLayout);
+    Vue.component('grid-item', VueGridLayout.GridItem);
     var $vue = new Vue({
         el: '#app',
         data: function() {
