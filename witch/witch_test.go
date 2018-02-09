@@ -5,31 +5,19 @@ import (
 	"math/rand"
 	"testing"
 	"time"
+	"expvar"
+	"github.com/v2pro/plz/dump"
 )
 
-type fakeStateExporter struct {
-}
-
-func (se *fakeStateExporter) ExportState() map[string]interface{} {
-	return map[string]interface{}{
-		"hello": []interface{}{"world1",
-			map[string]interface{}{
-				"level1-1": "val",
-				"level1-2": map[string]interface{}{
-					"level2": "val",
-				},
-				"level1-3": time.Now().UnixNano(),
-				"level1-4": nil,
-				"level1-5": true,
-			},
+func init() {
+	expvar.Publish("test", &dump.Var{
+		Object: map[string]string{
+			"hello": "world",
 		},
-		"myself": se,
-	}
-
+	})
 }
 
 func Test_witch(t *testing.T) {
-	countlog.RegisterStateExporter("fake", &fakeStateExporter{})
 	fakeValues := []string{"tom", "jerry", "william", "lily"}
 	Start("192.168.3.33:8318")
 	go func() {

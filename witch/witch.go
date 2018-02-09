@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"github.com/v2pro/plz/countlog/output"
 	"github.com/v2pro/plz/countlog/output/json"
+	"expvar"
 )
 
 var files = []string{
@@ -24,6 +25,7 @@ var Mux = &http.ServeMux{}
 
 func init() {
 	Mux.HandleFunc("/witch/more-events", moreEvents)
+	Mux.Handle("/witch/expvar", expvar.Handler())
 	Mux.HandleFunc("/witch/", homepage)
 }
 
