@@ -10,6 +10,9 @@ import (
 	"github.com/v2pro/plz/countlog/output"
 	"github.com/v2pro/plz/countlog/output/json"
 	"expvar"
+	"path"
+	"runtime"
+	"reflect"
 )
 
 var files = []string{
@@ -66,6 +69,38 @@ func initViewerHtml() error {
 	return nil
 }
 
+var isDebug = true
+var thisFile string
+
+func init() {
+	pc := reflect.ValueOf(loadDebugViewerHtml).Pointer()
+	thisFile, _ = runtime.FuncForPC(pc).FileLine(pc)
+}
+
+func loadDebugViewerHtml() ([]byte, error) {
+	dir := path.Join(path.Dir(thisFile), "webroot")
+	indexHtml, err := ioutil.ReadFile(path.Join(dir, "index.html"))
+	if err != nil {
+		countlog.Error("event!witch.failed to read index.html", "err", err)
+		return nil, err
+	}
+	components := []byte{}
+	for _, file := range files {
+		fileHtml, err := ioutil.ReadFile(path.Join(dir, file))
+		if err != nil {
+			countlog.Error("event!witch.failed to read file", "err", err, "file", file)
+			return nil, err
+		}
+		components = append(components, fileHtml...)
+	}
+	components = append(components, `
+	<script>
+		window.isDebug = true;
+	</script>
+	`...)
+	return bytes.Replace(indexHtml, []byte("{{ COMPONENTS }}"), components, -1), nil
+}
+
 func Start(addr string) {
 	err := initViewerHtml()
 	if err != nil {
@@ -87,5 +122,14 @@ func Start(addr string) {
 
 func homepage(respWriter http.ResponseWriter, req *http.Request) {
 	setCurrentGoRoutineIsKoala()
-	respWriter.Write(viewerHtml)
+	if !isDebug {
+		respWriter.Write(viewerHtml)
+		return
+	}
+	debugViewerHtml, err := loadDebugViewerHtml()
+	if err != nil {
+		respWriter.Write([]byte(err.Error()))
+	} else {
+		respWriter.Write(debugViewerHtml)
+	}
 }

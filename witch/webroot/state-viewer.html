@@ -21,7 +21,7 @@
                 </state-node>
             </el-col>
             <el-col :span="4" style="pdding-right: 1em; padding-left: 1em;">
-                <snapshots :selectedSnapshot.sync="selectedSnapshot"></snapshots>
+                <snapshots ref="snapshots" :selectedSnapshot.sync="selectedSnapshot"></snapshots>
             </el-col>
         </el-row>
     </div>

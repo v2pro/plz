@@ -43,7 +43,7 @@
 </head>
 <body>
 <div id="app">
-    <ide></ide>
+    <ide ref="ide"></ide>
 </div>
 </body>
 <!-- 先引入 Vue -->
@@ -61,6 +61,16 @@
         el: '#app',
         data: function() {
             return { visible: false }
+        },
+        mounted: function() {
+            if (!window.isDebug) {
+                return
+            }
+            var ide = this.$refs.ide;
+            ide.switchView('state');
+            window.setTimeout(function() {
+                ide.$refs.stateViewer.$refs.snapshots.pollCurrentState();
+            }, 100)
         }
     });
     axios.interceptors.response.use(function (response) {
