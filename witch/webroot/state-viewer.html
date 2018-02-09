@@ -44,13 +44,14 @@
     Node.prototype.addChild = function (options) {
         var child = new Node(options);
         child.root = this.root;
+        child.addrMap = options.addrMap;
         child.id = this.id + '>' + options.label;
         child.indention = this.indention + 18;
         this.children.push(child);
         this.root.all_nodes[child.id] = child;
         return child;
     };
-    Node.prototype.addObject = function (object) {
+    Node.prototype.addObject = function (object, addrMap) {
         var isArray = Array.isArray(object);
         for (var k in object) {
             var label = k;
@@ -59,32 +60,38 @@
             }
             var v = object[k];
             if (Array.isArray(v)) {
-                var childNode = this.addChild({label: label});
-                childNode.addObject(v);
+                var childNode = this.addChild({label: label, addrMap:addrMap});
+                childNode.addObject(v, addrMap);
             } else if (v === null) {
-                this.addChild({label: label, value: '<null>', isLeaf: true});
+                this.addChild({label: label, addrMap:addrMap, value: '<null>', isLeaf: true});
                 break;
             } else {
-                switch (typeof v) {
-                    case 'string':
-                        this.addChild({label: label, value: v, isLeaf: true});
-                        break;
-                    case 'boolean':
-                        this.addChild({label: label, value: '' + v, isLeaf: true});
-                        break;
-                    case 'number':
-                        this.addChild({label: label, value: '' + v, isLeaf: true});
-                        break;
-                    case 'object':
-                        if (v.__object_address__) {
-                            this.addChild({label: label, data: v});
-                        } else {
-                            var childNode = this.addChild({label: label});
-                            childNode.addObject(v);
-                        }
-                        break;
-                }
+                this.addValue(label, v, addrMap)
             }
+        }
+    };
+    Node.prototype.addValue = function(label, v, addrMap) {
+        switch (typeof v) {
+            case 'string':
+                this.addChild({label: label, addrMap:addrMap, value: v, isLeaf: true});
+                break;
+            case 'boolean':
+                this.addChild({label: label, addrMap:addrMap, value: '' + v, isLeaf: true});
+                break;
+            case 'number':
+                this.addChild({label: label, addrMap:addrMap, value: '' + v, isLeaf: true});
+                break;
+            case 'object':
+                if (v.__root__) {
+                    var childNode = this.addChild({label: label, addrMap:addrMap});
+                    childNode.addObject(v.__root__, v);
+                } else if (v.__ptr__) {
+                    this.addChild({label: label, addrMap:addrMap, data: v})
+                } else {
+                    var childNode = this.addChild({label: label, addrMap:addrMap});
+                    childNode.addObject(v, addrMap);
+                }
+                break;
         }
     };
     Vue.component('state-node', {
@@ -106,12 +113,11 @@
                 this.tree = new Node({id: 'root'});
                 this.tree.root = this.tree;
                 this.tree.all_nodes = {};
-                console.log(this.selectedSnapshot.data);
                 this.tree.addObject(this.selectedSnapshot.data);
                 for (var nodeId in this.expansion) {
                     var node = this.tree.all_nodes[nodeId];
                     if (node) {
-                        this.expandStateExporter(node);
+                        this.expandPtr(node);
                     }
                 }
             }
@@ -119,14 +125,18 @@
         methods: {
             onNodeClick: function (node) {
                 Vue.set(this.expansion, node.id, !this.expansion[node.id]);
-                this.expandStateExporter(node);
+                this.expandPtr(node);
             },
-            expandStateExporter: function (node) {
-                if (node.data && node.data.__object_address__) {
-                    var objectAddr = node.data.__object_address__;
+            expandPtr: function (node) {
+                if (node.data && node.data.__ptr__) {
+                    var objectAddr = node.data.__ptr__;
                     node.data = null; // avoid reload children
-                    var object = this.selectedSnapshot.data[objectAddr];
-                    node.addObject(object);
+                    var object = node.addrMap[objectAddr];
+                    if((typeof object) === 'object') {
+                        node.addObject(object, node.addrMap);
+                    } else {
+                        node.addValue('value', object, node.addrMap);
+                    }
                 }
             },
             isExpanded: function (node) {
