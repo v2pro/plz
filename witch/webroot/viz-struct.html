@@ -1,66 +1,60 @@
 <script type="text/x-template" id="viz-struct-template">
-    <table border="1">
-        <thead>
-        <th colspan="2">{{ptr}}</th>
-        </thead>
-        <tbody>
-        <tr v-for="(value, key) in data">
-            <td>{{key}}</td>
-            <td v-if="!isPtr(value)">{{value}}</td>
-            <td v-if="isPtr(value)">
-                <el-button v-if="!(ptrState[value.__ptr__])"
-                           @click="showPtr(key, value.__ptr__, $event)"
-                           icon="el-icon-plus" size="mini">
-                {{value.__ptr__}}
-                </el-button>
-                <el-button v-if="ptrState[value.__ptr__]"
-                           @click="hidePtr(value.__ptr__)"
-                           icon="el-icon-minus" size="mini">
-                {{value.__ptr__}}
-                </el-button>
+    <table>
+        <tr>
+            <td colspan="2">
+                <div class="vue-draggable-handle"></div>
+                <span class="no-drag">{{ptr}}</span>
             </td>
+            <viz-value v-for="(value, field) in data"
+                       :field="field" :value="value" :key="field"
+                       :ptr="ptr"
+                       @showPtr="showPtr" @hidePtr="hidePtr">
+            </viz-value>
         </tr>
         </tbody>
     </table>
 </script>
+<style>
+    .vue-grid-layout table, th, td {
+        border: 1px dashed #BBB;
+    }
+
+    .vue-grid-layout table {
+        border-bottom: 0;
+        border-left: 0;
+    }
+
+    .vue-grid-layout td, th {
+        border-top: 0;
+        border-right: 0;
+        padding-left: 4px;
+    }
+
+    .vue-draggable-handle {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        top: 6px;
+        left: 8px;
+        background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><circle cx='5' cy='5' r='5' fill='#999999'/></svg>") no-repeat;
+        background-position: bottom right;
+        padding: 0 8px 8px 0;
+        background-repeat: no-repeat;
+        background-origin: content-box;
+        box-sizing: border-box;
+        cursor: pointer;
+    }
+</style>
 <script>
     Vue.component('viz-struct', {
         template: '#viz-struct-template',
         props: ['data', 'addrMap', 'ptr'],
-        data: function () {
-            return {
-                ptrState: {}
-            }
-        },
         methods: {
-            isPtr: function (val) {
-                return val.__ptr__;
+            showPtr: function (e) {
+                this.$emit('showPtr', e);
             },
-            ptrBtnIcon: function (ptr) {
-                if (this.ptrState[ptr]) {
-                    return 'el-icon-minus';
-                }
-                return 'el-icon-plus';
-            },
-            showPtr: function (path, ptr, event) {
-                Vue.set(this.ptrState, ptr, true);
-                var connectorId = this.ptr + '>' + path + '>' + ptr;
-                var sourceElem = event.target.parentElement;
-                if (sourceElem.tagName !== 'TD') {
-                    sourceElem = sourceElem.parentElement;
-                }
-                if (sourceElem.tagName !== 'TD') {
-                    sourceElem = sourceElem.parentElement;
-                }
-                this.$emit('showPtr', {
-                    connectorId: connectorId,
-                    sourcePtr: this.ptr,
-                    targetPtr: ptr,
-                    sourceElem: sourceElem
-                });
-            },
-            hidePtr: function (ptr) {
-                Vue.set(this.ptrState, ptr, false);
+            hidePtr: function (e) {
+                this.$emit('hidePtr', e);
             }
         }
     });
