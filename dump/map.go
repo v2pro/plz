@@ -40,6 +40,8 @@ type bmap struct {
 	// Followed by an overflow pointer.
 }
 
+var topHashEncoder = jsonfmt.EncoderOf(reflect.ArrayOf(bucketCnt, reflect.TypeOf(uint8(0))))
+
 type mapEncoder struct {
 	bucketSize   uintptr
 	keysSize     uintptr
@@ -50,9 +52,11 @@ type mapEncoder struct {
 func newMapEncoder(api jsonfmt.API, valType reflect.Type) *mapEncoder {
 	keysEncoder := api.EncoderOf(reflect.ArrayOf(bucketCnt, valType.Key()))
 	elemsEncoder := api.EncoderOf(reflect.ArrayOf(bucketCnt, valType.Elem()))
+	keysSize := valType.Key().Size() * bucketCnt
+	elemsSize := valType.Elem().Size() * bucketCnt
 	return &mapEncoder{
-		bucketSize:   0,
-		keysSize:     valType.Key().Size() * bucketCnt,
+		bucketSize:   bucketCnt + keysSize + elemsSize + 8,
+		keysSize:     keysSize,
 		keysEncoder:  keysEncoder,
 		elemsEncoder: elemsEncoder,
 	}
@@ -83,9 +87,16 @@ func (encoder *mapEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.
 	space = append(space, extraPtr...)
 	space = append(space, `"}}`...)
 	bucketsCount := int(math.Pow(2, float64(hmap.B)))
-	bucketsData := encoder.encodeBuckets(ctx, nil, bucketsCount, hmap.buckets)
-	addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
-	addrMap[bucketsPtr] = json.RawMessage(bucketsData)
+	if hmap.buckets != nil {
+		bucketsData := encoder.encodeBuckets(ctx, nil, bucketsCount, hmap.buckets)
+		addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
+		addrMap[bucketsPtr] = json.RawMessage(bucketsData)
+	}
+	if hmap.oldbuckets != nil {
+		oldbucketsData := encoder.encodeBuckets(ctx, nil, bucketsCount / 2, hmap.oldbuckets)
+		addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
+		addrMap[oldbucketsPtr] = json.RawMessage(oldbucketsData)
+	}
 	return space
 }
 
@@ -106,12 +117,21 @@ func (encoder *mapEncoder) encodeBuckets(ctx context.Context, space []byte, coun
 func (encoder *mapEncoder) encodeBucket(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	bmap := (*bmap)(ptr)
 	space = append(space, `{"tophash":`...)
-	space = jsonfmt.WriteBytes(space, bmap.tophash[:])
+	space = topHashEncoder.Encode(ctx, space, jsonfmt.PtrOf(bmap.tophash))
 	space = append(space, `,"keys":`...)
 	keysPtr := uintptr(ptr) + bucketCnt
 	space = encoder.keysEncoder.Encode(ctx, space, unsafe.Pointer(keysPtr))
 	space = append(space, `,"elems":`...)
 	space = encoder.elemsEncoder.Encode(ctx, space, unsafe.Pointer(keysPtr+encoder.keysSize))
-	space = append(space, '}')
+	space = append(space, `,"overflow":{"__ptr__":"`...)
+	overflowPtr := *(*uintptr)(unsafe.Pointer(uintptr(ptr) + encoder.bucketSize - 8))
+	overflowPtrStr := ptrToStr(overflowPtr)
+	space = append(space, overflowPtrStr...)
+	space = append(space, `"}}`...)
+	if overflowPtr != 0 {
+		addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
+		overflow := encoder.encodeBucket(ctx, nil, unsafe.Pointer(overflowPtr))
+		addrMap[overflowPtrStr] = json.RawMessage(overflow)
+	}
 	return space
 }

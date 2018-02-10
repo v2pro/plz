@@ -82,6 +82,11 @@
                 ptrState: {'__root__': true}
             }
         },
+        watch: {
+            'addrMap': function() {
+                Object.assign(this.$data, this.$options.data());
+            }
+        },
         methods: {
             showPtr: function (e) {
                 var connector = this.connectors[e.connectorId];
