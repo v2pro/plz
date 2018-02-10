@@ -31,6 +31,16 @@ func (v Var) String() string {
 	return string(output)
 }
 
+type VarSnapshot string
+
+func Snapshot(obj interface{}) VarSnapshot {
+	return VarSnapshot(Var{Object: obj}.String())
+}
+
+func (snapshot VarSnapshot) String() string {
+	return string(snapshot)
+}
+
 func ptrToStr(ptr uintptr) string {
 	return string(jsonfmt.WriteUint64(nil, uint64(ptr)))
 }
