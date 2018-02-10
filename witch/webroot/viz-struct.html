@@ -1,54 +1,18 @@
 <script type="text/x-template" id="viz-struct-template">
     <table>
         <tr>
-            <td colspan="2">
-                <div class="vue-draggable-handle"></div>
-                <span class="no-drag">{{ptr}}</span>
+            <td v-for="(value, field) in data" :key="field">
+                <div>{{ field }}</div>
+                <viz-value :data="value" :path="path + ' > ' + field"
+                           @showPtr="showPtr" @hidePtr="hidePtr"/>
             </td>
-            <viz-value v-for="(value, field) in data"
-                       :field="field" :value="value" :key="field"
-                       :ptr="ptr"
-                       @showPtr="showPtr" @hidePtr="hidePtr">
-            </viz-value>
         </tr>
-        </tbody>
     </table>
 </script>
-<style>
-    .vue-grid-layout table, th, td {
-        border: 1px dashed #BBB;
-    }
-
-    .vue-grid-layout table {
-        border-bottom: 0;
-        border-left: 0;
-    }
-
-    .vue-grid-layout td, th {
-        border-top: 0;
-        border-right: 0;
-        padding-left: 4px;
-    }
-
-    .vue-draggable-handle {
-        position: absolute;
-        width: 24px;
-        height: 24px;
-        top: 6px;
-        left: 8px;
-        background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><circle cx='5' cy='5' r='5' fill='#999999'/></svg>") no-repeat;
-        background-position: bottom right;
-        padding: 0 8px 8px 0;
-        background-repeat: no-repeat;
-        background-origin: content-box;
-        box-sizing: border-box;
-        cursor: pointer;
-    }
-</style>
 <script>
     Vue.component('viz-struct', {
         template: '#viz-struct-template',
-        props: ['data', 'addrMap', 'ptr'],
+        props: ['data','path'],
         methods: {
             showPtr: function (e) {
                 this.$emit('showPtr', e);

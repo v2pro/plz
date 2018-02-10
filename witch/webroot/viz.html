@@ -2,7 +2,7 @@
     <grid-layout
             :layout="layout"
             :col-num="24"
-            :row-height="20"
+            :row-height="24"
             :is-draggable="true"
             :is-resizable="true"
             :is-mirrored="false"
@@ -11,22 +11,15 @@
             :use-css-transforms="false">
         <grid-item v-for="item in layout"
                    v-show="ptrState[item.i]"
-                   :x="item.x"
-                   :y="item.y"
-                   :w="item.w"
-                   :h="item.h"
-                   :i="item.i"
-                   :key="item.i"
-                   :ref="item.i"
+                   :x="item.x" :y="item.y"
+                   :w="item.w" :h="item.h"
+                   :i="item.i" :key="item.i" :ref="item.i"
                    drag-allow-from=".vue-draggable-handle"
                    drag-ignore-from=".no-drag"
                    @move="onMove" @resize="onMove"
                    @moved="onMoved" @resized="onMoved">
-            <viz-struct v-if="addrMap" :data="addrMap[item.i]"
-                        :addrMap="addrMap" :ptr="item.i"
-                        @showPtr="showPtr"
-                        @hidePtr="hidePtr"
-                        style="width:100%;height:100%;"/>
+            <viz-item :addrMap="addrMap" :ptr="item.i"
+                      @showPtr="showPtr" @hidePtr="hidePtr"/>
         </grid-item>
         <svg style="position:absolute;left:0px;top:0px;pointer-events: none;"
              width="100%" height="100%">
@@ -46,6 +39,37 @@
         </svg>
     </grid-layout>
 </script>
+<style>
+    table.viz-item, .viz-item table, .viz-item th, .viz-item td {
+        border: 1px dashed #BBB;
+    }
+
+    table.viz-item, .viz-item table {
+        border-bottom: 0;
+        border-left: 0;
+    }
+
+    .viz-item td, .viz-item th {
+        border-top: 0;
+        border-right: 0;
+        padding-left: 4px;
+    }
+
+    .vue-draggable-handle {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        top: 0px;
+        left: 0px;
+        background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><circle cx='5' cy='5' r='5' fill='#999999'/></svg>") no-repeat;
+        background-position: bottom right;
+        padding: 0 8px 8px 0;
+        background-repeat: no-repeat;
+        background-origin: content-box;
+        box-sizing: border-box;
+        cursor: pointer;
+    }
+</style>
 <script>
     Vue.component('viz', {
         template: '#viz-template',
@@ -69,9 +93,18 @@
                 }
                 Vue.set(this.ptrState, e.targetPtr, true);
                 var srcComp = this.$refs[e.sourcePtr][0];
-                this.layout.push({"x": 1, "y": srcComp.y + srcComp.h, "w": 8, "h": 2, "i": e.targetPtr});
+                this.layout.push({"x": 1, "y": srcComp.y + srcComp.h, "w": 2, "h": 2, "i": e.targetPtr});
                 var me = this;
                 this.$nextTick(function () {
+                    var comp = me.$refs[e.targetPtr][0];
+                    var compEl = comp.$el.getElementsByTagName('table')[0];
+                    var colWidth = document.documentElement.clientWidth / 24;
+                    for (var i = 0; i < me.layout.length; i++) {
+                        if (me.layout[i].i === e.targetPtr) {
+                            me.layout[i].h = 1 + parseInt(compEl.offsetHeight / 48);
+                            me.layout[i].w = 1 + parseInt(compEl.offsetWidth / colWidth);
+                        }
+                    }
                     me.updatePosition(e);
                     e.hidden = false;
                     Vue.set(me.connectors, e.connectorId, e);
@@ -97,7 +130,6 @@
                 connector.hidden = true;
                 connector.deleted = true;
                 var endpointConnectors = this.endpoints[e.targetPtr];
-                console.log(endpointConnectors);
                 if (!endpointConnectors) {
                     return;
                 }
@@ -145,11 +177,13 @@
                 }, 50);
             },
             updatePosition: function (connector) {
-                var sourceStyle = this.$refs[connector.sourcePtr][0].style;
+                var sourceComp = this.$refs[connector.sourcePtr][0];
+                var sourceStyle = sourceComp.style;
+                var pos = relativePos(connector.sourceElem, sourceComp.$el);
                 var x1 = parseInt(sourceStyle.left.slice(0, -2));
-                connector.x1 = x1 + connector.sourceElem.offsetLeft + connector.sourceElem.offsetWidth / 2;
+                connector.x1 = x1 + pos.left + connector.sourceElem.offsetWidth / 2;
                 var y1 = parseInt(sourceStyle.top.slice(0, -2));
-                connector.y1 = y1 + connector.sourceElem.offsetTop + connector.sourceElem.offsetHeight - 8;
+                connector.y1 = y1 + pos.top + connector.sourceElem.offsetHeight - 8;
                 var targetComp = this.$refs[connector.targetPtr][0];
                 var targetStyle = targetComp.style;
                 var x2 = parseInt(targetStyle.left.slice(0, -2));
@@ -181,4 +215,13 @@
             }
         }
     });
+    function relativePos(child, ancestor) {
+        if (child === ancestor) {
+            return {left: 0, top: 0}
+        }
+        var offset = relativePos(child.offsetParent, ancestor);
+        offset.left += child.offsetLeft;
+        offset.top += child.offsetTop;
+        return offset;
+    }
 </script>

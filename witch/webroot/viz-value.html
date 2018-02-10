@@ -1,74 +1,30 @@
 <script type="text/x-template" id="viz-value-template">
-<td>
-    <div>{{field}}</div>
-    <div v-if="value.__ptr__ === '0'">NULL</div>
-    <div v-else-if="!isPtr(value)">{{value}}</div>
-    <div v-else>
-        <el-button v-if="!(ptrState[value.__ptr__])"
-                   @click="showPtr(field, value.__ptr__, $event)"
-                   icon="el-icon-plus" size="mini">
-        {{value.__ptr__}}
-        </el-button>
-        <el-button v-if="ptrState[value.__ptr__]"
-                   @click="hidePtr(field, value.__ptr__, $event)"
-                   icon="el-icon-minus" size="mini">
-        {{value.__ptr__}}
-        </el-button>
-    </div>
-</td>
+    <component :is="view()" @showPtr="showPtr" @hidePtr="hidePtr"
+               :data="data" :path="path">
+    </component>
 </script>
 <script>
     Vue.component('viz-value', {
         template: '#viz-value-template',
-        props: ['field', 'value', 'ptr'],
-        data: function () {
-            return {
-                ptrState: {}
-            }
-        },
+        props: ['data', 'path'],
         methods: {
-            isPtr: function (val) {
-                return val.__ptr__;
+            view: function () {
+                if (Array.isArray(this.data)) {
+                    return 'viz-array'
+                }
+                if ((typeof this.data) === 'object') {
+                    if (this.data.__ptr__) {
+                        return 'viz-ptr'
+                    }
+                    return 'viz-struct'
+                }
+                return 'viz-plain';
             },
-            ptrBtnIcon: function (ptr) {
-                if (this.ptrState[ptr]) {
-                    return 'el-icon-minus';
-                }
-                return 'el-icon-plus';
+            showPtr: function (e) {
+                this.$emit('showPtr', e);
             },
-            showPtr: function (path, ptr, event) {
-                Vue.set(this.ptrState, ptr, true);
-                var connectorId = this.ptr + '>' + path + '>' + ptr;
-                var sourceElem = event.target.parentElement;
-                if (sourceElem.tagName !== 'TD') {
-                    sourceElem = sourceElem.parentElement;
-                }
-                if (sourceElem.tagName !== 'TD') {
-                    sourceElem = sourceElem.parentElement;
-                }
-                this.$emit('showPtr', {
-                    connectorId: connectorId,
-                    sourcePtr: this.ptr,
-                    targetPtr: ptr,
-                    sourceElem: sourceElem
-                });
-            },
-            hidePtr: function (path, ptr, event) {
-                Vue.set(this.ptrState, ptr, false);
-                var connectorId = this.ptr + '>' + path + '>' + ptr;
-                var sourceElem = event.target.parentElement;
-                if (sourceElem.tagName !== 'TD') {
-                    sourceElem = sourceElem.parentElement;
-                }
-                if (sourceElem.tagName !== 'TD') {
-                    sourceElem = sourceElem.parentElement;
-                }
-                this.$emit('hidePtr', {
-                    connectorId: connectorId,
-                    sourcePtr: this.ptr,
-                    targetPtr: ptr,
-                    sourceElem: sourceElem
-                });
+            hidePtr: function (e) {
+                this.$emit('hidePtr', e);
             }
         }
     });

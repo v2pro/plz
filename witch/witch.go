@@ -19,7 +19,9 @@ var files = []string{
 	"ide.html",
 	"log-viewer.html", "filters.html", "data-sources.html", "columns.html",
 	"state-viewer.html", "snapshots.html",
-	"viz.html", "viz-struct.html", "viz-value.html"}
+	"viz.html", "viz-item.html", "viz-value.html",
+	"viz-struct.html", "viz-array.html",
+	"viz-plain.html", "viz-ptr.html"}
 
 //go:generate $GOPATH/bin/statik -src $PWD/webroot
 
