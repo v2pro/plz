@@ -6,21 +6,40 @@
             :is-draggable="true"
             :is-resizable="true"
             :is-mirrored="false"
-            :vertical-compact="true"
+            :vertical-compact="false"
             :margin="[10, 10]"
-            :use-css-transforms="true">
+            :use-css-transforms="false">
         <grid-item v-for="item in layout"
                    :x="item.x"
                    :y="item.y"
                    :w="item.w"
                    :h="item.h"
                    :i="item.i"
-                   :key="item.i">
+                   :key="item.i"
+                   :ref="item.i"
+                   @move="onMove" @resize="onMove"
+                   @moved="onMoved" @resized="onMoved">
             <viz-struct v-if="addrMap" :data="addrMap[item.i]"
-                        :addrMap="addrMap" :title="item.i"
+                        :addrMap="addrMap" :ptr="item.i"
                         @showPtr="showPtr"
                         style="width:100%;height:100%;"/>
         </grid-item>
+        <svg style="position:absolute;left:0px;top:0px;pointer-events: none;"
+             width="100%" height="100%">
+            <defs>
+                <marker id="triangle" viewBox="0 0 10 10" refX="0" refY="5"
+                        markerUnits="strokeWidth" markerWidth="10"
+                        markerHeight="8" orient="auto">
+                    <path d="M 0 0 L 10 5 L 0 10 z"></path>
+                </marker>
+            </defs>
+            <g v-for="(connector, connectorId) in connectors"
+               :key="connectorId" v-show="!connector.hidden">
+                <circle :cx="connector.x1" :cy="connector.y1" r="3" fill="#456"
+                        stroke="none"/>
+                <path :d="curve(connector)" fill="none" stroke="#456" marker-end="url(#triangle)"/>
+            </g>
+        </svg>
     </grid-layout>
 </script>
 <script>
@@ -29,12 +48,89 @@
         props: ['addrMap'],
         data: function () {
             return {
-                layout: [{"x": 0, "y": 0, "w": 4, "h": 5, "i": "__root__"}]
+                layout: [{"x": 0, "y": 0, "w": 3, "h": 5, "i": "__root__"}],
+                connectors: {},
+                endpoints: {}
             }
         },
         methods: {
-            showPtr: function(ptr) {
-                this.layout.push({"x": 5, "y": 5, "w": 4, "h": 9, "i": ptr})
+            showPtr: function (e) {
+                this.layout.push({"x": 5, "y": 5, "w": 4, "h": 9, "i": e.targetPtr});
+                var me = this;
+                this.$nextTick(function () {
+                    var connector = me.connectors[e.connectorId];
+                    if (connector) {
+                        connector.hidden = false;
+                        return;
+                    }
+                    me.updatePosition(e);
+                    Vue.set(me.connectors, e.connectorId, e);
+                    var endpointConnectors = me.endpoints[e.sourcePtr];
+                    if (endpointConnectors) {
+                        endpointConnectors.push(e);
+                    } else {
+                        Vue.set(me.endpoints, e.sourcePtr, [e]);
+                    }
+                    endpointConnectors = me.endpoints[e.targetPtr];
+                    if (endpointConnectors) {
+                        endpointConnectors.push(e);
+                    } else {
+                        Vue.set(me.endpoints, e.targetPtr, [e]);
+                    }
+                });
+            },
+            onMove: function (ptr) {
+                var connectors = this.endpoints[ptr];
+                if (!connectors) {
+                    return;
+                }
+                for (var i = 0; i <connectors.length; i++) {
+                    connectors[i].hidden = true;
+                }
+            },
+            onMoved: function (ptr) {
+                var me = this;
+                window.setTimeout(function () {
+                    var connectors = me.endpoints[ptr];
+                    if (!connectors) {
+                        return;
+                    }
+                    for (var i = 0; i <connectors.length; i++) {
+                        var connector = connectors[i];
+                        connector.hidden = false;
+                        me.updatePosition(connector);
+                    }
+                }, 50);
+            },
+            updatePosition: function (connector) {
+                var sourceStyle = this.$refs[connector.sourcePtr][0].style;
+                var x1 = parseInt(sourceStyle.left.slice(0, -2));
+                connector.x1 = x1 + connector.sourceElem.offsetLeft + connector.sourceElem.offsetWidth / 2;
+                var y1 = parseInt(sourceStyle.top.slice(0, -2));
+                connector.y1 = y1 + connector.sourceElem.offsetTop + connector.sourceElem.offsetHeight - 8;
+                var targetComp = this.$refs[connector.targetPtr][0];
+                var targetStyle = targetComp.style;
+                var x2 = parseInt(targetStyle.left.slice(0, -2));
+                connector.x2 = x2 + targetComp.$el.offsetWidth / 2;
+                var y2 = parseInt(targetStyle.top.slice(0, -2));
+                connector.y2 = y2;
+            },
+            curve: function (connector) {
+                var tension = -0.2;
+                var x1 = connector.x1;
+                var y1 = connector.y1;
+                var x2 = connector.x2;
+                var y2 = connector.y2;
+                var delta = (x2 - x1) * tension;
+                var hx1 = x1;
+                var hy1 = y1 + delta;
+                var hx2 = x2;
+                var hy2 = y2 - delta;
+                var path = "M " + x1 + " " + y1 +
+                        " C " + hx1 + " " + hy1
+                        + " " + hx2 + " " + hy2
+                        + " " + x2 + " " + y2;
+                return path;
             }
         }
     });
