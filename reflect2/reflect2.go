@@ -12,7 +12,7 @@ type Type interface {
 	UnsafeNew() unsafe.Pointer
 	// Type1 returns reflect.Type
 	Type1() reflect.Type
-	FieldByName(fieldName string) StructField
+	FieldByName(name string) StructField
 }
 
 type StructField interface {
