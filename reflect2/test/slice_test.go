@@ -19,4 +19,11 @@ func Test_slice(t *testing.T) {
 		obj.([]int)[4] = 20
 		return obj
 	}))
+	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+		obj := []int{1, 2}
+		valType := api.TypeOf(obj).(reflect2.SliceType)
+		valType.Set(&obj, 0, 100)
+		valType.Set(&obj, 1, 20)
+		return obj
+	}))
 }
