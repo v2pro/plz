@@ -27,6 +27,25 @@ func makemap(rtype unsafe.Pointer, cap int) (m unsafe.Pointer)
 //go:noescape
 func mapassign(rtype unsafe.Pointer, m unsafe.Pointer, key, val unsafe.Pointer)
 
+// m escapes into the return value, but the caller of mapiterinit
+// doesn't let the return value escape.
+//go:noescape
+//go:linkname mapiterinit reflect.mapiterinit
+func mapiterinit(rtype unsafe.Pointer, m unsafe.Pointer) *hiter
+
+//go:noescape
+//go:linkname mapiternext reflect.mapiternext
+func mapiternext(it *hiter)
+
+// A hash iteration structure.
+// If you modify hiter, also change cmd/internal/gc/reflect.go to indicate
+// the layout of this structure.
+type hiter struct {
+	key   unsafe.Pointer // Must be in first position.  Write nil to indicate iteration end (see cmd/internal/gc/range.go).
+	value unsafe.Pointer // Must be in second position (see cmd/internal/gc/range.go).
+	// rest fields are ignored
+}
+
 type unsafeType struct {
 	reflect.Type
 	rtype  unsafe.Pointer

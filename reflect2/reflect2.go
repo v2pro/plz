@@ -50,6 +50,13 @@ type MapType interface {
 	UnsafeMakeMap(cap int) unsafe.Pointer
 	Set(obj interface{}, key interface{}, elem interface{})
 	UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer)
+	Iterate(obj interface{}) MapIterator
+	UnsafeIterate(obj unsafe.Pointer) *UnsafeMapIterator
+}
+
+type MapIterator interface {
+	HasNext() bool
+	Next() (key interface{}, elem interface{})
 }
 
 type Config struct {
