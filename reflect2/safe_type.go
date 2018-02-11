@@ -44,3 +44,11 @@ func (type2 *safeType) MakeSlice(length int, cap int) interface{} {
 func (type2 *safeType) UnsafeMakeSlice(length int, cap int) unsafe.Pointer {
 	panic("does not support unsafe operation")
 }
+
+func (type2 *safeType) Append(obj interface{}, elem interface{}) interface{} {
+	return reflect.Append(reflect.ValueOf(obj), reflect.ValueOf(elem)).Interface()
+}
+
+func (type2 *safeType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer{
+	panic("does not support unsafe operation")
+}

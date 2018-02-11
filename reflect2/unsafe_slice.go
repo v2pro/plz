@@ -44,3 +44,37 @@ func (type2 *unsafeSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsa
 	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
 	typedmemmove(type2.elemRType, elemPtr, elem)
 }
+
+func (type2 *unsafeSliceType) Append(obj interface{}, elem interface{}) interface{} {
+	ptr := type2.UnsafeAppend(toEface(obj).data, toEface(elem).data)
+	return packEface(type2.rtype, ptr)
+}
+
+func (type2 *unsafeSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer{
+	header := (*sliceHeader)(obj)
+	if header.Cap == header.Len {
+		newLen := header.Len + 1
+		newCap := calcNewCap(header.Cap, header.Len, newLen)
+		newHeader := (*sliceHeader)(type2.UnsafeMakeSlice(header.Len, newCap))
+		typedslicecopy(type2.elemRType, *newHeader, *header)
+		header = newHeader
+	}
+	type2.UnsafeSet(unsafe.Pointer(header), header.Len, elem)
+	header.Len += 1
+	return unsafe.Pointer(header)
+}
+
+func calcNewCap(cap int, oldLen int, newLen int) int {
+	if cap == 0 {
+		cap = newLen
+	} else {
+		for cap < newLen {
+			if oldLen < 1024 {
+				cap += cap
+			} else {
+				cap += cap / 4
+			}
+		}
+	}
+	return cap
+}

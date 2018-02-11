@@ -14,20 +14,22 @@ type Type interface {
 	Type1() reflect.Type
 }
 
-type ReadonlyListType interface {
+type StringType interface {
 	Type
 }
 
-type ListType interface {
-	ReadonlyListType
+type ArrayType interface {
+	Type
 	Set(obj interface{}, index int, elem interface{})
 	UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer)
 }
 
 type SliceType interface {
-	ListType
+	ArrayType
 	MakeSlice(length int, cap int) interface{}
 	UnsafeMakeSlice(length int, cap int) unsafe.Pointer
+	Append(obj interface{}, elem interface{}) interface{}
+	UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer
 }
 
 type StructType interface {
