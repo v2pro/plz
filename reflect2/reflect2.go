@@ -59,6 +59,12 @@ type MapIterator interface {
 	Next() (key interface{}, elem interface{})
 }
 
+type PointerType interface {
+	Type
+	Get(obj interface{}) interface{}
+	UnsafeGet(obj unsafe.Pointer) unsafe.Pointer
+}
+
 type Config struct {
 	UseSafeImplementation bool
 }
@@ -79,7 +85,6 @@ type API interface {
 var ConfigUnsafe = Config{UseSafeImplementation:false}.Froze()
 var ConfigSafe = Config{UseSafeImplementation:true}.Froze()
 
-
 func (cfg *frozenConfig) TypeOf(obj interface{}) Type {
 	valType := reflect.TypeOf(obj)
 	return cfg.Type2(valType)
@@ -87,8 +92,11 @@ func (cfg *frozenConfig) TypeOf(obj interface{}) Type {
 
 func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 	if cfg.useSafeImplementation {
-		if type1.Kind() == reflect.Map {
+		switch type1.Kind() {
+		case reflect.Map:
 			return &safeMapType{safeType{Type: type1}}
+		case reflect.Ptr:
+			return &safePtrType{safeType{Type: type1}}
 		}
 		return &safeType{Type: type1}
 	}
@@ -103,6 +111,8 @@ func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 		return newUnsafeSliceType(type1)
 	case reflect.Map:
 		return newUnsafeMapType(type1)
+	case reflect.Ptr:
+		return newUnsafePointerType(type1)
 	}
 	panic("unsupported type: " + type1.String())
 }
