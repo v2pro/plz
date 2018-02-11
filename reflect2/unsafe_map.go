@@ -22,3 +22,11 @@ func (type2 *unsafeMapType) MakeMap(cap int) interface{} {
 func (type2 *unsafeMapType) UnsafeMakeMap(cap int) unsafe.Pointer {
 	return makemap(type2.rtype, cap)
 }
+
+func (type2 *unsafeMapType) Set(obj interface{}, key interface{}, elem interface{}) {
+	type2.UnsafeSet(toEface(obj).data, toEface(key).data, toEface(elem).data)
+}
+
+func (type2 *unsafeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
+	mapassign(type2.rtype, obj, key, elem)
+}

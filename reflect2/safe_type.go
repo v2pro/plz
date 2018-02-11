@@ -72,3 +72,15 @@ func (type2 *safeType) MakeMap(cap int) interface{} {
 func (type2 *safeType) UnsafeMakeMap(cap int) unsafe.Pointer {
 	panic("does not support unsafe operation")
 }
+
+type safeMapType struct {
+	safeType
+}
+
+func (type2 *safeMapType) Set(obj interface{}, key interface{}, elem interface{}) {
+	reflect.ValueOf(obj).SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(elem))
+}
+
+func (type2 *safeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
+	panic("does not support unsafe operation")
+}

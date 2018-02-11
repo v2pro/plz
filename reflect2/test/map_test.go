@@ -18,4 +18,11 @@ func Test_map(t *testing.T) {
 		m[3] = 9
 		return m
 	}))
+	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+		obj := map[int]int{}
+		valType := api.TypeOf(obj).(reflect2.MapType)
+		valType.Set(obj, 2, 4)
+		valType.Set(obj, 3, 9)
+		return obj
+	}))
 }

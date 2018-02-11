@@ -48,6 +48,8 @@ type MapType interface {
 	Type
 	MakeMap(cap int) interface{}
 	UnsafeMakeMap(cap int) unsafe.Pointer
+	Set(obj interface{}, key interface{}, elem interface{})
+	UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer)
 }
 
 type Config struct {
@@ -78,6 +80,9 @@ func (cfg *frozenConfig) TypeOf(obj interface{}) Type {
 
 func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 	if cfg.useSafeImplementation {
+		if type1.Kind() == reflect.Map {
+			return &safeMapType{safeType{Type: type1}}
+		}
 		return &safeType{Type: type1}
 	}
 	switch type1.Kind() {
