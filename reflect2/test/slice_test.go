@@ -26,6 +26,11 @@ func Test_slice(t *testing.T) {
 		valType.Set(&obj, 1, 20)
 		return obj
 	}))
+	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+		obj := []int{1, 2}
+		valType := api.TypeOf(obj).(reflect2.SliceType)
+		return valType.Get(obj, 1)
+	}))
 	t.Run("Append", testOp(func(api reflect2.API) interface{} {
 		obj := make([]int, 2, 3)
 		obj[0] = 1

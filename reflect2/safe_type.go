@@ -37,6 +37,14 @@ func (type2 *safeType) UnsafeSet(obj unsafe.Pointer, index int, value unsafe.Poi
 	panic("does not support unsafe operation")
 }
 
+func (type2 *safeType) Get(obj interface{}, index int) interface{} {
+	return reflect.ValueOf(obj).Index(index).Interface()
+}
+
+func (type2 *safeType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {
+	panic("does not support unsafe operation")
+}
+
 func (type2 *safeType) MakeSlice(length int, cap int) interface{} {
 	return reflect.MakeSlice(type2.Type, length, cap).Interface()
 }

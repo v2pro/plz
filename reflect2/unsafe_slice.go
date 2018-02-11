@@ -45,6 +45,18 @@ func (type2 *unsafeSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsa
 	typedmemmove(type2.elemRType, elemPtr, elem)
 }
 
+
+func (type2 *unsafeSliceType)  Get(obj interface{}, index int) interface{} {
+	elemPtr := type2.UnsafeGet(toEface(obj).data, index)
+	return packEface(type2.elemRType, elemPtr)
+}
+
+func (type2 *unsafeSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {
+	header := (*sliceHeader)(obj)
+	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	return unsafe.Pointer(elemPtr)
+}
+
 func (type2 *unsafeSliceType) Append(obj interface{}, elem interface{}) interface{} {
 	ptr := type2.UnsafeAppend(toEface(obj).data, toEface(elem).data)
 	return packEface(type2.rtype, ptr)

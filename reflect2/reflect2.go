@@ -22,6 +22,8 @@ type ArrayType interface {
 	Type
 	Set(obj interface{}, index int, elem interface{})
 	UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer)
+	Get(obj interface{}, index int) interface{}
+	UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer
 }
 
 type SliceType interface {
