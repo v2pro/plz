@@ -5,7 +5,6 @@ import (
 	"github.com/v2pro/plz/test"
 	"github.com/v2pro/plz/countlog"
 	"github.com/v2pro/plz/reflect2"
-	"reflect"
 	"github.com/v2pro/plz/test/must"
 )
 
@@ -21,7 +20,7 @@ func Test_int(t *testing.T) {
 	t.Run("New", testOp(func(api reflect2.API) interface{} {
 		valType := api.TypeOf(1)
 		obj := valType.New()
-		reflect.ValueOf(obj).Elem().Set(reflect.ValueOf(100))
+		*obj.(*int) = 100
 		return obj
 	}))
 }

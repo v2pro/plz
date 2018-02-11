@@ -12,6 +12,20 @@ type Type interface {
 	UnsafeNew() unsafe.Pointer
 	// Type1 returns reflect.Type
 	Type1() reflect.Type
+}
+
+type ReadonlyListType interface {
+	Type
+}
+
+type ListType interface {
+	ReadonlyListType
+	Set(obj interface{}, index int, elem interface{})
+	UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer)
+}
+
+type StructType interface {
+	Type
 	FieldByName(name string) StructField
 }
 
@@ -34,6 +48,7 @@ type frozenConfig struct {
 
 type API interface {
 	TypeOf(obj interface{}) Type
+	Type2(type1 reflect.Type) Type
 }
 
 var ConfigUnsafe = Config{UseSafeImplementation:false}.Froze()
@@ -42,16 +57,22 @@ var ConfigSafe = Config{UseSafeImplementation:true}.Froze()
 
 func (cfg *frozenConfig) TypeOf(obj interface{}) Type {
 	valType := reflect.TypeOf(obj)
+	return cfg.Type2(valType)
+}
+
+func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 	if cfg.useSafeImplementation {
-		return &safeType{Type: valType}
+		return &safeType{Type: type1}
 	}
-	rtype := toEface(valType).data
-	prtype := toEface(reflect.PtrTo(valType)).data
-	return &unsafeType{
-		Type:   valType,
-		rtype:  rtype,
-		prtype: prtype,
+	switch type1.Kind() {
+	case reflect.Int:
+		return newUnsafeType(type1)
+	case reflect.Struct:
+		return newUnsafeStructType(type1)
+	case reflect.Array:
+		return newUnsafeArrayType(type1)
 	}
+	panic("unsupported type: " + type1.String())
 }
 
 func TypeOf(obj interface{}) Type {
