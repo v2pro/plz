@@ -6,10 +6,8 @@ import (
 	"testing"
 	"time"
 	"github.com/v2pro/plz/dump"
-	"fmt"
 	"expvar"
 	"unsafe"
-	"github.com/v2pro/plz/msgfmt/jsonfmt"
 )
 
 // A header for a Go map.
@@ -46,15 +44,21 @@ type mapextra struct {
 
 func init() {
 	m := map[int]int{}
-	hm := (*hmap)(jsonfmt.PtrOf(m))
-	for i := 1; i < 30; i++ {
-		m[i] = i * i
-		expvar.Publish(fmt.Sprintf("map%v", i), dump.Snapshot(m))
-		if hm.extra != nil && hm.extra.overflow != nil {
-			fmt.Println("!!!!", i)
-			break
-		}
-	}
+	m[1] = 1
+	m[2] = 4
+	m[3] = 9
+	expvar.Publish("map before delete", dump.Snapshot(m))
+	delete(m, 2)
+	expvar.Publish("map after delete", dump.Snapshot(m))
+	//hm := (*hmap)(jsonfmt.PtrOf(m))
+	//for i := 1; i < 30; i++ {
+	//	m[i] = i * i
+	//	expvar.Publish(fmt.Sprintf("map%v", i), dump.Snapshot(m))
+	//	if hm.oldbuckets != nil {
+	//		fmt.Println("!!!!", i)
+	//		break
+	//	}
+	//}
 }
 
 func Test_witch(t *testing.T) {

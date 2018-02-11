@@ -24,13 +24,15 @@ type Extension interface {
 }
 
 type Config struct {
-	Extensions []Extension
+	IncludesUnexported bool
+	Extensions         []Extension
 }
 
 func (cfg Config) Froze() API {
 	return &frozenConfig{
-		extensions:   cfg.Extensions,
-		encoderCache: &sync.Map{},
+		includesUnexported: cfg.IncludesUnexported,
+		extensions:         cfg.Extensions,
+		encoderCache:       &sync.Map{},
 	}
 }
 
@@ -39,8 +41,9 @@ type API interface {
 }
 
 type frozenConfig struct {
-	extensions   []Extension
-	encoderCache *sync.Map
+	includesUnexported bool
+	extensions         []Extension
+	encoderCache       *sync.Map
 }
 
 func (cfg *frozenConfig) EncoderOf(valType reflect.Type) Encoder {
@@ -85,6 +88,8 @@ func encoderOf(cfg *frozenConfig, prefix string, valType reflect.Type) Encoder {
 		}
 	}
 	switch valType.Kind() {
+	case reflect.Bool:
+		return &boolEncoder{}
 	case reflect.Int8:
 		return &int8Encoder{}
 	case reflect.Uint8:
@@ -99,7 +104,7 @@ func encoderOf(cfg *frozenConfig, prefix string, valType reflect.Type) Encoder {
 		return &uint32Encoder{}
 	case reflect.Int64, reflect.Int:
 		return &int64Encoder{}
-	case reflect.Uint64, reflect.Uint:
+	case reflect.Uint64, reflect.Uint, reflect.Uintptr:
 		return &uint64Encoder{}
 	case reflect.Float64:
 		return &lossyFloat64Encoder{}
@@ -202,7 +207,7 @@ func encoderOfStruct(cfg *frozenConfig, prefix string, valType reflect.Type) *st
 	var fields []structEncoderField
 	for i := 0; i < valType.NumField(); i++ {
 		field := valType.Field(i)
-		name := getFieldName(field)
+		name := getFieldName(cfg, field)
 		if name == "" {
 			continue
 		}
@@ -224,8 +229,14 @@ func encoderOfStruct(cfg *frozenConfig, prefix string, valType reflect.Type) *st
 	}
 }
 
-func getFieldName(field reflect.StructField) string {
-	if !unicode.IsUpper(rune(field.Name[0])) {
+func getFieldName(cfg *frozenConfig, field reflect.StructField) string {
+	if !cfg.includesUnexported && !unicode.IsUpper(rune(field.Name[0])) {
+		return ""
+	}
+	if field.Type.Kind() == reflect.Func {
+		return ""
+	}
+	if field.Type.Kind() == reflect.Chan {
 		return ""
 	}
 	jsonTag := field.Tag.Get("json")

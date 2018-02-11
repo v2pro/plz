@@ -11,6 +11,6 @@ import (
 func Test_time(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect.TypeOf(time.Time{}))
-	should.Equal(`"0001-01-01T00:00:00Z"`, string(encoder.Encode(nil, jsonfmt.PtrOf(time.Time{}))))
+	should.Equal(`"0001-01-01T00:00:00Z"`, string(encoder.Encode(nil,nil, jsonfmt.PtrOf(time.Time{}))))
 
 }

@@ -11,5 +11,5 @@ import (
 func Test_error(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect.TypeOf(errors.New("hello")))
-	should.Equal(`"hello"`, string(encoder.Encode(nil, jsonfmt.PtrOf(errors.New("hello")))))
+	should.Equal(`"hello"`, string(encoder.Encode(nil,nil, jsonfmt.PtrOf(errors.New("hello")))))
 }

@@ -10,6 +10,7 @@ import (
 
 var addrMapKey = 2020020002
 var dumper = jsonfmt.Config{
+	IncludesUnexported: true,
 	Extensions: []jsonfmt.Extension{&dumpExtension{}},
 }.Froze()
 

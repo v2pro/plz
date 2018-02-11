@@ -7,7 +7,6 @@ import (
 	"math"
 	"reflect"
 	"encoding/json"
-	"fmt"
 )
 
 // A header for a Go map.
@@ -22,7 +21,7 @@ type hmap struct {
 	oldbuckets unsafe.Pointer // previous bucket array of half the size, non-nil only when growing
 	nevacuate  uintptr        // progress counter for evacuation (buckets less than this have been evacuated)
 
-	extra unsafe.Pointer // optional fields
+	extra *mapextra // optional fields
 }
 
 const bucketCntBits = 3
@@ -101,7 +100,7 @@ func (encoder *mapEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.
 	space = append(space, `"},"nevacuate":`...)
 	space = jsonfmt.WriteUint64(space, uint64(hmap.nevacuate))
 	space = append(space, `,"extra":{"__ptr__":"`...)
-	extraPtr := ptrToStr(uintptr(hmap.extra))
+	extraPtr := ptrToStr(uintptr(unsafe.Pointer(hmap.extra)))
 	space = append(space, extraPtr...)
 	space = append(space, `"}}`...)
 	bucketsCount := int(math.Pow(2, float64(hmap.B)))
@@ -116,7 +115,7 @@ func (encoder *mapEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.
 		addrMap[oldbucketsPtr] = json.RawMessage(oldbucketsData)
 	}
 	if hmap.extra != nil {
-		extraData := encoder.encodeExtra(ctx, nil, hmap.extra)
+		extraData := encoder.encodeExtra(ctx, nil, unsafe.Pointer(hmap.extra))
 		addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
 		addrMap[extraPtr] = json.RawMessage(extraData)
 	}
@@ -181,9 +180,7 @@ func (encoder *mapEncoder) encodeBucketPtrArray(ctx context.Context, space []byt
 		if i != 0 {
 			space = append(space, ',', ' ')
 		}
-		fmt.Println(ptr)
 		elemPtr := *(*unsafe.Pointer)(unsafe.Pointer(cursor + 8 * uintptr(i)))
-		fmt.Println(elemPtr)
 		space = append(space, `{"__ptr__":"`...)
 		elemPtrStr := ptrToStr(uintptr(elemPtr))
 		space = append(space, elemPtrStr...)
