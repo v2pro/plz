@@ -8,14 +8,51 @@ import (
 	"github.com/v2pro/plz/dump"
 	"fmt"
 	"expvar"
+	"unsafe"
+	"github.com/v2pro/plz/msgfmt/jsonfmt"
 )
+
+// A header for a Go map.
+type hmap struct {
+	count     int // # live cells == size of map.  Must be first (used by len() builtin)
+	flags     uint8
+	B         uint8  // log_2 of # of buckets (can hold up to loadFactor * 2^B items)
+	noverflow uint16 // approximate number of overflow buckets; see incrnoverflow for details
+	hash0     uint32 // hash seed
+
+	buckets    unsafe.Pointer // array of 2^B Buckets. may be nil if count==0.
+	oldbuckets unsafe.Pointer // previous bucket array of half the size, non-nil only when growing
+	nevacuate  uintptr        // progress counter for evacuation (buckets less than this have been evacuated)
+
+	extra *mapextra // optional fields
+}
+
+// mapextra holds fields that are not present on all maps.
+type mapextra struct {
+	// If both key and value do not contain pointers and are inline, then we mark bucket
+	// type as containing no pointers. This avoids scanning such maps.
+	// However, bmap.overflow is a pointer. In order to keep overflow buckets
+	// alive, we store pointers to all overflow buckets in hmap.overflow and h.map.oldoverflow.
+	// overflow and oldoverflow are only used if key and value do not contain pointers.
+	// overflow contains overflow buckets for hmap.buckets.
+	// oldoverflow contains overflow buckets for hmap.oldbuckets.
+	// The indirection allows to store a pointer to the slice in hiter.
+	overflow    *[]unsafe.Pointer
+	oldoverflow *[]unsafe.Pointer
+
+	// nextOverflow holds a pointer to a free overflow bucket.
+	nextOverflow unsafe.Pointer
+}
 
 func init() {
 	m := map[int]int{}
-	for i := 0; i < 29; i++ {
+	hm := (*hmap)(jsonfmt.PtrOf(m))
+	for i := 1; i < 30; i++ {
 		m[i] = i * i
-		if i > 23 {
-			expvar.Publish(fmt.Sprintf("map%v", i), dump.Snapshot(m))
+		expvar.Publish(fmt.Sprintf("map%v", i), dump.Snapshot(m))
+		if hm.extra != nil && hm.extra.overflow != nil {
+			fmt.Println("!!!!", i)
+			break
 		}
 	}
 }

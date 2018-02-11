@@ -1,11 +1,19 @@
 <script type="text/x-template" id="viz-item-template">
-    <div>
-        <div class="vue-draggable-handle"></div>
-        <div class="no-drag" style="padding-left: 18px;">{{ptr}}</div>
-        <viz-value class="no-drag viz-item" :path="ptr" :data="addrMap[ptr]"
-                   @showPtr="showPtr" @hidePtr="hidePtr"
-                   style="width: 100%; height: 100%;"/>
-    </div>
+    <table style="width: 100%; height: 100%;">
+        <tr>
+            <td>
+                <div class="vue-draggable-handle"></div>
+                <div class="no-drag" style="padding-left: 18px;">{{ptr}}</div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <viz-value class="no-drag viz-item" :path="ptr" :data="addrMap[ptr]"
+                           @showPtr="showPtr" @hidePtr="hidePtr"
+                           style="width: 100%; height: 100%;"/>
+            </td>
+        </tr>
+    </table>
 </script>
 <script>
     Vue.component('viz-item', {

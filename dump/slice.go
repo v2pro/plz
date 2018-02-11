@@ -19,17 +19,17 @@ type sliceEncoder struct {
 }
 
 func (encoder *sliceEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	slice := (*sliceHeader)(ptr)
+	header := (*sliceHeader)(ptr)
 	space = append(space, `{"data":{"__ptr__":"`...)
-	ptrStr := ptrToStr(uintptr(slice.data))
+	ptrStr := ptrToStr(uintptr(header.data))
 	space = append(space, ptrStr...)
 	space = append(space, `"},"len":`...)
-	space = jsonfmt.WriteInt64(space, int64(slice.len))
+	space = jsonfmt.WriteInt64(space, int64(header.len))
 	space = append(space, `,"cap":`...)
-	space = jsonfmt.WriteInt64(space, int64(slice.cap))
+	space = jsonfmt.WriteInt64(space, int64(header.cap))
 	space = append(space, `}`...)
 	data := encoder.encodeData(ctx, nil, ptr)
-	if uintptr(slice.data) != 0 {
+	if uintptr(header.data) != 0 {
 		addrMap := ctx.Value(addrMapKey).(map[string]json.RawMessage)
 		addrMap[ptrStr] = json.RawMessage(data)
 	}
