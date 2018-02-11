@@ -11,6 +11,8 @@ func unsafe_New(rtype unsafe.Pointer) unsafe.Pointer
 //go:linkname typedmemmove reflect.typedmemmove
 func typedmemmove(rtype unsafe.Pointer, dst, src unsafe.Pointer)
 
+//go:linkname unsafe_NewArray reflect.unsafe_NewArray
+func unsafe_NewArray(rtype unsafe.Pointer, length int) unsafe.Pointer
 
 type unsafeType struct {
 	reflect.Type

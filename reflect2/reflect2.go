@@ -24,6 +24,12 @@ type ListType interface {
 	UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer)
 }
 
+type SliceType interface {
+	ListType
+	MakeSlice(length int, cap int) interface{}
+	UnsafeMakeSlice(length int, cap int) unsafe.Pointer
+}
+
 type StructType interface {
 	Type
 	FieldByName(name string) StructField
@@ -71,6 +77,8 @@ func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 		return newUnsafeStructType(type1)
 	case reflect.Array:
 		return newUnsafeArrayType(type1)
+	case reflect.Slice:
+		return newUnsafeSliceType(type1)
 	}
 	panic("unsupported type: " + type1.String())
 }

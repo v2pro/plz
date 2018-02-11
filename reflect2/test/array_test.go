@@ -13,7 +13,7 @@ func Test_array(t *testing.T) {
 		(*(obj.(*[2]int)))[1] = 200
 		return obj
 	}))
-	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+	t.Run("Set", testOp(func(api reflect2.API) interface{} {
 		obj := [2]int{}
 		valType := api.TypeOf(obj).(reflect2.ListType)
 		valType.Set(&obj, 0, 100)

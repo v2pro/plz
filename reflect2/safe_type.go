@@ -36,3 +36,11 @@ func (type2 *safeType) Set(obj interface{}, index int, value interface{}) {
 func (type2 *safeType) UnsafeSet(obj unsafe.Pointer, index int, value unsafe.Pointer) {
 	panic("does not support unsafe operation")
 }
+
+func (type2 *safeType) MakeSlice(length int, cap int) interface{} {
+	return reflect.MakeSlice(type2.Type, length, cap).Interface()
+}
+
+func (type2 *safeType) UnsafeMakeSlice(length int, cap int) unsafe.Pointer {
+	panic("does not support unsafe operation")
+}
