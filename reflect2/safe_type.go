@@ -38,7 +38,11 @@ func (type2 *safeType) UnsafeSet(obj unsafe.Pointer, index int, value unsafe.Poi
 }
 
 func (type2 *safeType) Get(obj interface{}, index int) interface{} {
-	return reflect.ValueOf(obj).Index(index).Interface()
+	val := reflect.ValueOf(obj)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	return val.Index(index).Interface()
 }
 
 func (type2 *safeType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {
@@ -58,5 +62,13 @@ func (type2 *safeType) Append(obj interface{}, elem interface{}) interface{} {
 }
 
 func (type2 *safeType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer{
+	panic("does not support unsafe operation")
+}
+
+func (type2 *safeType) MakeMap(cap int) interface{} {
+	return reflect.MakeMapWithSize(type2.Type, cap).Interface()
+}
+
+func (type2 *safeType) UnsafeMakeMap(cap int) unsafe.Pointer {
 	panic("does not support unsafe operation")
 }

@@ -44,6 +44,12 @@ type StructField interface {
 	UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer)
 }
 
+type MapType interface {
+	Type
+	MakeMap(cap int) interface{}
+	UnsafeMakeMap(cap int) unsafe.Pointer
+}
+
 type Config struct {
 	UseSafeImplementation bool
 }
@@ -83,6 +89,8 @@ func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 		return newUnsafeArrayType(type1)
 	case reflect.Slice:
 		return newUnsafeSliceType(type1)
+	case reflect.Map:
+		return newUnsafeMapType(type1)
 	}
 	panic("unsupported type: " + type1.String())
 }

@@ -20,6 +20,9 @@ func unsafe_NewArray(rtype unsafe.Pointer, length int) unsafe.Pointer
 //go:noescape
 func typedslicecopy(elemType unsafe.Pointer, dst, src sliceHeader) int
 
+//go:linkname makemap reflect.makemap
+func makemap(rtype unsafe.Pointer, cap int) (m unsafe.Pointer)
+
 type unsafeType struct {
 	reflect.Type
 	rtype  unsafe.Pointer
