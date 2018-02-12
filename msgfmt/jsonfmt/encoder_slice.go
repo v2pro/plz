@@ -3,23 +3,24 @@ package jsonfmt
 import (
 	"unsafe"
 	"context"
+	"github.com/v2pro/plz/reflect2"
 )
 
 type sliceEncoder struct {
 	elemEncoder Encoder
-	elemSize    uintptr
+	sliceType   *reflect2.UnsafeSliceType
 }
 
 func (encoder *sliceEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	slice := (*sliceHeader)(ptr)
+	sliceType := encoder.sliceType
 	space = append(space, '[')
-	offset := uintptr(slice.Data)
-	for i := 0; i < slice.Len; i++ {
+	length := sliceType.UnsafeLen(ptr)
+	for i := 0; i < length; i++ {
 		if i != 0 {
 			space = append(space, ',')
 		}
-		space = encoder.elemEncoder.Encode(ctx, space, unsafe.Pointer(offset))
-		offset += encoder.elemSize
+		elemPtr := sliceType.UnsafeGet(ptr, i)
+		space = encoder.elemEncoder.Encode(ctx, space, elemPtr)
 	}
 	space = append(space, ']')
 	return space

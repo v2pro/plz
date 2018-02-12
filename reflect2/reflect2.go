@@ -135,6 +135,10 @@ func TypeOf(obj interface{}) Type {
 	return ConfigUnsafe.TypeOf(obj)
 }
 
+func Type2(type1 reflect.Type) Type {
+	return ConfigUnsafe.Type2(type1)
+}
+
 func PtrOf(obj interface{}) unsafe.Pointer {
 	return unpackEFace(obj).data
 }

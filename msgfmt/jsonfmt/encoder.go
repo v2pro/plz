@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"encoding/json"
 	"context"
+	"github.com/v2pro/plz/reflect2"
 )
 
 var bytesType = reflect.TypeOf([]byte(nil))
@@ -119,14 +120,13 @@ func encoderOf(cfg *frozenConfig, prefix string, valType reflect.Type) Encoder {
 		elemEncoder := encoderOf(cfg, prefix+" [sliceElem]", valType.Elem())
 		return &sliceEncoder{
 			elemEncoder: elemEncoder,
-			elemSize:    valType.Elem().Size(),
+			sliceType:    reflect2.Type2(valType).(*reflect2.UnsafeSliceType),
 		}
 	case reflect.Array:
 		elemEncoder := encoderOf(cfg, prefix+" [sliceElem]", valType.Elem())
 		return &arrayEncoder{
 			elemEncoder: elemEncoder,
-			elemSize:    valType.Elem().Size(),
-			length:      valType.Len(),
+			arrayType:   reflect2.Type2(valType).(*reflect2.UnsafeArrayType),
 		}
 	case reflect.Struct:
 		return encoderOfStruct(cfg, prefix, valType)

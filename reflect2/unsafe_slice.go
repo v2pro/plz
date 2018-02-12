@@ -38,6 +38,17 @@ func (type2 *UnsafeSliceType) UnsafeMakeSlice(length int, cap int) unsafe.Pointe
 	return unsafe.Pointer(header)
 }
 
+func (type2 *UnsafeSliceType) Len(obj interface{}) int {
+	objEFace := unpackEFace(obj)
+	assertType("SliceType.Len argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeLen(objEFace.data)
+}
+
+func (type2 *UnsafeSliceType) UnsafeLen(obj unsafe.Pointer) int {
+	header := (*sliceHeader)(obj)
+	return header.Len
+}
+
 func (type2 *UnsafeSliceType) Set(obj interface{}, index int, elem interface{}) {
 	objEFace := unpackEFace(obj)
 	assertType("SliceType.Set argument 1", type2.ptrRType, objEFace.rtype)
