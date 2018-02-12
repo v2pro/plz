@@ -19,7 +19,7 @@ func newUnsafeSliceType(type1 reflect.Type) SliceType {
 		elemSize:   type1.Elem().Size(),
 	}
 	switch type1.Elem().Kind() {
-	case reflect.Map:
+	case reflect.Map, reflect.Ptr:
 		return &unsafeIndirSliceType{unsafeSliceType: sliceType}
 	case reflect.Interface:
 		if type1.Elem().NumMethod() == 0 {
