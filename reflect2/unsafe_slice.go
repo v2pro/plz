@@ -19,6 +19,8 @@ func newUnsafeSliceType(type1 reflect.Type) SliceType {
 		elemSize:   type1.Elem().Size(),
 	}
 	switch type1.Elem().Kind() {
+	case reflect.Map:
+		return &unsafeIndirSliceType{unsafeSliceType: sliceType}
 	case reflect.Interface:
 		if type1.Elem().NumMethod() == 0 {
 			return &unsafeEFaceSliceType{unsafeSliceType: sliceType}
@@ -180,6 +182,46 @@ func (type2 *unsafeIFaceSliceType) Append(obj interface{}, elem interface{}) int
 }
 
 func (type2 *unsafeIFaceSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
+	header := (*sliceHeader)(obj)
+	if header.Cap == header.Len {
+		header = type2.grow(header, header.Len + 1)
+	}
+	type2.UnsafeSet(unsafe.Pointer(header), header.Len, elem)
+	header.Len += 1
+	return unsafe.Pointer(header)
+}
+
+type unsafeIndirSliceType struct {
+	unsafeSliceType
+}
+
+func (type2 *unsafeIndirSliceType) Set(obj interface{}, index int, elem interface{}) {
+	type2.UnsafeSet(toEFace(obj).data, index, toEFace(elem).data)
+}
+
+func (type2 *unsafeIndirSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer) {
+	header := (*sliceHeader)(obj)
+	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	*(*unsafe.Pointer)(elemPtr) = elem
+}
+
+func (type2 *unsafeIndirSliceType) Get(obj interface{}, index int) interface{} {
+	elemPtr := type2.UnsafeGet(toEFace(obj).data, index)
+	return packEFace(type2.elemRType, elemPtr)
+}
+
+func (type2 *unsafeIndirSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {
+	header := (*sliceHeader)(obj)
+	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	return *(*unsafe.Pointer)(elemPtr)
+}
+
+func (type2 *unsafeIndirSliceType) Append(obj interface{}, elem interface{}) interface{} {
+	ptr := type2.UnsafeAppend(toEFace(obj).data, toEFace(elem).data)
+	return packEFace(type2.rtype, ptr)
+}
+
+func (type2 *unsafeIndirSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
 	header := (*sliceHeader)(obj)
 	if header.Cap == header.Len {
 		header = type2.grow(header, header.Len + 1)
