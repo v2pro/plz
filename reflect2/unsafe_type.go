@@ -25,6 +25,10 @@ func (type2 *unsafeType) Type1() reflect.Type {
 	return type2.Type
 }
 
+func (type2 *unsafeType) Elem() Type {
+	return type2.cfg.Type2(type2.Type.Elem())
+}
+
 func (type2 *unsafeType) UnsafeNew() unsafe.Pointer {
 	return unsafe_New(type2.rtype)
 }

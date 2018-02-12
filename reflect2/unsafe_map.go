@@ -23,10 +23,6 @@ func (type2 *UnsafeMapType) Key() Type {
 	return type2.cfg.Type2(type2.Type.Key())
 }
 
-func (type2 *UnsafeMapType) Elem() Type {
-	return type2.cfg.Type2(type2.Type.Elem())
-}
-
 func (type2 *UnsafeMapType) MakeMap(cap int) interface{} {
 	return packEFace(type2.ptrRType, type2.UnsafeMakeMap(cap))
 }

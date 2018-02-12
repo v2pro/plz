@@ -16,12 +16,9 @@ type Type interface {
 	Type1() reflect.Type
 }
 
-type StringType interface {
-	Type
-}
-
 type ArrayType interface {
 	Type
+	Elem() Type
 	Set(obj interface{}, index int, elem interface{})
 	UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer)
 	Get(obj interface{}, index int) interface{}
@@ -70,6 +67,7 @@ type MapIterator interface {
 
 type PointerType interface {
 	Type
+	Elem() Type
 	Get(obj interface{}) interface{}
 	UnsafeGet(obj unsafe.Pointer) unsafe.Pointer
 }
@@ -100,32 +98,37 @@ func (cfg *frozenConfig) TypeOf(obj interface{}) Type {
 }
 
 func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
-	if cfg.useSafeImplementation {
-		safeType := safeType{Type: type1, cfg: cfg}
-		switch type1.Kind() {
-		case reflect.Map:
-			return &safeMapType{safeType}
-		case reflect.Ptr:
-			return &safePtrType{safeType}
-		case reflect.Struct:
-			return &safeStructType{safeType}
-		case reflect.Slice:
-			return &safeSliceType{safeType: safeType}
-		}
-		return &safeType
-	}
+	safeType := safeType{Type: type1, cfg: cfg}
 	switch type1.Kind() {
 	case reflect.Int:
+		if cfg.useSafeImplementation {
+			return &safeType
+		}
 		return newUnsafeType(cfg, type1)
 	case reflect.Struct:
+		if cfg.useSafeImplementation {
+			return &safeStructType{safeType}
+		}
 		return newUnsafeStructType(cfg, type1)
 	case reflect.Array:
+		if cfg.useSafeImplementation {
+			return &safeSliceType{safeType}
+		}
 		return newUnsafeArrayType(cfg, type1)
 	case reflect.Slice:
+		if cfg.useSafeImplementation {
+			return &safeSliceType{safeType}
+		}
 		return newUnsafeSliceType(cfg, type1)
 	case reflect.Map:
+		if cfg.useSafeImplementation {
+			return &safeMapType{safeType}
+		}
 		return newUnsafeMapType(cfg, type1)
 	case reflect.Ptr:
+		if cfg.useSafeImplementation {
+			return &safePtrType{safeType}
+		}
 		return newUnsafePointerType(cfg, type1)
 	}
 	panic("unsupported type: " + type1.String())

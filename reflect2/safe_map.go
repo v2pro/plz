@@ -9,10 +9,6 @@ type safeMapType struct {
 	safeType
 }
 
-func (type2 *safeMapType) Elem() Type {
-	return type2.cfg.Type2(type2.Type.Elem())
-}
-
 func (type2 *safeMapType) MakeMap(cap int) interface{} {
 	ptr := reflect.New(type2.Type)
 	ptr.Elem().Set(reflect.MakeMapWithSize(type2.Type, cap))

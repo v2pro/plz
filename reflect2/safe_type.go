@@ -18,6 +18,10 @@ func (type2 *safeType) UnsafeNew() unsafe.Pointer {
 	panic("does not support unsafe operation")
 }
 
+func (type2 *safeType) Elem() Type {
+	return type2.cfg.Type2(type2.Type.Elem())
+}
+
 func (type2 *safeType) Type1() reflect.Type {
 	return type2.Type
 }
