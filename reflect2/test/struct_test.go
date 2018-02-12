@@ -14,6 +14,9 @@ func Test_struct(t *testing.T) {
 		Field1 int
 		Field2 int
 	}
+	var pInt = func(val int) *int {
+		return &val
+	}
 	t.Run("New", testOp(func(api reflect2.API) interface{} {
 		valType := api.TypeOf(TestObject{})
 		obj := valType.New()
@@ -24,13 +27,13 @@ func Test_struct(t *testing.T) {
 	t.Run("PackEFace", test.Case(func(ctx *countlog.Context) {
 		valType := reflect2.TypeOf(TestObject{})
 		ptr := valType.UnsafeNew()
-		must.Equal(TestObject{}, valType.PackEFace(ptr))
+		must.Equal(&TestObject{}, valType.PackEFace(ptr))
 	}))
 	t.Run("Set", testOp(func(api reflect2.API) interface{} {
 		valType := api.TypeOf(TestObject{}).(reflect2.StructType)
 		field1 := valType.FieldByName("Field1")
 		obj := TestObject{}
-		field1.Set(&obj, 100)
+		field1.Set(&obj, pInt(100))
 		return obj
 	}))
 	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {

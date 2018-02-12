@@ -2,35 +2,27 @@ package reflect2
 
 import (
 	"reflect"
-	"unsafe"
 )
 
-type unsafeStructType struct {
+type UnsafeStructType struct {
 	unsafeType
 }
 
-func newUnsafeStructType(cfg *frozenConfig, type1 reflect.Type) *unsafeStructType {
-	return &unsafeStructType{
+func newUnsafeStructType(cfg *frozenConfig, type1 reflect.Type) *UnsafeStructType {
+	return &UnsafeStructType{
 		unsafeType: *newUnsafeType(cfg, type1),
 	}
 }
 
-func (type2 *unsafeStructType) PackEFace(ptr unsafe.Pointer) interface{} {
-	return packEFace(type2.ptrRType, ptr)
-}
-
-func (type2 *unsafeStructType) FieldByName(name string) StructField {
+func (type2 *UnsafeStructType) FieldByName(name string) StructField {
 	structField, found := type2.Type.FieldByName(name)
 	if !found {
-		panic("field " + name + " not found")
+		panic("field " + name + " not found in " + type2.Type.String())
 	}
-	switch structField.Type.Kind() {
-	case reflect.Interface:
-		return &unsafeEFaceField{StructField: structField}
-	default:
-		return &unsafeDirField{
-			StructField: structField,
-			rtype:       unpackEFace(structField.Type).data,
-		}
+	return &UnsafeStructField{
+		StructField: structField,
+		rtype:       unpackEFace(structField.Type).data,
+		ptrRType:    unpackEFace(reflect.PtrTo(structField.Type)).data,
+		structType:  type2,
 	}
 }

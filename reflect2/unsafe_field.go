@@ -5,49 +5,33 @@ import (
 	"unsafe"
 )
 
-type unsafeDirField struct {
+type UnsafeStructField struct {
 	reflect.StructField
-	rtype unsafe.Pointer
+	structType *UnsafeStructType
+	rtype      unsafe.Pointer
+	ptrRType   unsafe.Pointer
 }
 
-func (field *unsafeDirField) Set(obj interface{}, value interface{}) {
-	field.UnsafeSet(unpackEFace(obj).data, unpackEFace(value).data)
+func (field *UnsafeStructField) Set(obj interface{}, value interface{}) {
+	objEFace := unpackEFace(obj)
+	assertType("StructField.Set argument 1", field.structType.ptrRType, objEFace.rtype)
+	valueEFace := unpackEFace(value)
+	assertType("StructField.Set argument 2", field.ptrRType, valueEFace.rtype)
+	field.UnsafeSet(objEFace.data, valueEFace.data)
 }
 
-func (field *unsafeDirField) UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer) {
+func (field *UnsafeStructField) UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer) {
 	fieldPtr := add(obj, field.Offset, "same as non-reflect &v.field")
 	typedmemmove(field.rtype, fieldPtr, value)
 }
 
-func (field *unsafeDirField) Get(obj interface{}) interface{} {
-	value := field.UnsafeGet(unpackEFace(obj).data)
-	return packEFace(field.rtype, value)
+func (field *UnsafeStructField) Get(obj interface{}) interface{} {
+	objEFace := unpackEFace(obj)
+	assertType("StructField.Get argument 1", field.structType.ptrRType, objEFace.rtype)
+	value := field.UnsafeGet(objEFace.data)
+	return packEFace(field.ptrRType, value)
 }
 
-func (field *unsafeDirField) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
-	fieldPtr := add(obj, field.Offset, "same as non-reflect &v.field")
-	return fieldPtr
-}
-
-type unsafeEFaceField struct {
-	reflect.StructField
-}
-
-func (field *unsafeEFaceField) Set(obj interface{}, value interface{}) {
-	field.UnsafeSet(unpackEFace(obj).data, unsafe.Pointer(&value))
-}
-
-func (field *unsafeEFaceField) UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer) {
-	fieldPtr := add(obj, field.Offset, "same as non-reflect &v.field")
-	*(*interface{})(fieldPtr) = *(*interface{})(value)
-}
-
-func (field *unsafeEFaceField) Get(obj interface{}) interface{} {
-	value := field.UnsafeGet(unpackEFace(obj).data)
-	return *(*interface{})(value)
-}
-
-func (field *unsafeEFaceField) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
-	fieldPtr := add(obj, field.Offset, "same as non-reflect &v.field")
-	return fieldPtr
+func (field *UnsafeStructField) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
+	return add(obj, field.Offset, "same as non-reflect &v.field")
 }

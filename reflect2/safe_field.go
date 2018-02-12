@@ -10,7 +10,8 @@ type safeField struct {
 }
 
 func (field *safeField) Set(obj interface{}, value interface{}) {
-	reflect.ValueOf(obj).Elem().FieldByIndex(field.Index).Set(reflect.ValueOf(value))
+	val := reflect.ValueOf(obj).Elem()
+	val.FieldByIndex(field.Index).Set(reflect.ValueOf(value).Elem())
 }
 
 func (field *safeField) UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer) {
@@ -18,7 +19,10 @@ func (field *safeField) UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer) {
 }
 
 func (field *safeField) Get(obj interface{}) interface{} {
-	return reflect.ValueOf(obj).Elem().FieldByIndex(field.Index).Interface()
+	val := reflect.ValueOf(obj).Elem().FieldByIndex(field.Index)
+	ptr := reflect.New(val.Type())
+	ptr.Elem().Set(val)
+	return ptr.Interface()
 }
 
 func (field *safeField) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
