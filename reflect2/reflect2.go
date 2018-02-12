@@ -126,3 +126,7 @@ func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 func TypeOf(obj interface{}) Type {
 	return ConfigUnsafe.TypeOf(obj)
 }
+
+func PtrOf(obj interface{}) unsafe.Pointer {
+	return unpackEFace(obj).data
+}

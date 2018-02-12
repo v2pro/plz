@@ -34,7 +34,7 @@ func (type2 *safeType) FieldByName(name string) StructField {
 }
 
 func (type2 *safeType) Set(obj interface{}, index int, value interface{}) {
-	reflect.ValueOf(obj).Elem().Index(index).Set(reflect.ValueOf(value))
+	reflect.ValueOf(obj).Index(index).Set(reflect.ValueOf(value))
 }
 
 func (type2 *safeType) UnsafeSet(obj unsafe.Pointer, index int, value unsafe.Pointer) {

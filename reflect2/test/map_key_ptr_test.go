@@ -6,7 +6,7 @@ import (
 	"github.com/v2pro/plz/test/must"
 )
 
-func Test_map_ptr(t *testing.T) {
+func Test_map_key_ptr(t *testing.T) {
 	var pInt = func(val int) *int {
 		return &val
 	}

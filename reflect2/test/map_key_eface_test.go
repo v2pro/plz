@@ -4,42 +4,29 @@ import (
 	"testing"
 	"github.com/v2pro/plz/reflect2"
 	"github.com/v2pro/plz/test/must"
-	"github.com/v2pro/plz/countlog"
-	"github.com/v2pro/plz/test"
 )
 
-func Test_map_eface_elem(t *testing.T) {
+func Test_map_key_eface(t *testing.T) {
 	t.Run("Set", testOp(func(api reflect2.API) interface{} {
-		obj := map[int]interface{}{}
+		obj := map[interface{}]int{}
 		valType := api.TypeOf(obj).(reflect2.MapType)
 		valType.Set(obj, 2, 4)
-		valType.Set(obj, 3, nil)
+		valType.Set(obj, 3, 9)
+		valType.Set(obj, nil, 9)
 		return obj
 	}))
 	t.Run("Get", testOp(func(api reflect2.API) interface{} {
-		obj := map[int]interface{}{3: 9, 2: nil}
+		obj := map[interface{}]int{3: 9, 2: 4}
 		valType := api.TypeOf(obj).(reflect2.MapType)
 		return []interface{}{
 			valType.Get(obj, 3),
-			valType.Get(obj, 2),
 			valType.Get(obj, 0),
+			valType.Get(obj, nil),
+			valType.Get(obj, ""),
 		}
 	}))
-	t.Run("TryGet", test.Case(func(ctx *countlog.Context) {
-		obj := map[int]interface{}{3: 9, 2: nil}
-		valType := reflect2.TypeOf(obj).(reflect2.MapType)
-		elem, found := valType.TryGet(obj, 3)
-		must.Equal(9, elem)
-		must.Pass(found)
-		elem, found = valType.TryGet(obj, 2)
-		must.Nil(elem)
-		must.Pass(found)
-		elem, found = valType.TryGet(obj, 0)
-		must.Nil(elem)
-		must.Pass(!found)
-	}))
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {
-		obj := map[int]interface{}{2: 4}
+		obj := map[interface{}]int{2: 4}
 		valType := api.TypeOf(obj).(reflect2.MapType)
 		iter := valType.Iterate(obj)
 		must.Pass(iter.HasNext(), "api", api)

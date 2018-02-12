@@ -13,19 +13,38 @@ type sliceHeader struct {
 }
 
 func newUnsafeSliceType(type1 reflect.Type) SliceType {
+	elemType := type1.Elem()
 	sliceType := unsafeSliceType{
 		unsafeType: *newUnsafeType(type1),
-		elemRType:  unpackEFace(type1.Elem()).data,
-		elemSize:   type1.Elem().Size(),
+		elemRType:  unpackEFace(elemType).data,
+		elemSize:   elemType.Size(),
 	}
-	switch type1.Elem().Kind() {
-	case reflect.Map, reflect.Ptr:
+	switch elemType.Kind() {
+	case reflect.Map, reflect.Ptr, reflect.Chan, reflect.Func:
 		return &unsafeIndirSliceType{unsafeSliceType: sliceType}
 	case reflect.Interface:
-		if type1.Elem().NumMethod() == 0 {
+		if elemType.NumMethod() == 0 {
 			return &unsafeEFaceSliceType{unsafeSliceType: sliceType}
 		}
 		return &unsafeIFaceSliceType{unsafeSliceType: sliceType}
+	case reflect.Struct:
+		if elemType.NumField() == 1 {
+			firstFieldKind := elemType.Field(0).Type.Kind()
+			if firstFieldKind == reflect.Ptr || firstFieldKind == reflect.Map ||
+				firstFieldKind == reflect.Chan || firstFieldKind == reflect.Func {
+				return &unsafeIndirSliceType{unsafeSliceType: sliceType}
+			}
+		}
+		return &sliceType
+	case reflect.Array:
+		if elemType.Len() == 1 {
+			elemKind := elemType.Elem().Kind()
+			if elemKind == reflect.Ptr || elemKind == reflect.Map ||
+				elemKind == reflect.Chan || elemKind == reflect.Func {
+				return &unsafeIndirSliceType{unsafeSliceType: sliceType}
+			}
+		}
+		return &sliceType
 	default:
 		return &sliceType
 	}
@@ -75,7 +94,7 @@ func (type2 *unsafeSliceType) Append(obj interface{}, elem interface{}) interfac
 func (type2 *unsafeSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
 	header := (*sliceHeader)(obj)
 	if header.Cap == header.Len {
-		header = type2.grow(header, header.Len + 1)
+		header = type2.grow(header, header.Len+1)
 	}
 	type2.UnsafeSet(unsafe.Pointer(header), header.Len, elem)
 	header.Len += 1
@@ -94,33 +113,30 @@ type unsafeEFaceSliceType struct {
 }
 
 func (type2 *unsafeEFaceSliceType) Set(obj interface{}, index int, elem interface{}) {
-	header := (*sliceHeader)(unpackEFace(obj).data)
-	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
-	*(*interface{})(elemPtr) = elem
+	type2.UnsafeSet(unpackEFace(obj).data, index, unsafe.Pointer(&elem))
 }
 
 func (type2 *unsafeEFaceSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer) {
 	header := (*sliceHeader)(obj)
 	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
-	(*eface)(elemPtr).data = elem
+	*(*interface{})(elemPtr) = *(*interface{})(elem)
 }
 
 func (type2 *unsafeEFaceSliceType) Get(obj interface{}, index int) interface{} {
-	header := (*sliceHeader)(unpackEFace(obj).data)
-	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	elemPtr := type2.UnsafeGet(unpackEFace(obj).data, index)
 	return *(*interface{})(elemPtr)
 }
 
 func (type2 *unsafeEFaceSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {
 	header := (*sliceHeader)(obj)
 	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
-	return (*eface)(elemPtr).data
+	return elemPtr
 }
 
 func (type2 *unsafeEFaceSliceType) Append(obj interface{}, elem interface{}) interface{} {
 	header := (*sliceHeader)(unpackEFace(obj).data)
 	if header.Cap == header.Len {
-		header = type2.grow(header, header.Len + 1)
+		header = type2.grow(header, header.Len+1)
 	}
 	appended := type2.PackEFace(unsafe.Pointer(header))
 	type2.Set(appended, header.Len, elem)
@@ -131,7 +147,7 @@ func (type2 *unsafeEFaceSliceType) Append(obj interface{}, elem interface{}) int
 func (type2 *unsafeEFaceSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
 	header := (*sliceHeader)(obj)
 	if header.Cap == header.Len {
-		header = type2.grow(header, header.Len + 1)
+		header = type2.grow(header, header.Len+1)
 	}
 	type2.UnsafeSet(unsafe.Pointer(header), header.Len, elem)
 	header.Len += 1
@@ -151,12 +167,11 @@ func (type2 *unsafeIFaceSliceType) Set(obj interface{}, index int, elem interfac
 func (type2 *unsafeIFaceSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer) {
 	header := (*sliceHeader)(obj)
 	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
-	(*iface)(elemPtr).data = elem
+	*(*iface)(elemPtr) = *(*iface)(elem)
 }
 
 func (type2 *unsafeIFaceSliceType) Get(obj interface{}, index int) interface{} {
-	header := (*sliceHeader)(unpackEFace(obj).data)
-	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	elemPtr := type2.UnsafeGet(unpackEFace(obj).data, index)
 	elemIFace := (*iface)(elemPtr)
 	if elemIFace.data == nil {
 		return nil
@@ -167,13 +182,13 @@ func (type2 *unsafeIFaceSliceType) Get(obj interface{}, index int) interface{} {
 func (type2 *unsafeIFaceSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {
 	header := (*sliceHeader)(obj)
 	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
-	return (*iface)(elemPtr).data
+	return elemPtr
 }
 
 func (type2 *unsafeIFaceSliceType) Append(obj interface{}, elem interface{}) interface{} {
 	header := (*sliceHeader)(unpackEFace(obj).data)
 	if header.Cap == header.Len {
-		header = type2.grow(header, header.Len + 1)
+		header = type2.grow(header, header.Len+1)
 	}
 	appended := type2.PackEFace(unsafe.Pointer(header))
 	type2.Set(appended, header.Len, elem)
@@ -184,7 +199,7 @@ func (type2 *unsafeIFaceSliceType) Append(obj interface{}, elem interface{}) int
 func (type2 *unsafeIFaceSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
 	header := (*sliceHeader)(obj)
 	if header.Cap == header.Len {
-		header = type2.grow(header, header.Len + 1)
+		header = type2.grow(header, header.Len+1)
 	}
 	type2.UnsafeSet(unsafe.Pointer(header), header.Len, elem)
 	header.Len += 1
@@ -224,7 +239,7 @@ func (type2 *unsafeIndirSliceType) Append(obj interface{}, elem interface{}) int
 func (type2 *unsafeIndirSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
 	header := (*sliceHeader)(obj)
 	if header.Cap == header.Len {
-		header = type2.grow(header, header.Len + 1)
+		header = type2.grow(header, header.Len+1)
 	}
 	type2.UnsafeSet(unsafe.Pointer(header), header.Len, elem)
 	header.Len += 1
