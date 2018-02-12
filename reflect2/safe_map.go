@@ -34,6 +34,18 @@ func (type2 *safeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem
 	panic("does not support unsafe operation")
 }
 
+func (type2 *safeMapType) TryGet(obj interface{}, key interface{}) (interface{}, bool) {
+	keyVal := reflect.ValueOf(key)
+	if key == nil {
+		keyVal = reflect.New(type2.Key()).Elem()
+	}
+	val := reflect.ValueOf(obj).MapIndex(keyVal)
+	if !val.IsValid() {
+		return nil, false
+	}
+	return val.Interface(), true
+}
+
 func (type2 *safeMapType) Get(obj interface{}, key interface{}) interface{} {
 	keyVal := reflect.ValueOf(key)
 	if key == nil {

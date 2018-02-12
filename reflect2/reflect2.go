@@ -52,6 +52,7 @@ type MapType interface {
 	UnsafeMakeMap(cap int) unsafe.Pointer
 	Set(obj interface{}, key interface{}, elem interface{})
 	UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer)
+	TryGet(obj interface{}, key interface{}) (interface{}, bool)
 	Get(obj interface{}, key interface{}) interface{}
 	UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer
 	Iterate(obj interface{}) MapIterator

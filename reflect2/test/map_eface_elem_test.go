@@ -4,6 +4,8 @@ import (
 	"testing"
 	"github.com/v2pro/plz/reflect2"
 	"github.com/v2pro/plz/test/must"
+	"github.com/v2pro/plz/countlog"
+	"github.com/v2pro/plz/test"
 )
 
 func Test_map_eface_elem(t *testing.T) {
@@ -22,6 +24,19 @@ func Test_map_eface_elem(t *testing.T) {
 			valType.Get(obj, 2),
 			valType.Get(obj, 0),
 		}
+	}))
+	t.Run("TryGet", test.Case(func(ctx *countlog.Context) {
+		obj := map[int]interface{}{3: 9, 2: nil}
+		valType := reflect2.TypeOf(obj).(reflect2.MapType)
+		elem, found := valType.TryGet(obj, 3)
+		must.Equal(9, elem)
+		must.Pass(found)
+		elem, found = valType.TryGet(obj, 2)
+		must.Nil(elem)
+		must.Pass(found)
+		elem, found = valType.TryGet(obj, 0)
+		must.Nil(elem)
+		must.Pass(!found)
 	}))
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {
 		obj := map[int]interface{}{2: 4}

@@ -114,6 +114,14 @@ func (type2 *unsafeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, el
 	mapassign(type2.rtype, obj, key, elem)
 }
 
+func (type2 *unsafeMapType) TryGet(obj interface{}, key interface{}) (interface{}, bool) {
+	elemPtr := type2.UnsafeGet(unpackEFace(obj).data, type2.keyEmbedType.Unpack(key))
+	if elemPtr == nil {
+		return nil, false
+	}
+	return type2.elemEmbedType.Pack(elemPtr), true
+}
+
 func (type2 *unsafeMapType) Get(obj interface{}, key interface{}) interface{} {
 	elemPtr := type2.UnsafeGet(unpackEFace(obj).data, type2.keyEmbedType.Unpack(key))
 	if elemPtr == nil {
@@ -132,7 +140,7 @@ func (type2 *unsafeMapType) Iterate(obj interface{}) MapIterator {
 
 func (type2 *unsafeMapType) UnsafeIterate(obj unsafe.Pointer) MapIterator {
 	return &unsafeMapIterator{
-		hiter:     mapiterinit(type2.rtype, obj),
+		hiter:         mapiterinit(type2.rtype, obj),
 		keyEmbedType:  type2.keyEmbedType,
 		elemEmbedType: type2.elemEmbedType,
 	}
@@ -140,7 +148,7 @@ func (type2 *unsafeMapType) UnsafeIterate(obj unsafe.Pointer) MapIterator {
 
 type unsafeMapIterator struct {
 	*hiter
-	keyEmbedType embedType
+	keyEmbedType  embedType
 	elemEmbedType embedType
 }
 
