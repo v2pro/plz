@@ -18,8 +18,12 @@ func (type2 *safeMapType) UnsafeMakeMap(cap int) unsafe.Pointer {
 }
 
 func (type2 *safeMapType) Set(obj interface{}, key interface{}, elem interface{}) {
+	keyVal := reflect.ValueOf(key)
+	if key == nil {
+		keyVal = reflect.New(type2.Key()).Elem()
+	}
 	val := reflect.ValueOf(obj)
-	val.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(elem))
+	val.SetMapIndex(keyVal, reflect.ValueOf(elem))
 }
 
 func (type2 *safeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
@@ -27,7 +31,11 @@ func (type2 *safeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem
 }
 
 func (type2 *safeMapType) Get(obj interface{}, key interface{}) interface{} {
-	val := reflect.ValueOf(obj).MapIndex(reflect.ValueOf(key))
+	keyVal := reflect.ValueOf(key)
+	if key == nil {
+		keyVal = reflect.New(type2.Key()).Elem()
+	}
+	val := reflect.ValueOf(obj).MapIndex(keyVal)
 	if !val.IsValid() {
 		return nil
 	}

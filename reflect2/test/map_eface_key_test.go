@@ -12,6 +12,7 @@ func Test_map_eface_key(t *testing.T) {
 		valType := api.TypeOf(obj).(reflect2.MapType)
 		valType.Set(obj, 2, 4)
 		valType.Set(obj, 3, 9)
+		valType.Set(obj, nil, 9)
 		return obj
 	}))
 	t.Run("Get", testOp(func(api reflect2.API) interface{} {
@@ -20,6 +21,8 @@ func Test_map_eface_key(t *testing.T) {
 		return []interface{}{
 			valType.Get(obj, 3),
 			valType.Get(obj, 0),
+			valType.Get(obj, nil),
+			valType.Get(obj, ""),
 		}
 	}))
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {
