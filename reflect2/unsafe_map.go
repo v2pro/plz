@@ -14,13 +14,13 @@ type unsafeMapType struct {
 func newUnsafeMapType(type1 reflect.Type) *unsafeMapType {
 	return &unsafeMapType{
 		unsafeType: *newUnsafeType(type1),
-		keyRType:   toEface(type1.Key()).data,
-		elemRType:  toEface(type1.Elem()).data,
+		keyRType:   toEFace(type1.Key()).data,
+		elemRType:  toEFace(type1.Elem()).data,
 	}
 }
 
 func (type2 *unsafeMapType) MakeMap(cap int) interface{} {
-	return packEface(type2.rtype, type2.UnsafeMakeMap(cap))
+	return packEFace(type2.rtype, type2.UnsafeMakeMap(cap))
 }
 
 func (type2 *unsafeMapType) UnsafeMakeMap(cap int) unsafe.Pointer {
@@ -28,7 +28,7 @@ func (type2 *unsafeMapType) UnsafeMakeMap(cap int) unsafe.Pointer {
 }
 
 func (type2 *unsafeMapType) Set(obj interface{}, key interface{}, elem interface{}) {
-	type2.UnsafeSet(toEface(obj).data, toEface(key).data, toEface(elem).data)
+	type2.UnsafeSet(toEFace(obj).data, toEFace(key).data, toEFace(elem).data)
 }
 
 func (type2 *unsafeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
@@ -36,7 +36,7 @@ func (type2 *unsafeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, el
 }
 
 func (type2 *unsafeMapType) Iterate(obj interface{}) MapIterator {
-	return type2.UnsafeIterate(toEface(obj).data)
+	return type2.UnsafeIterate(toEFace(obj).data)
 }
 
 func (type2 *unsafeMapType) UnsafeIterate(obj unsafe.Pointer) *UnsafeMapIterator {
@@ -59,7 +59,7 @@ func (iter *UnsafeMapIterator) HasNext() bool {
 
 func (iter *UnsafeMapIterator) Next() (interface{}, interface{}) {
 	key, elem := iter.UnsafeNext()
-	return packEface(iter.keyRType, key), packEface(iter.elemRType, elem)
+	return packEFace(iter.keyRType, key), packEFace(iter.elemRType, elem)
 }
 
 func (iter *UnsafeMapIterator) UnsafeNext() (unsafe.Pointer, unsafe.Pointer) {

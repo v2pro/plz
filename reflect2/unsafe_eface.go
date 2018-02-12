@@ -7,11 +7,11 @@ type eface struct {
 	data  unsafe.Pointer
 }
 
-func toEface(obj interface{}) *eface {
+func toEFace(obj interface{}) *eface {
 	return (*eface)(unsafe.Pointer(&obj))
 }
 
-func packEface(rtype unsafe.Pointer, data unsafe.Pointer) interface{} {
+func packEFace(rtype unsafe.Pointer, data unsafe.Pointer) interface{} {
 	var i interface{}
 	e := (*eface)(unsafe.Pointer(&i))
 	e.rtype = rtype

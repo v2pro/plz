@@ -10,21 +10,21 @@ func newUnsafePointerType(type1 reflect.Type) PointerType {
 	case reflect.Ptr, reflect.Map:
 		return &unsafeIndirPointerType{
 			unsafeType: *newUnsafeType(type1),
-			elemRType:  toEface(type1.Elem()).data,
+			elemRType:  toEFace(type1.Elem()).data,
 		}
 	case reflect.Interface:
 		if type1.Elem().NumMethod() == 0 {
-			return &unsafeEfacePointerType{
+			return &unsafeEFacePointerType{
 				unsafeType: *newUnsafeType(type1),
 			}
 		}
-		return &unsafeIfacePointerType{
+		return &unsafeIFacePointerType{
 			unsafeType: *newUnsafeType(type1),
 		}
 	default:
 		return &unsafeDirPointerType{
 			unsafeType: *newUnsafeType(type1),
-			elemRType:  toEface(type1.Elem()).data,
+			elemRType:  toEFace(type1.Elem()).data,
 		}
 	}
 }
@@ -35,8 +35,8 @@ type unsafeDirPointerType struct {
 }
 
 func (type2 *unsafeDirPointerType) Get(obj interface{}) interface{} {
-	ptr := type2.UnsafeGet(toEface(obj).data)
-	return packEface(type2.elemRType, ptr)
+	ptr := type2.UnsafeGet(toEFace(obj).data)
+	return packEFace(type2.elemRType, ptr)
 }
 
 func (type2 *unsafeDirPointerType) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
@@ -49,36 +49,36 @@ type unsafeIndirPointerType struct {
 }
 
 func (type2 *unsafeIndirPointerType) Get(obj interface{}) interface{} {
-	ptr := type2.UnsafeGet(toEface(obj).data)
-	return packEface(type2.elemRType, ptr)
+	ptr := type2.UnsafeGet(toEFace(obj).data)
+	return packEFace(type2.elemRType, ptr)
 }
 
 func (type2 *unsafeIndirPointerType) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
 	return *(*unsafe.Pointer)(obj)
 }
 
-type unsafeEfacePointerType struct {
+type unsafeEFacePointerType struct {
 	unsafeType
 }
 
-func (type2 *unsafeEfacePointerType) Get(obj interface{}) interface{} {
-	ptr := (*interface{})(toEface(obj).data)
+func (type2 *unsafeEFacePointerType) Get(obj interface{}) interface{} {
+	ptr := (*interface{})(toEFace(obj).data)
 	return *ptr
 }
 
-func (type2 *unsafeEfacePointerType) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
+func (type2 *unsafeEFacePointerType) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
 	return (*eface)(obj).data
 }
 
-type unsafeIfacePointerType struct {
+type unsafeIFacePointerType struct {
 	unsafeType
 }
 
-func (type2 *unsafeIfacePointerType) Get(obj interface{}) interface{} {
-	ptr := (*iface)(toEface(obj).data)
-	return packEface(ptr.itab.rtype, ptr.data)
+func (type2 *unsafeIFacePointerType) Get(obj interface{}) interface{} {
+	ptr := (*iface)(toEFace(obj).data)
+	return packEFace(ptr.itab.rtype, ptr.data)
 }
 
-func (type2 *unsafeIfacePointerType) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
+func (type2 *unsafeIFacePointerType) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
 	return (*iface)(obj).data
 }
