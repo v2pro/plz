@@ -34,6 +34,9 @@ func mapiterinit(rtype unsafe.Pointer, m unsafe.Pointer) *hiter
 //go:linkname mapiternext reflect.mapiternext
 func mapiternext(it *hiter)
 
+//go:linkname ifaceE2I reflect.ifaceE2I
+func ifaceE2I(rtype unsafe.Pointer, src interface{}, dst unsafe.Pointer)
+
 // A hash iteration structure.
 // If you modify hiter, also change cmd/internal/gc/reflect.go to indicate
 // the layout of this structure.

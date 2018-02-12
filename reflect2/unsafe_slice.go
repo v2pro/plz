@@ -20,7 +20,10 @@ func newUnsafeSliceType(type1 reflect.Type) SliceType {
 	}
 	switch type1.Elem().Kind() {
 	case reflect.Interface:
-		return &unsafeEfaceSliceType{unsafeSliceType: sliceType}
+		if type1.Elem().NumMethod() == 0 {
+			return &unsafeEfaceSliceType{unsafeSliceType: sliceType}
+		}
+		return &unsafeIfaceSliceType{unsafeSliceType: sliceType}
 	default:
 		return &sliceType
 	}
@@ -97,7 +100,7 @@ func (type2 *unsafeEfaceSliceType) Set(obj interface{}, index int, elem interfac
 func (type2 *unsafeEfaceSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer) {
 	header := (*sliceHeader)(obj)
 	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
-	(*iface)(elemPtr).data = elem
+	(*eface)(elemPtr).data = elem
 }
 
 func (type2 *unsafeEfaceSliceType) Get(obj interface{}, index int) interface{} {
@@ -131,6 +134,22 @@ func (type2 *unsafeEfaceSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.
 	type2.UnsafeSet(unsafe.Pointer(header), header.Len, elem)
 	header.Len += 1
 	return unsafe.Pointer(header)
+}
+
+type unsafeIfaceSliceType struct {
+	unsafeSliceType
+}
+
+func (type2 *unsafeIfaceSliceType) Set(obj interface{}, index int, elem interface{}) {
+	header := (*sliceHeader)(toEface(obj).data)
+	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	ifaceE2I(type2.elemRType, elem, elemPtr)
+}
+
+func (type2 *unsafeIfaceSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer) {
+	header := (*sliceHeader)(obj)
+	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	(*iface)(elemPtr).data = elem
 }
 
 func calcNewCap(cap int, expectedCap int) int {
