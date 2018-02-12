@@ -10,7 +10,9 @@ type safeSliceType struct {
 }
 
 func (type2 *safeSliceType) Set(obj interface{}, index int, value interface{}) {
-	reflect.ValueOf(obj).Index(index).Set(reflect.ValueOf(value).Elem())
+	val := reflect.ValueOf(obj).Elem()
+	elem := reflect.ValueOf(value).Elem()
+	val.Index(index).Set(elem)
 }
 
 func (type2 *safeSliceType) UnsafeSet(obj unsafe.Pointer, index int, value unsafe.Pointer) {
@@ -18,9 +20,11 @@ func (type2 *safeSliceType) UnsafeSet(obj unsafe.Pointer, index int, value unsaf
 }
 
 func (type2 *safeSliceType) Get(obj interface{}, index int) interface{} {
-	val := reflect.ValueOf(obj).Index(index)
-	v := val.Interface()
-	return &v
+	val := reflect.ValueOf(obj).Elem()
+	elem := val.Index(index)
+	ptr := reflect.New(elem.Type())
+	ptr.Elem().Set(elem)
+	return ptr.Interface()
 }
 
 func (type2 *safeSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {
@@ -28,7 +32,10 @@ func (type2 *safeSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Poin
 }
 
 func (type2 *safeSliceType) MakeSlice(length int, cap int) interface{} {
-	return reflect.MakeSlice(type2.Type, length, cap).Interface()
+	val := reflect.MakeSlice(type2.Type, length, cap)
+	ptr := reflect.New(val.Type())
+	ptr.Elem().Set(val)
+	return ptr.Interface()
 }
 
 func (type2 *safeSliceType) UnsafeMakeSlice(length int, cap int) unsafe.Pointer {
@@ -36,9 +43,14 @@ func (type2 *safeSliceType) UnsafeMakeSlice(length int, cap int) unsafe.Pointer 
 }
 
 func (type2 *safeSliceType) Append(obj interface{}, elem interface{}) interface{} {
-	return reflect.Append(reflect.ValueOf(obj), reflect.ValueOf(elem)).Interface()
+	val := reflect.ValueOf(obj).Elem()
+	elemVal := reflect.ValueOf(elem).Elem()
+	val = reflect.Append(val, elemVal)
+	ptr := reflect.New(val.Type())
+	ptr.Elem().Set(val)
+	return ptr.Interface()
 }
 
-func (type2 *safeSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer{
+func (type2 *safeSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
 	panic("does not support unsafe operation")
 }

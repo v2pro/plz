@@ -87,7 +87,7 @@ func Test_map(t *testing.T) {
 
 func Benchmark_map_unsafe(b *testing.B) {
 	obj := map[int]int{}
-	valType := reflect2.TypeOf(obj).(reflect2.MapType)
+	valType := reflect2.TypeOf(obj).(*reflect2.UnsafeMapType)
 	m := unsafe.Pointer(&obj)
 	b.ReportAllocs()
 	b.ResetTimer()

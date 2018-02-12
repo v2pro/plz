@@ -9,6 +9,9 @@ import (
 )
 
 func Test_slice(t *testing.T) {
+	var pInt = func(val int) *int {
+		return &val
+	}
 	t.Run("New", testOp(func(api reflect2.API) interface{} {
 		valType := reflect2.TypeOf([]int{})
 		obj := *valType.New().(*[]int)
@@ -17,21 +20,21 @@ func Test_slice(t *testing.T) {
 	}))
 	t.Run("MakeSlice", testOp(func(api reflect2.API) interface{} {
 		valType := api.TypeOf([]int{}).(reflect2.SliceType)
-		obj := valType.MakeSlice(5, 10)
-		obj.([]int)[0] = 100
-		obj.([]int)[4] = 20
+		obj := *(valType.MakeSlice(5, 10).(*[]int))
+		obj[0] = 100
+		obj[4] = 20
 		return obj
 	}))
 	t.Run("UnsafeMakeSlice", test.Case(func(ctx *countlog.Context) {
 		valType := reflect2.TypeOf([]int{}).(reflect2.SliceType)
 		obj := valType.UnsafeMakeSlice(5, 10)
-		must.Equal([]int{0, 0, 0, 0, 0}, valType.PackEFace(obj))
+		must.Equal(&[]int{0, 0, 0, 0, 0}, valType.PackEFace(obj))
 	}))
 	t.Run("Set", testOp(func(api reflect2.API) interface{} {
 		obj := []int{1, 2}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		valType.Set(obj, 0, 100)
-		valType.Set(obj, 1, 20)
+		valType.Set(&obj, 0, pInt(100))
+		valType.Set(&obj, 1, pInt(20))
 		return obj
 	}))
 	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {
@@ -45,8 +48,7 @@ func Test_slice(t *testing.T) {
 		obj := []int{1, 2}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
 		return []interface{}{
-			valType.Get(obj, 1),
-			valType.Get(&obj, 1),
+			valType.Get(&obj, 1).(*int),
 		}
 	}))
 	t.Run("UnsafeGet", test.Case(func(ctx *countlog.Context) {
@@ -62,10 +64,11 @@ func Test_slice(t *testing.T) {
 		obj[0] = 1
 		obj[1] = 2
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		obj = valType.Append(obj, 3).([]int)
+		ptr := &obj
+		ptr = valType.Append(ptr, pInt(3)).(*[]int)
 		// will trigger grow
-		obj = valType.Append(obj, 4).([]int)
-		return obj
+		ptr = valType.Append(ptr, pInt(4)).(*[]int)
+		return ptr
 	}))
 	t.Run("UnsafeAppend", test.Case(func(ctx *countlog.Context) {
 		obj := make([]int, 2, 3)
@@ -75,6 +78,6 @@ func Test_slice(t *testing.T) {
 		ptr := reflect2.PtrOf(obj)
 		ptr = valType.UnsafeAppend(ptr, reflect2.PtrOf(3))
 		ptr = valType.UnsafeAppend(ptr, reflect2.PtrOf(4))
-		must.Equal([]int{1, 2, 3, 4}, valType.PackEFace(ptr))
+		must.Equal(&[]int{1, 2, 3, 4}, valType.PackEFace(ptr))
 	}))
 }
