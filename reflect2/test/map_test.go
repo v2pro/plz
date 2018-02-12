@@ -68,7 +68,7 @@ func Test_map(t *testing.T) {
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {
 		obj := map[int]int{2: 4}
 		valType := api.TypeOf(obj).(reflect2.MapType)
-		iter := valType.Iterate(obj)
+		iter := valType.Iterate(&obj)
 		must.Pass(iter.HasNext(), "api", api)
 		key1, elem1 := iter.Next()
 		must.Pass(!iter.HasNext(), "api", api)
@@ -77,7 +77,7 @@ func Test_map(t *testing.T) {
 	t.Run("UnsafeIterate", test.Case(func(ctx *countlog.Context) {
 		obj := map[int]int{2: 4}
 		valType := reflect2.TypeOf(obj).(reflect2.MapType)
-		iter := valType.UnsafeIterate(reflect2.PtrOf(obj))
+		iter := valType.UnsafeIterate(unsafe.Pointer(&obj))
 		must.Pass(iter.HasNext())
 		key, elem := iter.UnsafeNext()
 		must.Equal(2, *(*int)(key))
@@ -88,7 +88,7 @@ func Test_map(t *testing.T) {
 func Benchmark_map_unsafe(b *testing.B) {
 	obj := map[int]int{}
 	valType := reflect2.TypeOf(obj).(reflect2.MapType)
-	m := reflect2.PtrOf(obj)
+	m := unsafe.Pointer(&obj)
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

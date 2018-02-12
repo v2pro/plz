@@ -64,7 +64,7 @@ func (type2 *safeMapType) UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsa
 }
 
 func (type2 *safeMapType) Iterate(obj interface{}) MapIterator {
-	m := reflect.ValueOf(obj)
+	m := reflect.ValueOf(obj).Elem()
 	return &safeMapIterator{
 		m:    m,
 		keys: m.MapKeys(),
@@ -89,7 +89,11 @@ func (iter *safeMapIterator) Next() (interface{}, interface{}) {
 	key := iter.keys[iter.i]
 	elem := iter.m.MapIndex(key)
 	iter.i += 1
-	return key.Interface(), elem.Interface()
+	keyPtr := reflect.New(key.Type())
+	keyPtr.Elem().Set(key)
+	elemPtr := reflect.New(elem.Type())
+	elemPtr.Elem().Set(elem)
+	return keyPtr.Interface(), elemPtr.Interface()
 }
 
 func (iter *safeMapIterator) UnsafeNext() (unsafe.Pointer, unsafe.Pointer) {
