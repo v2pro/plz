@@ -24,6 +24,10 @@ func makemap(rtype unsafe.Pointer, cap int) (m unsafe.Pointer)
 //go:noescape
 func mapassign(rtype unsafe.Pointer, m unsafe.Pointer, key, val unsafe.Pointer)
 
+//go:linkname mapaccess reflect.mapaccess
+//go:noescape
+func mapaccess(rtype unsafe.Pointer, m unsafe.Pointer, key unsafe.Pointer) (val unsafe.Pointer)
+
 // m escapes into the return value, but the caller of mapiterinit
 // doesn't let the return value escape.
 //go:noescape

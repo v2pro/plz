@@ -18,13 +18,25 @@ func (type2 *safeMapType) UnsafeMakeMap(cap int) unsafe.Pointer {
 }
 
 func (type2 *safeMapType) Set(obj interface{}, key interface{}, elem interface{}) {
-	reflect.ValueOf(obj).SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(elem))
+	val := reflect.ValueOf(obj)
+	val.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(elem))
 }
 
 func (type2 *safeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
 	panic("does not support unsafe operation")
 }
 
+func (type2 *safeMapType) Get(obj interface{}, key interface{}) interface{} {
+	val := reflect.ValueOf(obj).MapIndex(reflect.ValueOf(key))
+	if !val.IsValid() {
+		return nil
+	}
+	return val.Interface()
+}
+
+func (type2 *safeMapType) UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer {
+	panic("does not support unsafe operation")
+}
 
 func (type2 *safeMapType) Iterate(obj interface{}) MapIterator {
 	m := reflect.ValueOf(obj)

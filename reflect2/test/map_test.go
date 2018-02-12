@@ -26,6 +26,14 @@ func Test_map(t *testing.T) {
 		valType.Set(obj, 3, 9)
 		return obj
 	}))
+	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+		obj := map[int]int{3: 9, 2: 4}
+		valType := api.TypeOf(obj).(reflect2.MapType)
+		return []interface{}{
+			valType.Get(obj, 3),
+			valType.Get(obj, 0),
+		}
+	}))
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {
 		obj := map[int]int{2: 4, 3: 9}
 		valType := api.TypeOf(obj).(reflect2.MapType)
