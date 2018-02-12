@@ -12,6 +12,39 @@ type UnsafeStructField struct {
 	ptrRType   unsafe.Pointer
 }
 
+func newUnsafeStructField(structType *UnsafeStructType, structField reflect.StructField) *UnsafeStructField {
+	return &UnsafeStructField{
+		StructField: structField,
+		rtype:       unpackEFace(structField.Type).data,
+		ptrRType:    unpackEFace(reflect.PtrTo(structField.Type)).data,
+		structType:  structType,
+	}
+}
+
+func (field *UnsafeStructField) Name() string {
+	return field.StructField.Name
+}
+
+func (field *UnsafeStructField) PkgPath() string {
+	return field.StructField.PkgPath
+}
+
+func (field *UnsafeStructField) Type() Type {
+	return field.structType.cfg.Type2(field.StructField.Type)
+}
+
+func (field *UnsafeStructField) Tag() reflect.StructTag {
+	return field.StructField.Tag
+}
+
+func (field *UnsafeStructField) Index() []int {
+	return field.StructField.Index
+}
+
+func (field *UnsafeStructField) Anonymous() bool {
+	return field.StructField.Anonymous
+}
+
 func (field *UnsafeStructField) Set(obj interface{}, value interface{}) {
 	objEFace := unpackEFace(obj)
 	assertType("StructField.Set argument 1", field.structType.ptrRType, objEFace.rtype)

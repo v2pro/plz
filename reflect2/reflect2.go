@@ -35,10 +35,20 @@ type SliceType interface {
 
 type StructType interface {
 	Type
+	NumField() int
+	Field(i int) StructField
 	FieldByName(name string) StructField
+	FieldByIndex(index []int) StructField
+	FieldByNameFunc(match func(string) bool) StructField
 }
 
 type StructField interface {
+	Name() string
+	PkgPath() string
+	Type() Type
+	Tag() reflect.StructTag
+	Index() []int
+	Anonymous() bool
 	Set(obj interface{}, value interface{})
 	UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer)
 	Get(obj interface{}) interface{}
@@ -63,13 +73,6 @@ type MapIterator interface {
 	HasNext() bool
 	Next() (key interface{}, elem interface{})
 	UnsafeNext() (key unsafe.Pointer, elem unsafe.Pointer)
-}
-
-type PointerType interface {
-	Type
-	Elem() Type
-	Get(obj interface{}) interface{}
-	UnsafeGet(obj unsafe.Pointer) unsafe.Pointer
 }
 
 type Config struct {
@@ -100,11 +103,6 @@ func (cfg *frozenConfig) TypeOf(obj interface{}) Type {
 func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 	safeType := safeType{Type: type1, cfg: cfg}
 	switch type1.Kind() {
-	case reflect.Int:
-		if cfg.useSafeImplementation {
-			return &safeType
-		}
-		return newUnsafeType(cfg, type1)
 	case reflect.Struct:
 		if cfg.useSafeImplementation {
 			return &safeStructType{safeType}
@@ -125,13 +123,12 @@ func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 			return &safeMapType{safeType}
 		}
 		return newUnsafeMapType(cfg, type1)
-	case reflect.Ptr:
+	default:
 		if cfg.useSafeImplementation {
-			return &safePtrType{safeType}
+			return &safeType
 		}
-		return newUnsafePointerType(cfg, type1)
+		return newUnsafeType(cfg, type1)
 	}
-	panic("unsupported type: " + type1.String())
 }
 
 func TypeOf(obj interface{}) Type {
