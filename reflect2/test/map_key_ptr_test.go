@@ -16,9 +16,10 @@ func Test_map_key_ptr(t *testing.T) {
 	t.Run("Set", testOp(func(api reflect2.API) interface{} {
 		obj := map[*int]int{}
 		valType := api.TypeOf(obj).(reflect2.MapType)
-		valType.Set(obj, pInt(2), 4)
-		valType.Set(obj, pInt(2), 9)
-		valType.Set(obj, nil, 9)
+		key := pInt(2)
+		valType.Set(obj, &key, 4)
+		valType.Set(obj, &key, 9)
+		//valType.Set(obj, nil, 9)
 		return obj[pInt(2)]
 	}))
 	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {

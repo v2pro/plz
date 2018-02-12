@@ -8,6 +8,7 @@ import (
 	"github.com/v2pro/plz/test/must"
 	"unsafe"
 	"github.com/v2pro/plz/test/should"
+	"fmt"
 )
 
 func Test_slice_eface(t *testing.T) {
@@ -21,8 +22,10 @@ func Test_slice_eface(t *testing.T) {
 	t.Run("Set", testOp(func(api reflect2.API) interface{} {
 		obj := []interface{}{1, nil}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		valType.Set(obj, 0, 100)
-		valType.Set(obj, 1, 20)
+		elem0 := interface{}(100)
+		valType.Set(obj, 0, &elem0)
+		elem1 := interface{}(20)
+		valType.Set(obj, 1, &elem1)
 		return obj
 	}))
 	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {
@@ -37,9 +40,8 @@ func Test_slice_eface(t *testing.T) {
 	t.Run("Get", testOp(func(api reflect2.API) interface{} {
 		obj := []interface{}{1, nil}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
+		fmt.Println(api, *valType.Get(obj, 0).(*interface{}))
 		return []interface{}{
-			valType.Get(&obj, 0),
-			valType.Get(&obj, 1),
 			valType.Get(obj, 0),
 			valType.Get(obj, 1),
 		}

@@ -16,25 +16,26 @@ func newUnsafeSliceType(cfg *frozenConfig, type1 reflect.Type) SliceType {
 	elemType := type1.Elem()
 	sliceType := unsafeSliceType{
 		unsafeType: *newUnsafeType(cfg, type1),
+		ptrElemRType: unpackEFace(reflect.PtrTo(elemType)).data,
 		elemRType:  unpackEFace(elemType).data,
 		elemSize:   elemType.Size(),
 	}
 	switch elemType.Kind() {
-	case reflect.Map, reflect.Ptr, reflect.Chan, reflect.Func:
-		return &unsafeIndirSliceType{unsafeSliceType: sliceType}
-	case reflect.Interface:
-		if elemType.NumMethod() == 0 {
-			return &unsafeEFaceSliceType{unsafeSliceType: sliceType}
-		}
-		return &unsafeIFaceSliceType{unsafeSliceType: sliceType}
+	//case reflect.Map, reflect.Ptr, reflect.Chan, reflect.Func:
+	//	return &unsafeIndirSliceType{unsafeSliceType: sliceType}
+	//case reflect.Interface:
+	//	if elemType.NumMethod() == 0 {
+	//		return &unsafeEFaceSliceType{unsafeSliceType: sliceType}
+	//	}
+	//	return &unsafeIFaceSliceType{unsafeSliceType: sliceType}
 	case reflect.Struct:
-		if elemType.NumField() == 1 {
-			firstFieldKind := elemType.Field(0).Type.Kind()
-			if firstFieldKind == reflect.Ptr || firstFieldKind == reflect.Map ||
-				firstFieldKind == reflect.Chan || firstFieldKind == reflect.Func {
-				return &unsafeIndirSliceType{unsafeSliceType: sliceType}
-			}
-		}
+		//if elemType.NumField() == 1 {
+		//	firstFieldKind := elemType.Field(0).Type.Kind()
+		//	if firstFieldKind == reflect.Ptr || firstFieldKind == reflect.Map ||
+		//		firstFieldKind == reflect.Chan || firstFieldKind == reflect.Func {
+		//		return &unsafeIndirSliceType{unsafeSliceType: sliceType}
+		//	}
+		//}
 		return &sliceType
 	case reflect.Array:
 		if elemType.Len() == 1 {
@@ -53,6 +54,7 @@ func newUnsafeSliceType(cfg *frozenConfig, type1 reflect.Type) SliceType {
 type unsafeSliceType struct {
 	unsafeType
 	elemRType unsafe.Pointer
+	ptrElemRType unsafe.Pointer
 	elemSize  uintptr
 }
 
@@ -77,7 +79,7 @@ func (type2 *unsafeSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsa
 
 func (type2 *unsafeSliceType) Get(obj interface{}, index int) interface{} {
 	elemPtr := type2.UnsafeGet(unpackEFace(obj).data, index)
-	return packEFace(type2.elemRType, elemPtr)
+	return packEFace(type2.ptrElemRType, elemPtr)
 }
 
 func (type2 *unsafeSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {

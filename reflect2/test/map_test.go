@@ -11,6 +11,9 @@ import (
 )
 
 func Test_map(t *testing.T) {
+	var pInt = func(val int) *int {
+		return &val
+	}
 	t.Run("New", testOp(func(api reflect2.API) interface{} {
 		valType := api.TypeOf(map[int]int{})
 		m := valType.New().(*map[int]int)
@@ -18,7 +21,7 @@ func Test_map(t *testing.T) {
 	}))
 	t.Run("MakeMap", testOp(func(api reflect2.API) interface{} {
 		valType := api.TypeOf(map[int]int{}).(reflect2.MapType)
-		m := valType.MakeMap(0).(map[int]int)
+		m := *(valType.MakeMap(0).(*map[int]int))
 		m[2] = 4
 		m[3] = 9
 		return m
@@ -32,33 +35,34 @@ func Test_map(t *testing.T) {
 	t.Run("PackEFace", test.Case(func(ctx *countlog.Context) {
 		valType := reflect2.TypeOf(map[int]int{}).(reflect2.MapType)
 		m := valType.UnsafeMakeMap(0)
-		must.Equal(map[int]int{}, valType.PackEFace(unsafe.Pointer(m)))
+		must.Equal(&map[int]int{}, valType.PackEFace(unsafe.Pointer(m)))
 	}))
 	t.Run("Set", testOp(func(api reflect2.API) interface{} {
 		obj := map[int]int{}
 		valType := api.TypeOf(obj).(reflect2.MapType)
-		valType.Set(obj, 2, 4)
-		valType.Set(obj, 3, 9)
+		valType.Set(&obj, pInt(2), pInt(4))
+		valType.Set(&obj, pInt(3), pInt(9))
+		must.Equal(4, obj[2])
 		return obj
 	}))
 	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {
 		obj := map[int]int{}
 		valType := reflect2.TypeOf(obj).(reflect2.MapType)
-		valType.UnsafeSet(reflect2.PtrOf(obj), reflect2.PtrOf(2), reflect2.PtrOf(4))
+		valType.UnsafeSet(unsafe.Pointer(&obj), reflect2.PtrOf(2), reflect2.PtrOf(4))
 		must.Equal(map[int]int{2: 4}, obj)
 	}))
 	t.Run("Get", testOp(func(api reflect2.API) interface{} {
 		obj := map[int]int{3: 9, 2: 4}
 		valType := api.TypeOf(obj).(reflect2.MapType)
 		return []interface{}{
-			valType.Get(obj, 3),
-			valType.Get(obj, 0),
+			*valType.Get(&obj, pInt(3)).(*int),
+			valType.Get(&obj, pInt(0)).(*int),
 		}
 	}))
 	t.Run("UnsafeGet", test.Case(func(ctx *countlog.Context) {
 		obj := map[int]int{3: 9, 2: 4}
 		valType := reflect2.TypeOf(obj).(reflect2.MapType)
-		elem := valType.UnsafeGet(reflect2.PtrOf(obj), reflect2.PtrOf(3))
+		elem := valType.UnsafeGet(unsafe.Pointer(&obj), reflect2.PtrOf(3))
 		must.Equal(9, *(*int)(elem))
 	}))
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {

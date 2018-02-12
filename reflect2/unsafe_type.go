@@ -34,5 +34,15 @@ func (type2 *unsafeType) New() interface{} {
 }
 
 func (type2 *unsafeType) PackEFace(ptr unsafe.Pointer) interface{} {
-	return packEFace(type2.rtype, ptr)
+	return packEFace(type2.ptrRType, ptr)
+}
+
+func assertType(where string, expectRType unsafe.Pointer, actualRType unsafe.Pointer) {
+	if expectRType != actualRType {
+		expectType := reflect.TypeOf(0)
+		(*iface)(unsafe.Pointer(&expectType)).data = expectRType
+		actualType := reflect.TypeOf(0)
+		(*iface)(unsafe.Pointer(&actualType)).data = actualRType
+		panic(where + ": expect " + expectType.String() + ", actual " + actualType.String())
+	}
 }

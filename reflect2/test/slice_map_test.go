@@ -16,8 +16,8 @@ func Test_slice_map(t *testing.T) {
 	t.Run("Set", testOp(func(api reflect2.API) interface{} {
 		obj := []map[int]int{{1: 1}, nil}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		valType.Set(&obj, 0, map[int]int{10:10})
-		valType.Set(&obj, 1, map[int]int{2:2})
+		valType.Set(obj, 0, &map[int]int{10:10})
+		valType.Set(obj, 1, &map[int]int{2:2})
 		return obj
 	}))
 	t.Run("Get", testOp(func(api reflect2.API) interface{} {

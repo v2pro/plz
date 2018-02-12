@@ -14,7 +14,9 @@ func (type2 *safeMapType) Elem() Type {
 }
 
 func (type2 *safeMapType) MakeMap(cap int) interface{} {
-	return reflect.MakeMapWithSize(type2.Type, cap).Interface()
+	ptr := reflect.New(type2.Type)
+	ptr.Elem().Set(reflect.MakeMapWithSize(type2.Type, cap))
+	return ptr.Interface()
 }
 
 func (type2 *safeMapType) UnsafeMakeMap(cap int) unsafe.Pointer {
@@ -23,15 +25,9 @@ func (type2 *safeMapType) UnsafeMakeMap(cap int) unsafe.Pointer {
 
 func (type2 *safeMapType) Set(obj interface{}, key interface{}, elem interface{}) {
 	keyVal := reflect.ValueOf(key)
-	if key == nil {
-		keyVal = reflect.New(type2.Key()).Elem()
-	}
 	elemVal := reflect.ValueOf(elem)
-	if elem == nil {
-		elemVal = reflect.New(type2.Type.Elem()).Elem()
-	}
 	val := reflect.ValueOf(obj)
-	val.SetMapIndex(keyVal, elemVal)
+	val.Elem().SetMapIndex(keyVal.Elem(), elemVal.Elem())
 }
 
 func (type2 *safeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
@@ -51,15 +47,16 @@ func (type2 *safeMapType) TryGet(obj interface{}, key interface{}) (interface{},
 }
 
 func (type2 *safeMapType) Get(obj interface{}, key interface{}) interface{} {
-	keyVal := reflect.ValueOf(key)
-	if key == nil {
-		keyVal = reflect.New(type2.Key()).Elem()
+	val := reflect.ValueOf(obj).Elem()
+	keyVal := reflect.ValueOf(key).Elem()
+	elemVal := val.MapIndex(keyVal)
+	if !elemVal.IsValid() {
+		ptr := reflect.New(reflect.PtrTo(val.Type().Elem()))
+		return ptr.Elem().Interface()
 	}
-	val := reflect.ValueOf(obj).MapIndex(keyVal)
-	if !val.IsValid() {
-		return nil
-	}
-	return val.Interface()
+	ptr := reflect.New(elemVal.Type())
+	ptr.Elem().Set(elemVal)
+	return ptr.Interface()
 }
 
 func (type2 *safeMapType) UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer {

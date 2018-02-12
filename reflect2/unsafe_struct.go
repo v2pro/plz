@@ -1,6 +1,9 @@
 package reflect2
 
-import "reflect"
+import (
+	"reflect"
+	"unsafe"
+)
 
 type unsafeStructType struct {
 	unsafeType
@@ -10,6 +13,10 @@ func newUnsafeStructType(cfg *frozenConfig, type1 reflect.Type) *unsafeStructTyp
 	return &unsafeStructType{
 		unsafeType: *newUnsafeType(cfg, type1),
 	}
+}
+
+func (type2 *unsafeStructType) PackEFace(ptr unsafe.Pointer) interface{} {
+	return packEFace(type2.ptrRType, ptr)
 }
 
 func (type2 *unsafeStructType) FieldByName(name string) StructField {

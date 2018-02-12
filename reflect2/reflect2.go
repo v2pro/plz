@@ -101,13 +101,18 @@ func (cfg *frozenConfig) TypeOf(obj interface{}) Type {
 
 func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 	if cfg.useSafeImplementation {
+		safeType := safeType{Type: type1, cfg: cfg}
 		switch type1.Kind() {
 		case reflect.Map:
-			return &safeMapType{safeType{Type: type1, cfg: cfg}}
+			return &safeMapType{safeType}
 		case reflect.Ptr:
-			return &safePtrType{safeType{Type: type1, cfg: cfg}}
+			return &safePtrType{safeType}
+		case reflect.Struct:
+			return &safeStructType{safeType}
+		case reflect.Slice:
+			return &safeSliceType{safeType: safeType}
 		}
-		return &safeType{Type: type1, cfg: cfg}
+		return &safeType
 	}
 	switch type1.Kind() {
 	case reflect.Int:
