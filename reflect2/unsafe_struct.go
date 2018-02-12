@@ -6,19 +6,24 @@ type unsafeStructType struct {
 	unsafeType
 }
 
-func newUnsafeStructType(type1 reflect.Type) *unsafeStructType {
+func newUnsafeStructType(cfg *frozenConfig, type1 reflect.Type) *unsafeStructType {
 	return &unsafeStructType{
-		unsafeType: *newUnsafeType(type1),
+		unsafeType: *newUnsafeType(cfg, type1),
 	}
 }
 
 func (type2 *unsafeStructType) FieldByName(name string) StructField {
-	structField1, found := type2.Type.FieldByName(name)
+	structField, found := type2.Type.FieldByName(name)
 	if !found {
 		panic("field " + name + " not found")
 	}
-	return &unsafeField{
-		StructField: structField1,
-		rtype:       unpackEFace(structField1.Type).data,
+	switch structField.Type.Kind() {
+	case reflect.Interface:
+		return &unsafeEFaceField{StructField: structField}
+	default:
+		return &unsafeDirField{
+			StructField: structField,
+			rtype:       unpackEFace(structField.Type).data,
+		}
 	}
 }

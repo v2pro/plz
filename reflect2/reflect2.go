@@ -44,10 +44,13 @@ type StructType interface {
 type StructField interface {
 	Set(obj interface{}, value interface{})
 	UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer)
+	Get(obj interface{}) interface{}
+	UnsafeGet(obj unsafe.Pointer) unsafe.Pointer
 }
 
 type MapType interface {
 	Type
+	Elem() Type
 	MakeMap(cap int) interface{}
 	UnsafeMakeMap(cap int) unsafe.Pointer
 	Set(obj interface{}, key interface{}, elem interface{})
@@ -88,8 +91,8 @@ type API interface {
 	Type2(type1 reflect.Type) Type
 }
 
-var ConfigUnsafe = Config{UseSafeImplementation:false}.Froze()
-var ConfigSafe = Config{UseSafeImplementation:true}.Froze()
+var ConfigUnsafe = Config{UseSafeImplementation: false}.Froze()
+var ConfigSafe = Config{UseSafeImplementation: true}.Froze()
 
 func (cfg *frozenConfig) TypeOf(obj interface{}) Type {
 	valType := reflect.TypeOf(obj)
@@ -100,25 +103,25 @@ func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 	if cfg.useSafeImplementation {
 		switch type1.Kind() {
 		case reflect.Map:
-			return &safeMapType{safeType{Type: type1}}
+			return &safeMapType{safeType{Type: type1, cfg: cfg}}
 		case reflect.Ptr:
-			return &safePtrType{safeType{Type: type1}}
+			return &safePtrType{safeType{Type: type1, cfg: cfg}}
 		}
-		return &safeType{Type: type1}
+		return &safeType{Type: type1, cfg: cfg}
 	}
 	switch type1.Kind() {
 	case reflect.Int:
-		return newUnsafeType(type1)
+		return newUnsafeType(cfg, type1)
 	case reflect.Struct:
-		return newUnsafeStructType(type1)
+		return newUnsafeStructType(cfg, type1)
 	case reflect.Array:
-		return newUnsafeArrayType(type1)
+		return newUnsafeArrayType(cfg, type1)
 	case reflect.Slice:
-		return newUnsafeSliceType(type1)
+		return newUnsafeSliceType(cfg, type1)
 	case reflect.Map:
-		return newUnsafeMapType(type1)
+		return newUnsafeMapType(cfg, type1)
 	case reflect.Ptr:
-		return newUnsafePointerType(type1)
+		return newUnsafePointerType(cfg, type1)
 	}
 	panic("unsupported type: " + type1.String())
 }

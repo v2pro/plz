@@ -12,10 +12,10 @@ type sliceHeader struct {
 	Cap  int
 }
 
-func newUnsafeSliceType(type1 reflect.Type) SliceType {
+func newUnsafeSliceType(cfg *frozenConfig, type1 reflect.Type) SliceType {
 	elemType := type1.Elem()
 	sliceType := unsafeSliceType{
-		unsafeType: *newUnsafeType(type1),
+		unsafeType: *newUnsafeType(cfg, type1),
 		elemRType:  unpackEFace(elemType).data,
 		elemSize:   elemType.Size(),
 	}

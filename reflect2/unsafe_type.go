@@ -5,16 +5,17 @@ import (
 	"reflect"
 )
 
-
 type unsafeType struct {
 	reflect.Type
-	rtype  unsafe.Pointer
+	cfg      *frozenConfig
+	rtype    unsafe.Pointer
 	ptrRType unsafe.Pointer
 }
 
-func newUnsafeType(type1 reflect.Type) *unsafeType {
+func newUnsafeType(cfg *frozenConfig, type1 reflect.Type) *unsafeType {
 	return &unsafeType{
 		Type:     type1,
+		cfg:      cfg,
 		rtype:    unpackEFace(type1).data,
 		ptrRType: unpackEFace(reflect.PtrTo(type1)).data,
 	}

@@ -15,7 +15,9 @@ type unsafeMapType struct {
 
 type embedType interface {
 	Pack(ptr unsafe.Pointer) interface{}
+	UnsafePack(ptr unsafe.Pointer) unsafe.Pointer
 	Unpack(obj interface{}) unsafe.Pointer
+	UnsafeUnpack(obj unsafe.Pointer) unsafe.Pointer
 }
 
 type dirEmbedType struct {
@@ -26,12 +28,20 @@ func (embedType *dirEmbedType) Pack(ptr unsafe.Pointer) interface{} {
 	return packEFace(embedType.rtype, ptr)
 }
 
+func (embedType *dirEmbedType) UnsafePack(ptr unsafe.Pointer) unsafe.Pointer {
+	return ptr
+}
+
 func (embedType *dirEmbedType) Unpack(obj interface{}) unsafe.Pointer {
 	if obj == nil {
 		var nilPtr unsafe.Pointer
 		return unsafe.Pointer(&nilPtr)
 	}
 	return unpackEFace(obj).data
+}
+
+func (embedType *dirEmbedType) UnsafeUnpack(ptr unsafe.Pointer) unsafe.Pointer {
+	return ptr
 }
 
 type indirEmbedType struct {
@@ -42,8 +52,16 @@ func (embedType *indirEmbedType) Pack(ptr unsafe.Pointer) interface{} {
 	return packEFace(embedType.rtype, *(*unsafe.Pointer)(ptr))
 }
 
+func (embedType *indirEmbedType) UnsafePack(ptr unsafe.Pointer) unsafe.Pointer {
+	return *(*unsafe.Pointer)(ptr)
+}
+
 func (embedType *indirEmbedType) Unpack(obj interface{}) unsafe.Pointer {
 	return unsafe.Pointer(&unpackEFace(obj).data)
+}
+
+func (embedType *indirEmbedType) UnsafeUnpack(ptr unsafe.Pointer) unsafe.Pointer {
+	return unsafe.Pointer(&ptr)
 }
 
 type efaceEmbedType struct {
@@ -54,8 +72,16 @@ func (embedType *efaceEmbedType) Pack(ptr unsafe.Pointer) interface{} {
 	return *(*interface{})(ptr)
 }
 
+func (embedType *efaceEmbedType) UnsafePack(ptr unsafe.Pointer) unsafe.Pointer {
+	return ptr
+}
+
 func (embedType *efaceEmbedType) Unpack(obj interface{}) unsafe.Pointer {
 	return unsafe.Pointer(&obj)
+}
+
+func (embedType *efaceEmbedType) UnsafeUnpack(ptr unsafe.Pointer) unsafe.Pointer {
+	return ptr
 }
 
 type ifaceEmbedType struct {
@@ -67,12 +93,20 @@ func (embedType *ifaceEmbedType) Pack(ptr unsafe.Pointer) interface{} {
 	return packEFace(iface.itab.rtype, iface.data)
 }
 
+func (embedType *ifaceEmbedType) UnsafePack(ptr unsafe.Pointer) unsafe.Pointer {
+	return ptr
+}
+
 func (embedType *ifaceEmbedType) Unpack(obj interface{}) unsafe.Pointer {
 	iface := unsafe_New(embedType.rtype)
 	if obj != nil {
 		ifaceE2I(embedType.rtype, obj, iface)
 	}
 	return iface
+}
+
+func (embedType *ifaceEmbedType) UnsafeUnpack(ptr unsafe.Pointer) unsafe.Pointer {
+	return ptr
 }
 
 func newEmbedType(type1 reflect.Type) embedType {
@@ -108,14 +142,18 @@ func newEmbedType(type1 reflect.Type) embedType {
 	}
 }
 
-func newUnsafeMapType(type1 reflect.Type) MapType {
+func newUnsafeMapType(cfg *frozenConfig, type1 reflect.Type) MapType {
 	return &unsafeMapType{
-		unsafeType:    *newUnsafeType(type1),
+		unsafeType:    *newUnsafeType(cfg, type1),
 		keyRType:      unpackEFace(type1.Key()).data,
 		elemRType:     unpackEFace(type1.Elem()).data,
 		keyEmbedType:  newEmbedType(type1.Key()),
 		elemEmbedType: newEmbedType(type1.Elem()),
 	}
+}
+
+func (type2 *unsafeMapType) Elem() Type {
+	return type2.cfg.Type2(type2.Type.Elem())
 }
 
 func (type2 *unsafeMapType) MakeMap(cap int) interface{} {
@@ -132,16 +170,15 @@ func (type2 *unsafeMapType) PackEFace(ptr unsafe.Pointer) interface{} {
 }
 
 func (type2 *unsafeMapType) Set(obj interface{}, key interface{}, elem interface{}) {
-	var elemPtr unsafe.Pointer
-		elemPtr = type2.elemEmbedType.Unpack(elem)
-	elemPtr = type2.elemEmbedType.Unpack(elem)
 	mapassign(type2.rtype, unpackEFace(obj).data,
 		type2.keyEmbedType.Unpack(key),
-		elemPtr)
+		type2.elemEmbedType.Unpack(elem))
 }
 
 func (type2 *unsafeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
-	mapassign(type2.rtype, *(*unsafe.Pointer)(obj), key, elem)
+	key = type2.keyEmbedType.UnsafeUnpack(key)
+	elem = type2.elemEmbedType.UnsafeUnpack(elem)
+	mapassign(type2.rtype, obj, key, elem)
 }
 
 func (type2 *unsafeMapType) TryGet(obj interface{}, key interface{}) (interface{}, bool) {
@@ -161,20 +198,18 @@ func (type2 *unsafeMapType) Get(obj interface{}, key interface{}) interface{} {
 }
 
 func (type2 *unsafeMapType) UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer {
-	return mapaccess(type2.rtype, *(*unsafe.Pointer)(obj), key)
+	key = type2.keyEmbedType.UnsafeUnpack(key)
+	elem := mapaccess(type2.rtype, obj, key)
+	return type2.elemEmbedType.UnsafePack(elem)
 }
 
 func (type2 *unsafeMapType) Iterate(obj interface{}) MapIterator {
-	return &unsafeMapIterator{
-		hiter:         mapiterinit(type2.rtype, unpackEFace(obj).data),
-		keyEmbedType:  type2.keyEmbedType,
-		elemEmbedType: type2.elemEmbedType,
-	}
+	return type2.UnsafeIterate(unpackEFace(obj).data)
 }
 
 func (type2 *unsafeMapType) UnsafeIterate(obj unsafe.Pointer) MapIterator {
 	return &unsafeMapIterator{
-		hiter:         mapiterinit(type2.rtype, *(*unsafe.Pointer)(obj)),
+		hiter:         mapiterinit(type2.rtype, obj),
 		keyEmbedType:  type2.keyEmbedType,
 		elemEmbedType: type2.elemEmbedType,
 	}
@@ -191,7 +226,9 @@ func (iter *unsafeMapIterator) HasNext() bool {
 }
 
 func (iter *unsafeMapIterator) Next() (interface{}, interface{}) {
-	key, elem := iter.UnsafeNext()
+	key := iter.key
+	elem := iter.value
+	mapiternext(iter.hiter)
 	return iter.keyEmbedType.Pack(key), iter.elemEmbedType.Pack(elem)
 }
 
@@ -199,5 +236,5 @@ func (iter *unsafeMapIterator) UnsafeNext() (unsafe.Pointer, unsafe.Pointer) {
 	key := iter.key
 	elem := iter.value
 	mapiternext(iter.hiter)
-	return key, elem
+	return iter.keyEmbedType.UnsafePack(key), iter.elemEmbedType.UnsafePack(elem)
 }

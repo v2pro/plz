@@ -11,9 +11,9 @@ type unsafeArrayType struct {
 	elemSize uintptr
 }
 
-func newUnsafeArrayType(type1 reflect.Type) *unsafeArrayType {
+func newUnsafeArrayType(cfg *frozenConfig, type1 reflect.Type) *unsafeArrayType {
 	return &unsafeArrayType{
-		unsafeType: *newUnsafeType(type1),
+		unsafeType: *newUnsafeType(cfg, type1),
 		elemRType:  unpackEFace(type1.Elem()).data,
 		elemSize:   type1.Elem().Size(),
 	}

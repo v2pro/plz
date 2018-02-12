@@ -7,6 +7,7 @@ import (
 	"github.com/v2pro/plz/countlog"
 	"github.com/v2pro/plz/test"
 	"unsafe"
+	"reflect"
 )
 
 func Test_map(t *testing.T) {
@@ -43,7 +44,7 @@ func Test_map(t *testing.T) {
 	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {
 		obj := map[int]int{}
 		valType := reflect2.TypeOf(obj).(reflect2.MapType)
-		valType.UnsafeSet(unsafe.Pointer(&obj), reflect2.PtrOf(2), reflect2.PtrOf(4))
+		valType.UnsafeSet(reflect2.PtrOf(obj), reflect2.PtrOf(2), reflect2.PtrOf(4))
 		must.Equal(map[int]int{2: 4}, obj)
 	}))
 	t.Run("Get", testOp(func(api reflect2.API) interface{} {
@@ -57,7 +58,7 @@ func Test_map(t *testing.T) {
 	t.Run("UnsafeGet", test.Case(func(ctx *countlog.Context) {
 		obj := map[int]int{3: 9, 2: 4}
 		valType := reflect2.TypeOf(obj).(reflect2.MapType)
-		elem := valType.UnsafeGet(unsafe.Pointer(&obj), reflect2.PtrOf(3))
+		elem := valType.UnsafeGet(reflect2.PtrOf(obj), reflect2.PtrOf(3))
 		must.Equal(9, *(*int)(elem))
 	}))
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {
@@ -72,10 +73,31 @@ func Test_map(t *testing.T) {
 	t.Run("UnsafeIterate", test.Case(func(ctx *countlog.Context) {
 		obj := map[int]int{2: 4}
 		valType := reflect2.TypeOf(obj).(reflect2.MapType)
-		iter := valType.UnsafeIterate(unsafe.Pointer(&obj))
+		iter := valType.UnsafeIterate(reflect2.PtrOf(obj))
 		must.Pass(iter.HasNext())
 		key, elem := iter.UnsafeNext()
 		must.Equal(2, *(*int)(key))
 		must.Equal(4, *(*int)(elem))
 	}))
+}
+
+func Benchmark_map_unsafe(b *testing.B) {
+	obj := map[int]int{}
+	valType := reflect2.TypeOf(obj).(reflect2.MapType)
+	m := reflect2.PtrOf(obj)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		valType.UnsafeSet(m, reflect2.PtrOf(2), reflect2.PtrOf(4))
+	}
+}
+
+func Benchmark_map_safe(b *testing.B) {
+	obj := map[int]int{}
+	val := reflect.ValueOf(obj)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		val.SetMapIndex(reflect.ValueOf(2), reflect.ValueOf(4))
+	}
 }

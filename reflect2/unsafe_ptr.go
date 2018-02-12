@@ -5,25 +5,25 @@ import (
 	"reflect"
 )
 
-func newUnsafePointerType(type1 reflect.Type) PointerType {
+func newUnsafePointerType(cfg *frozenConfig, type1 reflect.Type) PointerType {
 	switch type1.Elem().Kind() {
 	case reflect.Ptr, reflect.Map:
 		return &unsafeIndirPointerType{
-			unsafeType: *newUnsafeType(type1),
+			unsafeType: *newUnsafeType(cfg, type1),
 			elemRType:  unpackEFace(type1.Elem()).data,
 		}
 	case reflect.Interface:
 		if type1.Elem().NumMethod() == 0 {
 			return &unsafeEFacePointerType{
-				unsafeType: *newUnsafeType(type1),
+				unsafeType: *newUnsafeType(cfg, type1),
 			}
 		}
 		return &unsafeIFacePointerType{
-			unsafeType: *newUnsafeType(type1),
+			unsafeType: *newUnsafeType(cfg, type1),
 		}
 	default:
 		return &unsafeDirPointerType{
-			unsafeType: *newUnsafeType(type1),
+			unsafeType: *newUnsafeType(cfg, type1),
 			elemRType:  unpackEFace(type1.Elem()).data,
 		}
 	}

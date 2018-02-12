@@ -9,6 +9,10 @@ type safeMapType struct {
 	safeType
 }
 
+func (type2 *safeMapType) Elem() Type {
+	return type2.cfg.Type2(type2.Type.Elem())
+}
+
 func (type2 *safeMapType) MakeMap(cap int) interface{} {
 	return reflect.MakeMapWithSize(type2.Type, cap).Interface()
 }
@@ -24,7 +28,7 @@ func (type2 *safeMapType) Set(obj interface{}, key interface{}, elem interface{}
 	}
 	elemVal := reflect.ValueOf(elem)
 	if elem == nil {
-		elemVal = reflect.New(type2.Elem()).Elem()
+		elemVal = reflect.New(type2.Type.Elem()).Elem()
 	}
 	val := reflect.ValueOf(obj)
 	val.SetMapIndex(keyVal, elemVal)

@@ -16,3 +16,11 @@ func (field *safeField) Set(obj interface{}, value interface{}) {
 func (field *safeField) UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer) {
 	panic("unsafe operation is not supported")
 }
+
+func (field *safeField) Get(obj interface{}) interface{} {
+	return reflect.ValueOf(obj).Elem().FieldByIndex(field.Index).Interface()
+}
+
+func (field *safeField) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
+	panic("does not support unsafe operation")
+}

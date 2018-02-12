@@ -7,6 +7,7 @@ import (
 
 type safeType struct {
 	reflect.Type
+	cfg *frozenConfig
 }
 
 func (type2 *safeType) New() interface{} {
