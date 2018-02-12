@@ -5,12 +5,6 @@ import (
 	"reflect"
 )
 
-type unsafeSliceType struct {
-	unsafeType
-	elemRType unsafe.Pointer
-	elemSize  uintptr
-}
-
 // sliceHeader is a safe version of SliceHeader used within this package.
 type sliceHeader struct {
 	Data unsafe.Pointer
@@ -18,12 +12,24 @@ type sliceHeader struct {
 	Cap  int
 }
 
-func newUnsafeSliceType(type1 reflect.Type) *unsafeSliceType {
-	return &unsafeSliceType{
+func newUnsafeSliceType(type1 reflect.Type) SliceType {
+	sliceType := unsafeSliceType{
 		unsafeType: *newUnsafeType(type1),
 		elemRType:  toEface(type1.Elem()).data,
 		elemSize:   type1.Elem().Size(),
 	}
+	switch type1.Elem().Kind() {
+	case reflect.Interface:
+		return &unsafeEfaceSliceType{unsafeSliceType: sliceType}
+	default:
+		return &sliceType
+	}
+}
+
+type unsafeSliceType struct {
+	unsafeType
+	elemRType unsafe.Pointer
+	elemSize  uintptr
 }
 
 func (type2 *unsafeSliceType) MakeSlice(length int, cap int) interface{} {
@@ -45,8 +51,7 @@ func (type2 *unsafeSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsa
 	typedmemmove(type2.elemRType, elemPtr, elem)
 }
 
-
-func (type2 *unsafeSliceType)  Get(obj interface{}, index int) interface{} {
+func (type2 *unsafeSliceType) Get(obj interface{}, index int) interface{} {
 	elemPtr := type2.UnsafeGet(toEface(obj).data, index)
 	return packEface(type2.elemRType, elemPtr)
 }
@@ -62,26 +67,78 @@ func (type2 *unsafeSliceType) Append(obj interface{}, elem interface{}) interfac
 	return packEface(type2.rtype, ptr)
 }
 
-func (type2 *unsafeSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer{
+func (type2 *unsafeSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
 	header := (*sliceHeader)(obj)
 	if header.Cap == header.Len {
-		newLen := header.Len + 1
-		newCap := calcNewCap(header.Cap, header.Len, newLen)
-		newHeader := (*sliceHeader)(type2.UnsafeMakeSlice(header.Len, newCap))
-		typedslicecopy(type2.elemRType, *newHeader, *header)
-		header = newHeader
+		header = type2.grow(header, header.Len + 1)
 	}
 	type2.UnsafeSet(unsafe.Pointer(header), header.Len, elem)
 	header.Len += 1
 	return unsafe.Pointer(header)
 }
 
-func calcNewCap(cap int, oldLen int, newLen int) int {
+func (type2 *unsafeSliceType) grow(header *sliceHeader, expectedCap int) *sliceHeader {
+	newCap := calcNewCap(header.Cap, expectedCap)
+	newHeader := (*sliceHeader)(type2.UnsafeMakeSlice(header.Len, newCap))
+	typedslicecopy(type2.elemRType, *newHeader, *header)
+	return newHeader
+}
+
+type unsafeEfaceSliceType struct {
+	unsafeSliceType
+}
+
+func (type2 *unsafeEfaceSliceType) Set(obj interface{}, index int, elem interface{}) {
+	header := (*sliceHeader)(toEface(obj).data)
+	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	*(*interface{})(elemPtr) = elem
+}
+
+func (type2 *unsafeEfaceSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer) {
+	header := (*sliceHeader)(obj)
+	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	(*iface)(elemPtr).data = elem
+}
+
+func (type2 *unsafeEfaceSliceType) Get(obj interface{}, index int) interface{} {
+	header := (*sliceHeader)(toEface(obj).data)
+	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	return *(*interface{})(elemPtr)
+}
+
+func (type2 *unsafeEfaceSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {
+	header := (*sliceHeader)(obj)
+	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
+	return (*eface)(elemPtr).data
+}
+
+func (type2 *unsafeEfaceSliceType) Append(obj interface{}, elem interface{}) interface{} {
+	header := (*sliceHeader)(toEface(obj).data)
+	if header.Cap == header.Len {
+		header = type2.grow(header, header.Len + 1)
+	}
+	appended := type2.PackEFace(unsafe.Pointer(header))
+	type2.Set(appended, header.Len, elem)
+	header.Len += 1
+	return appended
+}
+
+func (type2 *unsafeEfaceSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
+	header := (*sliceHeader)(obj)
+	if header.Cap == header.Len {
+		header = type2.grow(header, header.Len + 1)
+	}
+	type2.UnsafeSet(unsafe.Pointer(header), header.Len, elem)
+	header.Len += 1
+	return unsafe.Pointer(header)
+}
+
+func calcNewCap(cap int, expectedCap int) int {
 	if cap == 0 {
-		cap = newLen
+		cap = expectedCap
 	} else {
-		for cap < newLen {
-			if oldLen < 1024 {
+		for cap < expectedCap {
+			if cap < 1024 {
 				cap += cap
 			} else {
 				cap += cap / 4
