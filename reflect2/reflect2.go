@@ -10,6 +10,8 @@ type Type interface {
 	New() interface{}
 	// UnsafeNew return the allocated space pointed by unsafe.Pointer
 	UnsafeNew() unsafe.Pointer
+	// PackEFace cast a pointer back to empty interface
+	PackEFace(ptr unsafe.Pointer) interface{}
 	// Type1 returns reflect.Type
 	Type1() reflect.Type
 }

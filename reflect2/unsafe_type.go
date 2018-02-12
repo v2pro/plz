@@ -31,3 +31,7 @@ func (type2 *unsafeType) UnsafeNew() unsafe.Pointer {
 func (type2 *unsafeType) New() interface{} {
 	return packEface(type2.ptrRType, type2.UnsafeNew())
 }
+
+func (type2 *unsafeType) PackEFace(ptr unsafe.Pointer) interface{} {
+	return packEface(type2.rtype, ptr)
+}

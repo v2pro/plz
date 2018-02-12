@@ -21,6 +21,10 @@ func (type2 *safeType) Type1() reflect.Type {
 	return type2.Type
 }
 
+func (type2 *safeType) PackEFace(ptr unsafe.Pointer) interface{} {
+	panic("does not support unsafe operation")
+}
+
 func (type2 *safeType) FieldByName(name string) StructField {
 	field, found := type2.Type.FieldByName(name)
 	if !found {
