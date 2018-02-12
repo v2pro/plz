@@ -18,6 +18,8 @@ func newUnsafeMapType(type1 reflect.Type) MapType {
 		elemRType:  toEFace(type1.Elem()).data,
 	}
 	switch type1.Key().Kind() {
+	case reflect.Ptr:
+		return &unsafeIndirKeyMapType{unsafeMapType: mapType}
 	case reflect.Interface:
 		if type1.Key().NumMethod() == 0 {
 			return &unsafeEFaceKeyMapType{unsafeMapType: mapType}
@@ -97,20 +99,12 @@ func (type2 *unsafeEFaceKeyMapType) Set(obj interface{}, key interface{}, elem i
 	type2.UnsafeSet(toEFace(obj).data, unsafe.Pointer(&key), toEFace(elem).data)
 }
 
-func (type2 *unsafeEFaceKeyMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
-	mapassign(type2.rtype, obj, key, elem)
-}
-
 func (type2 *unsafeEFaceKeyMapType) Get(obj interface{}, key interface{}) interface{} {
 	elemPtr := type2.UnsafeGet(toEFace(obj).data, unsafe.Pointer(&key))
 	if elemPtr == nil {
 		return nil
 	}
 	return packEFace(type2.elemRType, elemPtr)
-}
-
-func (type2 *unsafeEFaceKeyMapType) UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer {
-	return mapaccess(type2.rtype, obj, key)
 }
 
 func (type2 *unsafeEFaceKeyMapType) Iterate(obj interface{}) MapIterator {
@@ -147,10 +141,6 @@ func (type2 *unsafeIFaceKeyMapType) Set(obj interface{}, key interface{}, elem i
 	type2.UnsafeSet(toEFace(obj).data, keyIFace, toEFace(elem).data)
 }
 
-func (type2 *unsafeIFaceKeyMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
-	mapassign(type2.rtype, obj, key, elem)
-}
-
 func (type2 *unsafeIFaceKeyMapType) Get(obj interface{}, key interface{}) interface{} {
 	keyIFace := unsafe_New(type2.keyRType)
 	if key != nil {
@@ -163,6 +153,63 @@ func (type2 *unsafeIFaceKeyMapType) Get(obj interface{}, key interface{}) interf
 	return packEFace(type2.elemRType, elemPtr)
 }
 
-func (type2 *unsafeIFaceKeyMapType) UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer {
-	return mapaccess(type2.rtype, obj, key)
+func (type2 *unsafeIFaceKeyMapType) Iterate(obj interface{}) MapIterator {
+	return type2.UnsafeIterate(toEFace(obj).data)
+}
+
+func (type2 *unsafeIFaceKeyMapType) UnsafeIterate(obj unsafe.Pointer) MapIterator {
+	return &unsafeIFaceKeyMapIterator{
+		unsafeMapIterator{
+			hiter:     mapiterinit(type2.rtype, obj),
+			keyRType:  type2.keyRType,
+			elemRType: type2.elemRType,
+		}}
+}
+
+type unsafeIFaceKeyMapIterator struct {
+	unsafeMapIterator
+}
+
+func (iter *unsafeIFaceKeyMapIterator) Next() (interface{}, interface{}) {
+	key, elem := iter.UnsafeNext()
+	keyIFace := (*iface)(key)
+	return packEFace(keyIFace.itab.rtype, keyIFace.data), packEFace(iter.elemRType, elem)
+}
+
+type unsafeIndirKeyMapType struct {
+	unsafeMapType
+}
+
+func (type2 *unsafeIndirKeyMapType) Set(obj interface{}, key interface{}, elem interface{}) {
+	type2.UnsafeSet(toEFace(obj).data, unsafe.Pointer(&toEFace(key).data), toEFace(elem).data)
+}
+
+func (type2 *unsafeIndirKeyMapType) Get(obj interface{}, key interface{}) interface{} {
+	elemPtr := type2.UnsafeGet(toEFace(obj).data, unsafe.Pointer(&toEFace(key).data))
+	if elemPtr == nil {
+		return nil
+	}
+	return packEFace(type2.elemRType, elemPtr)
+}
+
+func (type2 *unsafeIndirKeyMapType) Iterate(obj interface{}) MapIterator {
+	return type2.UnsafeIterate(toEFace(obj).data)
+}
+
+func (type2 *unsafeIndirKeyMapType) UnsafeIterate(obj unsafe.Pointer) MapIterator {
+	return &unsafeIndirKeyMapIterator{
+		unsafeMapIterator{
+			hiter:     mapiterinit(type2.rtype, obj),
+			keyRType:  type2.keyRType,
+			elemRType: type2.elemRType,
+		}}
+}
+
+type unsafeIndirKeyMapIterator struct {
+	unsafeMapIterator
+}
+
+func (iter *unsafeIndirKeyMapIterator) Next() (interface{}, interface{}) {
+	key, elem := iter.UnsafeNext()
+	return packEFace(iter.keyRType, *(*unsafe.Pointer)(key)), packEFace(iter.elemRType, elem)
 }

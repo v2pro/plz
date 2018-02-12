@@ -26,14 +26,12 @@ func Test_map_eface_key(t *testing.T) {
 		}
 	}))
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {
-		obj := map[interface{}]int{2: 4, 3: 9}
+		obj := map[interface{}]int{2: 4}
 		valType := api.TypeOf(obj).(reflect2.MapType)
 		iter := valType.Iterate(obj)
 		must.Pass(iter.HasNext(), "api", api)
 		key1, elem1 := iter.Next()
-		must.Pass(iter.HasNext(), "api", api)
-		key2, elem2 := iter.Next()
 		must.Pass(!iter.HasNext(), "api", api)
-		return []interface{}{key1, elem1, key2, elem2}
+		return []interface{}{key1, elem1}
 	}))
 }

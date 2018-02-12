@@ -35,4 +35,13 @@ func Test_map_iface_key(t *testing.T) {
 			valType.Get(obj, nil),
 		}
 	}))
+	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {
+		obj := map[error]int{intError(2): 4}
+		valType := api.TypeOf(obj).(reflect2.MapType)
+		iter := valType.Iterate(obj)
+		must.Pass(iter.HasNext(), "api", api)
+		key1, elem1 := iter.Next()
+		must.Pass(!iter.HasNext(), "api", api)
+		return []interface{}{key1, elem1}
+	}))
 }
