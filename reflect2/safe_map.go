@@ -46,7 +46,7 @@ func (type2 *safeMapType) Iterate(obj interface{}) MapIterator {
 	}
 }
 
-func (type2 *safeMapType) UnsafeIterate(obj unsafe.Pointer) *UnsafeMapIterator {
+func (type2 *safeMapType) UnsafeIterate(obj unsafe.Pointer) MapIterator {
 	panic("does not support unsafe operation")
 }
 
@@ -65,4 +65,8 @@ func (iter *safeMapIterator) Next() (interface{}, interface{}) {
 	elem := iter.m.MapIndex(key)
 	iter.i += 1
 	return key.Interface(), elem.Interface()
+}
+
+func (iter *safeMapIterator) UnsafeNext() (unsafe.Pointer, unsafe.Pointer) {
+	panic("does not support unsafe operation")
 }

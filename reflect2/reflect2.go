@@ -55,12 +55,13 @@ type MapType interface {
 	Get(obj interface{}, key interface{}) interface{}
 	UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer
 	Iterate(obj interface{}) MapIterator
-	UnsafeIterate(obj unsafe.Pointer) *UnsafeMapIterator
+	UnsafeIterate(obj unsafe.Pointer) MapIterator
 }
 
 type MapIterator interface {
 	HasNext() bool
 	Next() (key interface{}, elem interface{})
+	UnsafeNext() (key unsafe.Pointer, elem unsafe.Pointer)
 }
 
 type PointerType interface {
