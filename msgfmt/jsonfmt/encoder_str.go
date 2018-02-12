@@ -120,36 +120,23 @@ func (encoder *stringEncoder) Encode(ctx context.Context, space []byte, ptr unsa
 	return WriteString(space, *(*string)(ptr))
 }
 
-type stringHeader struct {
-	Data unsafe.Pointer
-	Len  int
-}
-
-type sliceHeader struct {
-	Data unsafe.Pointer
-	Len  int
-	Cap  int
-}
-
 func WriteString(space []byte, str string) []byte {
-	pStr := (*stringHeader)(unsafe.Pointer(&str))
-	s := *(*[]byte)(unsafe.Pointer(&sliceHeader{pStr.Data, pStr.Len, pStr.Len}))
 	space = append(space, '"')
 	// write string, the fast path, without utf8 and escape support
 	var i int
 	var c byte
-	for i, c = range s {
+	for i, c = range []byte(str) {
 		if c > 31 && c != '"' && c != '\\' {
 			space = append(space, c)
 		} else {
 			break
 		}
 	}
-	if i == len(s)-1 {
+	if i == len(str)-1 {
 		space = append(space, '"')
 		return space
 	}
-	return writeStringSlowPath(space, s[i:])
+	return writeStringSlowPath(space, []byte(str[i:]))
 }
 
 func writeStringSlowPath(space []byte, s []byte) []byte {

@@ -129,14 +129,14 @@ func encoderOf(cfg *frozenConfig, prefix string, valType reflect.Type) Encoder {
 			arrayType:   reflect2.Type2(valType).(*reflect2.UnsafeArrayType),
 		}
 	case reflect.Struct:
-		return encoderOfStruct(cfg, prefix, valType)
+		return encoderOfStruct(cfg, prefix, reflect2.Type2(valType).(*reflect2.UnsafeStructType))
 	case reflect.Map:
 		return encoderOfMap(cfg, prefix, valType)
 	case reflect.Interface:
 		if valType.NumMethod() != 0 {
-			return &nonEmptyInterfaceEncoder{}
+			return &ifaceEncoder{}
 		}
-		return &emptyInterfaceEncoder{}
+		return &efaceEncoder{}
 	}
 	return &unsupportedEncoder{fmt.Sprintf(`"can not encode %s %s to json"`, valType.String(), prefix)}
 }
@@ -203,7 +203,7 @@ func isOnePtr(valType reflect.Type) bool {
 	return false
 }
 
-func encoderOfStruct(cfg *frozenConfig, prefix string, valType reflect.Type) *structEncoder {
+func encoderOfStruct(cfg *frozenConfig, prefix string, valType *reflect2.UnsafeStructType) *structEncoder {
 	var fields []structEncoderField
 	for i := 0; i < valType.NumField(); i++ {
 		field := valType.Field(i)
@@ -219,9 +219,9 @@ func encoderOfStruct(cfg *frozenConfig, prefix string, valType reflect.Type) *st
 		prefix += name
 		prefix += `":`
 		fields = append(fields, structEncoderField{
-			offset:  field.Offset,
+			structField:  field.(*reflect2.UnsafeStructField),
 			prefix:  prefix,
-			encoder: encoderOf(cfg, prefix+" ."+name, field.Type),
+			encoder: encoderOf(cfg, prefix+" ."+name, field.Type().Type1()),
 		})
 	}
 	return &structEncoder{
@@ -229,26 +229,26 @@ func encoderOfStruct(cfg *frozenConfig, prefix string, valType reflect.Type) *st
 	}
 }
 
-func getFieldName(cfg *frozenConfig, field reflect.StructField) string {
-	if !cfg.includesUnexported && !unicode.IsUpper(rune(field.Name[0])) {
+func getFieldName(cfg *frozenConfig, field reflect2.StructField) string {
+	if !cfg.includesUnexported && !unicode.IsUpper(rune(field.Name()[0])) {
 		return ""
 	}
-	if field.Type.Kind() == reflect.Func {
+	if field.Type().Kind() == reflect.Func {
 		return ""
 	}
-	if field.Type.Kind() == reflect.Chan {
+	if field.Type().Kind() == reflect.Chan {
 		return ""
 	}
-	jsonTag := field.Tag.Get("json")
+	jsonTag := field.Tag().Get("json")
 	if jsonTag == "" {
-		return field.Name
+		return field.Name()
 	}
 	parts := strings.Split(jsonTag, ",")
 	if parts[0] == "-" {
 		return ""
 	}
 	if parts[0] == "" {
-		return field.Name
+		return field.Name()
 	}
 	return parts[0]
 }

@@ -6,6 +6,7 @@ import (
 )
 
 type Type interface {
+	Kind() reflect.Kind
 	// New return pointer to data of this type
 	New() interface{}
 	// UnsafeNew return the allocated space pointed by unsafe.Pointer

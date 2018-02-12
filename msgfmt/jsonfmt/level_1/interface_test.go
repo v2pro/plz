@@ -8,7 +8,7 @@ import (
 	"github.com/v2pro/plz/msgfmt/jsonfmt"
 )
 
-func Test_slice_of_empty_interface(t *testing.T) {
+func Test_slice_of_eface(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect.TypeOf(([]interface{})(nil)))
 	should.Equal("[1,null,3]", string(encoder.Encode(nil,nil, jsonfmt.PtrOf([]interface{}{
@@ -22,7 +22,7 @@ func (closer TestCloser) Close() error {
 	return nil
 }
 
-func Test_slice_of_non_empty_interface(t *testing.T) {
+func Test_slice_of_iface(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect.TypeOf(([]io.Closer)(nil)))
 	should.Equal("[1,null,3]", string(encoder.Encode(nil,nil, jsonfmt.PtrOf([]io.Closer{
