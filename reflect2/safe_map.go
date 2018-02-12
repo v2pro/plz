@@ -22,8 +22,12 @@ func (type2 *safeMapType) Set(obj interface{}, key interface{}, elem interface{}
 	if key == nil {
 		keyVal = reflect.New(type2.Key()).Elem()
 	}
+	elemVal := reflect.ValueOf(elem)
+	if elem == nil {
+		elemVal = reflect.New(type2.Elem()).Elem()
+	}
 	val := reflect.ValueOf(obj)
-	val.SetMapIndex(keyVal, reflect.ValueOf(elem))
+	val.SetMapIndex(keyVal, elemVal)
 }
 
 func (type2 *safeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {

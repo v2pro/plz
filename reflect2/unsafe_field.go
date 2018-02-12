@@ -11,7 +11,7 @@ type unsafeField struct {
 }
 
 func (field *unsafeField) Set(obj interface{}, value interface{}) {
-	field.UnsafeSet(toEFace(obj).data, toEFace(value).data)
+	field.UnsafeSet(unpackEFace(obj).data, unpackEFace(value).data)
 }
 
 func (field *unsafeField) UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer) {

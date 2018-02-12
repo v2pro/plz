@@ -19,6 +19,6 @@ func (type2 *unsafeStructType) FieldByName(name string) StructField {
 	}
 	return &unsafeField{
 		StructField: structField1,
-		rtype:       toEFace(structField1.Type).data,
+		rtype:       unpackEFace(structField1.Type).data,
 	}
 }

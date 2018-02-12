@@ -14,9 +14,9 @@ type unsafeType struct {
 
 func newUnsafeType(type1 reflect.Type) *unsafeType {
 	return &unsafeType{
-		Type: type1,
-		rtype: toEFace(type1).data,
-		ptrRType: toEFace(reflect.PtrTo(type1)).data,
+		Type:     type1,
+		rtype:    unpackEFace(type1).data,
+		ptrRType: unpackEFace(reflect.PtrTo(type1)).data,
 	}
 }
 

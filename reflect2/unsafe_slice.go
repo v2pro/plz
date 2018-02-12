@@ -15,7 +15,7 @@ type sliceHeader struct {
 func newUnsafeSliceType(type1 reflect.Type) SliceType {
 	sliceType := unsafeSliceType{
 		unsafeType: *newUnsafeType(type1),
-		elemRType:  toEFace(type1.Elem()).data,
+		elemRType:  unpackEFace(type1.Elem()).data,
 		elemSize:   type1.Elem().Size(),
 	}
 	switch type1.Elem().Kind() {
@@ -47,7 +47,7 @@ func (type2 *unsafeSliceType) UnsafeMakeSlice(length int, cap int) unsafe.Pointe
 }
 
 func (type2 *unsafeSliceType) Set(obj interface{}, index int, elem interface{}) {
-	type2.UnsafeSet(toEFace(obj).data, index, toEFace(elem).data)
+	type2.UnsafeSet(unpackEFace(obj).data, index, unpackEFace(elem).data)
 }
 
 func (type2 *unsafeSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer) {
@@ -57,7 +57,7 @@ func (type2 *unsafeSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsa
 }
 
 func (type2 *unsafeSliceType) Get(obj interface{}, index int) interface{} {
-	elemPtr := type2.UnsafeGet(toEFace(obj).data, index)
+	elemPtr := type2.UnsafeGet(unpackEFace(obj).data, index)
 	return packEFace(type2.elemRType, elemPtr)
 }
 
@@ -68,7 +68,7 @@ func (type2 *unsafeSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Po
 }
 
 func (type2 *unsafeSliceType) Append(obj interface{}, elem interface{}) interface{} {
-	ptr := type2.UnsafeAppend(toEFace(obj).data, toEFace(elem).data)
+	ptr := type2.UnsafeAppend(unpackEFace(obj).data, unpackEFace(elem).data)
 	return packEFace(type2.rtype, ptr)
 }
 
@@ -94,7 +94,7 @@ type unsafeEFaceSliceType struct {
 }
 
 func (type2 *unsafeEFaceSliceType) Set(obj interface{}, index int, elem interface{}) {
-	header := (*sliceHeader)(toEFace(obj).data)
+	header := (*sliceHeader)(unpackEFace(obj).data)
 	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
 	*(*interface{})(elemPtr) = elem
 }
@@ -106,7 +106,7 @@ func (type2 *unsafeEFaceSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem
 }
 
 func (type2 *unsafeEFaceSliceType) Get(obj interface{}, index int) interface{} {
-	header := (*sliceHeader)(toEFace(obj).data)
+	header := (*sliceHeader)(unpackEFace(obj).data)
 	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
 	return *(*interface{})(elemPtr)
 }
@@ -118,7 +118,7 @@ func (type2 *unsafeEFaceSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsa
 }
 
 func (type2 *unsafeEFaceSliceType) Append(obj interface{}, elem interface{}) interface{} {
-	header := (*sliceHeader)(toEFace(obj).data)
+	header := (*sliceHeader)(unpackEFace(obj).data)
 	if header.Cap == header.Len {
 		header = type2.grow(header, header.Len + 1)
 	}
@@ -143,7 +143,7 @@ type unsafeIFaceSliceType struct {
 }
 
 func (type2 *unsafeIFaceSliceType) Set(obj interface{}, index int, elem interface{}) {
-	header := (*sliceHeader)(toEFace(obj).data)
+	header := (*sliceHeader)(unpackEFace(obj).data)
 	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
 	ifaceE2I(type2.elemRType, elem, elemPtr)
 }
@@ -155,7 +155,7 @@ func (type2 *unsafeIFaceSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem
 }
 
 func (type2 *unsafeIFaceSliceType) Get(obj interface{}, index int) interface{} {
-	header := (*sliceHeader)(toEFace(obj).data)
+	header := (*sliceHeader)(unpackEFace(obj).data)
 	elemPtr := arrayAt(header.Data, index, type2.elemSize, "i < s.Len")
 	elemIFace := (*iface)(elemPtr)
 	if elemIFace.data == nil {
@@ -171,7 +171,7 @@ func (type2 *unsafeIFaceSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsa
 }
 
 func (type2 *unsafeIFaceSliceType) Append(obj interface{}, elem interface{}) interface{} {
-	header := (*sliceHeader)(toEFace(obj).data)
+	header := (*sliceHeader)(unpackEFace(obj).data)
 	if header.Cap == header.Len {
 		header = type2.grow(header, header.Len + 1)
 	}
@@ -196,7 +196,7 @@ type unsafeIndirSliceType struct {
 }
 
 func (type2 *unsafeIndirSliceType) Set(obj interface{}, index int, elem interface{}) {
-	type2.UnsafeSet(toEFace(obj).data, index, toEFace(elem).data)
+	type2.UnsafeSet(unpackEFace(obj).data, index, unpackEFace(elem).data)
 }
 
 func (type2 *unsafeIndirSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer) {
@@ -206,7 +206,7 @@ func (type2 *unsafeIndirSliceType) UnsafeSet(obj unsafe.Pointer, index int, elem
 }
 
 func (type2 *unsafeIndirSliceType) Get(obj interface{}, index int) interface{} {
-	elemPtr := type2.UnsafeGet(toEFace(obj).data, index)
+	elemPtr := type2.UnsafeGet(unpackEFace(obj).data, index)
 	return packEFace(type2.elemRType, elemPtr)
 }
 
@@ -217,7 +217,7 @@ func (type2 *unsafeIndirSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsa
 }
 
 func (type2 *unsafeIndirSliceType) Append(obj interface{}, elem interface{}) interface{} {
-	ptr := type2.UnsafeAppend(toEFace(obj).data, toEFace(elem).data)
+	ptr := type2.UnsafeAppend(unpackEFace(obj).data, unpackEFace(elem).data)
 	return packEFace(type2.rtype, ptr)
 }
 

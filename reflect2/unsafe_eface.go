@@ -7,7 +7,7 @@ type eface struct {
 	data  unsafe.Pointer
 }
 
-func toEFace(obj interface{}) *eface {
+func unpackEFace(obj interface{}) *eface {
 	return (*eface)(unsafe.Pointer(&obj))
 }
 

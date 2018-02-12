@@ -10,7 +10,7 @@ func newUnsafePointerType(type1 reflect.Type) PointerType {
 	case reflect.Ptr, reflect.Map:
 		return &unsafeIndirPointerType{
 			unsafeType: *newUnsafeType(type1),
-			elemRType:  toEFace(type1.Elem()).data,
+			elemRType:  unpackEFace(type1.Elem()).data,
 		}
 	case reflect.Interface:
 		if type1.Elem().NumMethod() == 0 {
@@ -24,7 +24,7 @@ func newUnsafePointerType(type1 reflect.Type) PointerType {
 	default:
 		return &unsafeDirPointerType{
 			unsafeType: *newUnsafeType(type1),
-			elemRType:  toEFace(type1.Elem()).data,
+			elemRType:  unpackEFace(type1.Elem()).data,
 		}
 	}
 }
@@ -35,7 +35,7 @@ type unsafeDirPointerType struct {
 }
 
 func (type2 *unsafeDirPointerType) Get(obj interface{}) interface{} {
-	ptr := type2.UnsafeGet(toEFace(obj).data)
+	ptr := type2.UnsafeGet(unpackEFace(obj).data)
 	return packEFace(type2.elemRType, ptr)
 }
 
@@ -49,7 +49,7 @@ type unsafeIndirPointerType struct {
 }
 
 func (type2 *unsafeIndirPointerType) Get(obj interface{}) interface{} {
-	ptr := type2.UnsafeGet(toEFace(obj).data)
+	ptr := type2.UnsafeGet(unpackEFace(obj).data)
 	return packEFace(type2.elemRType, ptr)
 }
 
@@ -62,7 +62,7 @@ type unsafeEFacePointerType struct {
 }
 
 func (type2 *unsafeEFacePointerType) Get(obj interface{}) interface{} {
-	ptr := (*interface{})(toEFace(obj).data)
+	ptr := (*interface{})(unpackEFace(obj).data)
 	return *ptr
 }
 
@@ -75,7 +75,7 @@ type unsafeIFacePointerType struct {
 }
 
 func (type2 *unsafeIFacePointerType) Get(obj interface{}) interface{} {
-	ptr := (*iface)(toEFace(obj).data)
+	ptr := (*iface)(unpackEFace(obj).data)
 	return packEFace(ptr.itab.rtype, ptr.data)
 }
 
