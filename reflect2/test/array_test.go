@@ -16,6 +16,10 @@ func Test_array(t *testing.T) {
 		(*(obj.(*[2]int)))[1] = 200
 		return obj
 	}))
+	t.Run("Indirect", testOp(func(api reflect2.API) interface{} {
+		valType := api.TypeOf([2]int{})
+		return valType.Indirect(&[2]int{})
+	}))
 	t.Run("Set", testOp(func(api reflect2.API) interface{} {
 		obj := [2]int{}
 		valType := api.TypeOf(obj).(reflect2.ArrayType)

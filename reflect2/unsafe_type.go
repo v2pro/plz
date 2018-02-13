@@ -34,6 +34,20 @@ func (type2 *unsafeType) PackEFace(ptr unsafe.Pointer) interface{} {
 	return packEFace(type2.ptrRType, ptr)
 }
 
+func (type2 *unsafeType) RType() uintptr {
+	return uintptr(type2.rtype)
+}
+
+func (type2 *unsafeType) Indirect(obj interface{}) interface{} {
+	objEFace := unpackEFace(obj)
+	assertType("Type.Indirect argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIndirect(objEFace.data)
+}
+
+func (type2 *unsafeType) UnsafeIndirect(obj unsafe.Pointer) interface{} {
+	return packEFace(type2.rtype, obj)
+}
+
 func assertType(where string, expectRType unsafe.Pointer, actualRType unsafe.Pointer) {
 	if expectRType != actualRType {
 		expectType := reflect.TypeOf(0)

@@ -2,7 +2,6 @@ package jsonfmt
 
 import (
 	"unsafe"
-	"reflect"
 	"context"
 	"github.com/v2pro/plz/reflect2"
 )
@@ -23,7 +22,7 @@ func (encoder *efaceEncoder) Encode(ctx context.Context, space []byte, ptr unsaf
 	if obj == nil {
 		return append(space, 'n', 'u', 'l', 'l')
 	}
-	return EncoderOf(reflect.TypeOf(obj)).Encode(ctx, space, PtrOf(obj))
+	return EncoderOf(reflect2.TypeOf(obj)).Encode(ctx, space, PtrOf(obj))
 }
 
 type ifaceEncoder struct {
@@ -34,5 +33,5 @@ func (encoder *ifaceEncoder) Encode(ctx context.Context, space []byte, ptr unsaf
 	if obj == nil {
 		return append(space, 'n', 'u', 'l', 'l')
 	}
-	return EncoderOf(reflect.TypeOf(obj)).Encode(ctx, space, PtrOf(obj))
+	return EncoderOf(reflect2.TypeOf(obj)).Encode(ctx, space, PtrOf(obj))
 }

@@ -33,3 +33,15 @@ func (type2 *safeType) PackEFace(ptr unsafe.Pointer) interface{} {
 func (type2 *safeType) Implements(thatType Type) bool {
 	return type2.Type.Implements(thatType.Type1())
 }
+
+func (type2 *safeType) RType() uintptr {
+	panic("does not support unsafe operation")
+}
+
+func (type2 *safeType) Indirect(obj interface{}) interface{} {
+	return reflect.Indirect(reflect.ValueOf(obj)).Interface()
+}
+
+func (type2 *safeType) UnsafeIndirect(ptr unsafe.Pointer) interface{} {
+	panic("does not support unsafe operation")
+}

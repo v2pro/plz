@@ -2,14 +2,15 @@ package test
 
 import (
 	"testing"
-	"github.com/stretchr/testify/require"
-	"reflect"
 	"github.com/v2pro/plz/msgfmt/jsonfmt"
 	"errors"
+	"github.com/v2pro/plz/test"
+	"github.com/v2pro/plz/countlog"
+	"github.com/v2pro/plz/test/must"
 )
 
 func Test_error(t *testing.T) {
-	should := require.New(t)
-	encoder := jsonfmt.EncoderOf(reflect.TypeOf(errors.New("hello")))
-	should.Equal(`"hello"`, string(encoder.Encode(nil,nil, jsonfmt.PtrOf(errors.New("hello")))))
+	t.Run("ptr struct", test.Case(func(ctx *countlog.Context) {
+		must.Equal(`"hello"`, jsonfmt.MarshalToString(errors.New("hello")))
+	}))
 }

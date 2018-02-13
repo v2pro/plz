@@ -18,7 +18,17 @@ func Test_int(t *testing.T) {
 	}))
 	t.Run("PackEFace", test.Case(func(ctx *countlog.Context) {
 		valType := reflect2.TypeOf(1)
-		one := 100
-		must.Equal(100, valType.PackEFace(unsafe.Pointer(&one)))
+		hundred := 100
+		must.Equal(&hundred, valType.PackEFace(unsafe.Pointer(&hundred)))
+	}))
+	t.Run("Indirect", test.Case(func(ctx *countlog.Context) {
+		valType := reflect2.TypeOf(1)
+		hundred := 100
+		must.Equal(100, valType.Indirect(&hundred))
+	}))
+	t.Run("Indirect", test.Case(func(ctx *countlog.Context) {
+		valType := reflect2.TypeOf(1)
+		hundred := 100
+		must.Equal(100, valType.UnsafeIndirect(unsafe.Pointer(&hundred)))
 	}))
 }

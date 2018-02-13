@@ -37,6 +37,10 @@ func Test_map(t *testing.T) {
 		m := valType.UnsafeMakeMap(0)
 		must.Equal(&map[int]int{}, valType.PackEFace(unsafe.Pointer(m)))
 	}))
+	t.Run("Indirect", testOp(func(api reflect2.API) interface{} {
+		valType := reflect2.TypeOf(map[int]int{})
+		return valType.Indirect(&map[int]int{})
+	}))
 	t.Run("Set", testOp(func(api reflect2.API) interface{} {
 		obj := map[int]int{}
 		valType := api.TypeOf(obj).(reflect2.MapType)

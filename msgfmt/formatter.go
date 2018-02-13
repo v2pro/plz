@@ -6,6 +6,7 @@ import (
 	"github.com/v2pro/plz/msgfmt/jsonfmt"
 	"reflect"
 	"strings"
+	"github.com/v2pro/plz/reflect2"
 )
 
 var formatterCache = &sync.Map{}
@@ -98,7 +99,7 @@ func (compiler *formatCompiler) afterLeftCurlyBrace(i int, b byte) {
 		default:
 			compiler.formatters = append(compiler.formatters, &jsonFormatter{
 				idx:     idx,
-				encoder: jsonfmt.EncoderOf(reflect.TypeOf(sampleValue)),
+				encoder: jsonfmt.EncoderOf(reflect2.TypeOf(sampleValue)),
 			})
 		}
 		compiler.start = i + 1

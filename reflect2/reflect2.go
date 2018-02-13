@@ -3,6 +3,7 @@ package reflect2
 import (
 	"reflect"
 	"unsafe"
+	"sync"
 )
 
 type Type interface {
@@ -11,12 +12,17 @@ type Type interface {
 	New() interface{}
 	// UnsafeNew return the allocated space pointed by unsafe.Pointer
 	UnsafeNew() unsafe.Pointer
-	// PackEFace cast a pointer back to empty interface
+	// PackEFace cast a unsafe pointer to object represented pointer
 	PackEFace(ptr unsafe.Pointer) interface{}
+	// Indirect dereference object represented pointer to this type
+	Indirect(obj interface{}) interface{}
+	// UnsafeIndirect dereference pointer to this type
+	UnsafeIndirect(ptr unsafe.Pointer) interface{}
 	// Type1 returns reflect.Type
 	Type1() reflect.Type
 	Implements(thatType Type) bool
 	String() string
+	RType() uintptr
 }
 
 type ListType interface {
@@ -84,7 +90,7 @@ type MapIterator interface {
 	UnsafeNext() (key unsafe.Pointer, elem unsafe.Pointer)
 }
 
-type PointerType interface {
+type PtrType interface {
 	Type
 	Elem() Type
 }
@@ -97,12 +103,9 @@ type Config struct {
 	UseSafeImplementation bool
 }
 
-func (cfg Config) Froze() *frozenConfig {
-	return &frozenConfig{useSafeImplementation: cfg.UseSafeImplementation}
-}
-
 type frozenConfig struct {
 	useSafeImplementation bool
+	cache *sync.Map
 }
 
 type API interface {
@@ -113,12 +116,34 @@ type API interface {
 var ConfigUnsafe = Config{UseSafeImplementation: false}.Froze()
 var ConfigSafe = Config{UseSafeImplementation: true}.Froze()
 
+func (cfg Config) Froze() *frozenConfig {
+	return &frozenConfig{
+		useSafeImplementation: cfg.UseSafeImplementation,
+		cache: &sync.Map{},
+	}
+}
+
 func (cfg *frozenConfig) TypeOf(obj interface{}) Type {
-	valType := reflect.TypeOf(obj)
-	return cfg.Type2(valType)
+	cacheKey := uintptr(unpackEFace(obj).rtype)
+	typeObj, found := cfg.cache.Load(cacheKey)
+	if found {
+		return typeObj.(Type)
+	}
+	return cfg.Type2(reflect.TypeOf(obj))
 }
 
 func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
+	cacheKey := uintptr(unpackEFace(type1).data)
+	typeObj, found := cfg.cache.Load(cacheKey)
+	if found {
+		return typeObj.(Type)
+	}
+	type2 := cfg.wrapType(type1)
+	cfg.cache.Store(cacheKey, type2)
+	return type2
+}
+
+func (cfg *frozenConfig) wrapType(type1 reflect.Type) Type {
 	safeType := safeType{Type: type1, cfg: cfg}
 	switch type1.Kind() {
 	case reflect.Struct:
@@ -141,6 +166,11 @@ func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 			return &safeMapType{safeType}
 		}
 		return newUnsafeMapType(cfg, type1)
+	case reflect.Ptr, reflect.Chan, reflect.Func:
+		if cfg.useSafeImplementation {
+			return &safeMapType{safeType}
+		}
+		return newUnsafePtrType(cfg, type1)
 	default:
 		if cfg.useSafeImplementation {
 			return &safeType
@@ -153,8 +183,8 @@ func TypeOf(obj interface{}) Type {
 	return ConfigUnsafe.TypeOf(obj)
 }
 
-func TypeOfPointer(obj interface{}) PointerType {
-	return TypeOf(obj).(PointerType)
+func TypeOfPtr(obj interface{}) PtrType {
+	return TypeOf(obj).(PtrType)
 }
 
 func Type2(type1 reflect.Type) Type {
@@ -165,7 +195,11 @@ func PtrOf(obj interface{}) unsafe.Pointer {
 	return unpackEFace(obj).data
 }
 
-func IsPointerKind(kind reflect.Kind) bool {
+func RTypeOf(obj interface{}) uintptr {
+	return uintptr(unpackEFace(obj).rtype)
+}
+
+func IsPtrKind(kind reflect.Kind) bool {
 	switch kind {
 	case reflect.Ptr, reflect.Map, reflect.Chan, reflect.Func:
 		return true

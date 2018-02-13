@@ -19,6 +19,16 @@ func newUnsafeMapType(cfg *frozenConfig, type1 reflect.Type) MapType {
 	}
 }
 
+func (type2 *UnsafeMapType) Indirect(obj interface{}) interface{} {
+	objEFace := unpackEFace(obj)
+	assertType("MapType.Indirect argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIndirect(objEFace.data)
+}
+
+func (type2 *UnsafeMapType) UnsafeIndirect(ptr unsafe.Pointer) interface{} {
+	return packEFace(type2.rtype, *(*unsafe.Pointer)(ptr))
+}
+
 func (type2 *UnsafeMapType) Key() Type {
 	return type2.cfg.Type2(type2.Type.Key())
 }

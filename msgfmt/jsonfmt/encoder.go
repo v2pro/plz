@@ -13,8 +13,8 @@ import (
 )
 
 var bytesType = reflect2.TypeOf([]byte(nil))
-var errorType = reflect2.TypeOfPointer((*error)(nil)).Elem()
-var jsonMarshalerType = reflect2.TypeOfPointer((*json.Marshaler)(nil)).Elem()
+var errorType = reflect2.TypeOfPtr((*error)(nil)).Elem()
+var jsonMarshalerType = reflect2.TypeOfPtr((*json.Marshaler)(nil)).Elem()
 
 type Encoder interface {
 	Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte
@@ -39,7 +39,8 @@ func (cfg Config) Froze() API {
 }
 
 type API interface {
-	EncoderOf(valType reflect.Type) Encoder
+	EncoderOf(valType reflect2.Type) Encoder
+	EncoderOfObject(obj interface{}) Encoder
 }
 
 type frozenConfig struct {
@@ -49,28 +50,41 @@ type frozenConfig struct {
 	mapKeyEncoderCache *sync.Map
 }
 
-func (cfg *frozenConfig) EncoderOf(type1 reflect.Type) Encoder {
-	encoderObj, found := cfg.encoderCache.Load(type1)
+func (cfg *frozenConfig) EncoderOfObject(obj interface{}) Encoder {
+	cacheKey := reflect2.RTypeOf(obj)
+	encoderObj, found := cfg.encoderCache.Load(cacheKey)
 	if found {
 		return encoderObj.(Encoder)
 	}
-	valType := reflect2.Type2(type1)
+	return cfg.EncoderOf(reflect2.TypeOf(obj))
+}
+
+func (cfg *frozenConfig) EncoderOf(valType reflect2.Type) Encoder {
+	cacheKey := valType.RType()
+	encoderObj, found := cfg.encoderCache.Load(cacheKey)
+	if found {
+		return encoderObj.(Encoder)
+	}
 	encoder := encoderOf(cfg, "", valType)
 	if isOnePtr(valType) {
 		encoder = &onePtrInterfaceEncoder{encoder}
 	}
-	cfg.encoderCache.Store(type1, encoder)
+	cfg.encoderCache.Store(cacheKey, encoder)
 	return encoder
 }
 
 var ConfigDefault = Config{}.Froze()
 
-func EncoderOf(valType reflect.Type) Encoder {
+func EncoderOf(valType reflect2.Type) Encoder {
 	return ConfigDefault.EncoderOf(valType)
 }
 
+func EncoderOfObject(obj interface{}) Encoder {
+	return ConfigDefault.EncoderOfObject(obj)
+}
+
 func MarshalToString(obj interface{}) string {
-	encoder := EncoderOf(reflect.TypeOf(obj))
+	encoder := EncoderOfObject(obj)
 	return string(encoder.Encode(nil, nil, PtrOf(obj)))
 }
 
@@ -84,12 +98,11 @@ func encoderOf(cfg *frozenConfig, prefix string, valType reflect2.Type) Encoder 
 	if bytesType == valType {
 		return &bytesEncoder{}
 	}
-	//if valType.Implements(errorType) && valType.Kind() == reflect.Ptr {
-	//	sampleObj := reflect.New(valType).Elem().Interface()
-	//	return &pointerEncoder{elemEncoder: &errorEncoder{
-	//		sampleInterface: *(*emptyInterface)(unsafe.Pointer(&sampleObj)),
-	//	}}
-	//}
+	if valType.Implements(errorType) {
+		return &errorEncoder{
+			valType: valType,
+		}
+	}
 	//if valType.Implements(jsonMarshalerType) && valType.Kind() != reflect.Ptr {
 	//	sampleObj := reflect.New(valType).Elem().Interface()
 	//	return &jsonMarshalerEncoder{
@@ -122,7 +135,7 @@ func encoderOf(cfg *frozenConfig, prefix string, valType reflect2.Type) Encoder 
 	case reflect.String:
 		return &stringEncoder{}
 	case reflect.Ptr:
-		pointerType := valType.(reflect2.PointerType)
+		pointerType := valType.(reflect2.PtrType)
 		elemEncoder := encoderOf(cfg, prefix+" [ptrElem]", pointerType.Elem())
 		return &pointerEncoder{elemEncoder: elemEncoder}
 	case reflect.Slice:
@@ -196,20 +209,20 @@ func _encoderOfMapKey(cfg *frozenConfig, prefix string, keyType reflect2.Type) E
 }
 
 func isOnePtr(valType reflect2.Type) bool {
-	if reflect2.IsPointerKind(valType.Kind()) {
+	if reflect2.IsPtrKind(valType.Kind()) {
 		return true
 	}
 	if valType.Kind() == reflect.Struct {
 		structType := valType.(reflect2.StructType)
 		onlyFieldKind := structType.Field(0).Type().Kind()
-		if structType.NumField() == 1 && reflect2.IsPointerKind(onlyFieldKind) {
+		if structType.NumField() == 1 && reflect2.IsPtrKind(onlyFieldKind) {
 			return true
 		}
 	}
 	if valType.Kind() == reflect.Array {
 		arrayType := valType.(reflect2.ArrayType)
 		onlyElemKind := arrayType.Elem().Kind()
-		if arrayType.Len() == 1 && reflect2.IsPointerKind(onlyElemKind) {
+		if arrayType.Len() == 1 && reflect2.IsPtrKind(onlyElemKind) {
 			return true
 		}
 	}
