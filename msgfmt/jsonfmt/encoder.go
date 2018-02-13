@@ -158,11 +158,7 @@ func encoderOf(cfg *frozenConfig, prefix string, valType reflect2.Type) Encoder 
 		mapType := valType.(reflect2.MapType)
 		return encoderOfMap(cfg, prefix, mapType)
 	case reflect.Interface:
-		interfaceType := valType.(reflect2.InterfaceType)
-		if interfaceType.NumMethod() != 0 {
-			return &ifaceEncoder{}
-		}
-		return &efaceEncoder{}
+		return &dynamicEncoder{valType:valType}
 	}
 	return &unsupportedEncoder{fmt.Sprintf(`"can not encode %s %s to json"`, valType.String(), prefix)}
 }
@@ -205,6 +201,14 @@ func _encoderOfMapKey(cfg *frozenConfig, prefix string, keyType reflect2.Type) E
 		return &mapInterfaceKeyEncoder{cfg: cfg, prefix: prefix}
 	}
 	return &mapNumberKeyEncoder{keyEncoder}
+}
+
+type onePtrInterfaceEncoder struct {
+	valEncoder Encoder
+}
+
+func (encoder *onePtrInterfaceEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
+	return encoder.valEncoder.Encode(ctx, space, unsafe.Pointer(&ptr))
 }
 
 func isOnePtr(valType reflect2.Type) bool {
@@ -278,6 +282,7 @@ func getFieldName(cfg *frozenConfig, field reflect2.StructField) string {
 	return parts[0]
 }
 
+// TODO: remove this
 func PtrOf(val interface{}) unsafe.Pointer {
 	return (*emptyInterface)(unsafe.Pointer(&val)).word
 }

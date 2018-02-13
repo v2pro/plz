@@ -1,6 +1,9 @@
 package reflect2
 
-import "unsafe"
+import (
+	"unsafe"
+	"reflect"
+)
 
 type iface struct {
 	itab *itab
@@ -12,10 +15,30 @@ type itab struct {
 	rtype  unsafe.Pointer
 }
 
-func UnsafeIFaceToEFace(ptr unsafe.Pointer) interface{} {
+func IFaceToEFace(ptr unsafe.Pointer) interface{} {
 	iface := (*iface)(ptr)
 	if iface.itab == nil {
 		return nil
 	}
 	return packEFace(iface.itab.rtype, iface.data)
+}
+
+type UnsafeIFaceType struct {
+	unsafeType
+}
+
+func newUnsafeIFaceType(cfg *frozenConfig, type1 reflect.Type) *UnsafeIFaceType {
+	return &UnsafeIFaceType{
+		unsafeType: *newUnsafeType(cfg, type1),
+	}
+}
+
+func (type2 *UnsafeIFaceType) Indirect(obj interface{}) interface{} {
+	objEFace := unpackEFace(obj)
+	assertType("Type.Indirect argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIndirect(objEFace.data)
+}
+
+func (type2 *UnsafeIFaceType) UnsafeIndirect(ptr unsafe.Pointer) interface{} {
+	return IFaceToEFace(ptr)
 }

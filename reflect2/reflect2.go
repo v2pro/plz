@@ -171,6 +171,14 @@ func (cfg *frozenConfig) wrapType(type1 reflect.Type) Type {
 			return &safeMapType{safeType}
 		}
 		return newUnsafePtrType(cfg, type1)
+	case reflect.Interface:
+		if cfg.useSafeImplementation {
+			return &safeMapType{safeType}
+		}
+		if type1.NumMethod() == 0 {
+			return newUnsafeEFaceType(cfg, type1)
+		}
+		return newUnsafeIFaceType(cfg, type1)
 	default:
 		if cfg.useSafeImplementation {
 			return &safeType

@@ -1,6 +1,9 @@
 package reflect2
 
-import "unsafe"
+import (
+	"unsafe"
+	"reflect"
+)
 
 type eface struct {
 	rtype unsafe.Pointer
@@ -17,4 +20,24 @@ func packEFace(rtype unsafe.Pointer, data unsafe.Pointer) interface{} {
 	e.rtype = rtype
 	e.data = data
 	return i
+}
+
+type UnsafeEFaceType struct {
+	unsafeType
+}
+
+func newUnsafeEFaceType(cfg *frozenConfig, type1 reflect.Type) *UnsafeEFaceType {
+	return &UnsafeEFaceType{
+		unsafeType: *newUnsafeType(cfg, type1),
+	}
+}
+
+func (type2 *UnsafeEFaceType) Indirect(obj interface{}) interface{} {
+	objEFace := unpackEFace(obj)
+	assertType("Type.Indirect argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIndirect(objEFace.data)
+}
+
+func (type2 *UnsafeEFaceType) UnsafeIndirect(ptr unsafe.Pointer) interface{} {
+	return *(*interface{})(ptr)
 }

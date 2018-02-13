@@ -3,14 +3,14 @@ package test
 import (
 	"testing"
 	"github.com/stretchr/testify/require"
-	"reflect"
 	"io"
 	"github.com/v2pro/plz/msgfmt/jsonfmt"
+	"github.com/v2pro/plz/reflect2"
 )
 
 func Test_slice_of_eface(t *testing.T) {
 	should := require.New(t)
-	encoder := jsonfmt.EncoderOf(reflect.TypeOf(([]interface{})(nil)))
+	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(([]interface{})(nil)))
 	should.Equal("[1,null,3]", string(encoder.Encode(nil,nil, jsonfmt.PtrOf([]interface{}{
 		1, nil, 3,
 	}))))
@@ -24,7 +24,7 @@ func (closer TestCloser) Close() error {
 
 func Test_slice_of_iface(t *testing.T) {
 	should := require.New(t)
-	encoder := jsonfmt.EncoderOf(reflect.TypeOf(([]io.Closer)(nil)))
+	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(([]io.Closer)(nil)))
 	should.Equal("[1,null,3]", string(encoder.Encode(nil,nil, jsonfmt.PtrOf([]io.Closer{
 		TestCloser(1), nil, TestCloser(3),
 	}))))
