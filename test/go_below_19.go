@@ -2,7 +2,5 @@
 
 package test
 
-func Helper() func() {
-	return func() {
-	}
+func Helper() {
 }

@@ -28,7 +28,7 @@ func Call(f interface{}, argObjs ...interface{}) ReturnValue {
 		if assert.NoError(t, err) {
 			return ReturnValue(retObjs)
 		}
-		test.Helper()()
+		test.Helper()
 		_, file, line, ok := runtime.Caller(1)
 		if !ok {
 			t.Fatal("check failed")

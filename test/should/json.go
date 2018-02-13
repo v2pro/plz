@@ -10,7 +10,7 @@ import (
 
 func JsonEqual(expected string, actual interface{}) {
 	t := test.CurrentT()
-	test.Helper()()
+	test.Helper()
 	var expectedObj interface{}
 	err := json.Unmarshal([]byte(expected), &expectedObj)
 	if err != nil {
@@ -39,7 +39,7 @@ func JsonEqual(expected string, actual interface{}) {
 	if assert.Equal(t, expectedObj, actualObj) {
 		return
 	}
-	test.Helper()()
+	test.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Error("check failed")

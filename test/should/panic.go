@@ -8,7 +8,7 @@ import (
 
 func Panic(f func()) (recovered interface{}) {
 	t := test.CurrentT()
-	test.Helper()()
+	test.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Error("check failed")

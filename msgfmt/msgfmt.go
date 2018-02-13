@@ -7,6 +7,7 @@ import (
 	"unsafe"
 	"fmt"
 	"github.com/v2pro/plz/concurrent"
+	"github.com/v2pro/plz/reflect2"
 )
 
 var bufPool = &sync.Pool{
@@ -16,26 +17,21 @@ var bufPool = &sync.Pool{
 }
 
 func Sprintf(format string, kvObj ...interface{}) string {
-	ptr := unsafe.Pointer(&kvObj)
-	kv := castEmptyInterfaces(uintptr(ptr))
+	ptr := reflect2.NoEscape(unsafe.Pointer(&kvObj))
+	kv := *(*[]interface{})(ptr)
 	buf := FormatterOf(format, kv).Format(nil, kv)
-	sliceHeader := (*sliceHeader)(unsafe.Pointer(&buf))
-	stringHeader := &stringHeader{
-		Data: sliceHeader.Data,
-		Len:  sliceHeader.Len,
-	}
-	return *(*string)(unsafe.Pointer(stringHeader))
+	return string(buf)
 }
 
 func Println(valuesObj ...interface{}) (int, error) {
-	ptr := unsafe.Pointer(&valuesObj)
-	values := castEmptyInterfaces(uintptr(ptr))
+	ptr := reflect2.NoEscape(unsafe.Pointer(&valuesObj))
+	values := *(*[]interface{})(ptr)
 	return fprintln(os.Stdout, values)
 }
 
 func Fprintln(writer io.Writer, valuesObj ...interface{}) (int, error) {
-	ptr := unsafe.Pointer(&valuesObj)
-	values := castEmptyInterfaces(uintptr(ptr))
+	ptr := reflect2.NoEscape(unsafe.Pointer(&valuesObj))
+	values := *(*[]interface{})(ptr)
 	return fprintln(writer, values)
 }
 
@@ -51,14 +47,14 @@ func fprintln(writer io.Writer, values []interface{}) (int, error) {
 }
 
 func Printf(format string, kvObj ...interface{}) (int, error) {
-	ptr := unsafe.Pointer(&kvObj)
-	kv := castEmptyInterfaces(uintptr(ptr))
+	ptr := reflect2.NoEscape(unsafe.Pointer(&kvObj))
+	kv := *(*[]interface{})(ptr)
 	return fprintf(os.Stdout, format, kv)
 }
 
 func Fprintf(writer io.Writer, format string, kvObj ...interface{}) (int, error) {
-	ptr := unsafe.Pointer(&kvObj)
-	kv := castEmptyInterfaces(uintptr(ptr))
+	ptr := reflect2.NoEscape(unsafe.Pointer(&kvObj))
+	kv := *(*[]interface{})(ptr)
 	return fprintf(writer, format, kv)
 }
 
@@ -69,21 +65,6 @@ func fprintf(writer io.Writer, format string, kv []interface{}) (int, error) {
 	n, err := writer.Write(formatted)
 	bufPool.Put(formatted)
 	return n, err
-}
-
-func castEmptyInterfaces(ptr uintptr) []interface{} {
-	return *(*[]interface{})(unsafe.Pointer(ptr))
-}
-
-type stringHeader struct {
-	Data unsafe.Pointer
-	Len  int
-}
-
-type sliceHeader struct {
-	Data unsafe.Pointer
-	Len  int
-	Cap  int
 }
 
 var formatterCache = concurrent.NewMap()

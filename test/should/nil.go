@@ -11,7 +11,7 @@ func Nil(actual interface{}) {
 	if assert.Nil(t, actual) {
 		return
 	}
-	test.Helper()()
+	test.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Error("check failed")
@@ -25,7 +25,7 @@ func AssertNil(actual interface{}) {
 	if assert.Nil(t, actual) {
 		return
 	}
-	test.Helper()()
+	test.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Error("check failed")
@@ -39,7 +39,7 @@ func NotNil(actual interface{}) {
 	if assert.NotNil(t, actual) {
 		return
 	}
-	test.Helper()()
+	test.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Error("check failed")
@@ -53,7 +53,7 @@ func AssertNotNil(actual interface{}) {
 	if assert.NotNil(t, actual) {
 		return
 	}
-	test.Helper()()
+	test.Helper()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Error("check failed")
