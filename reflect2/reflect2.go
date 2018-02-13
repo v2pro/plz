@@ -15,9 +15,11 @@ type Type interface {
 	PackEFace(ptr unsafe.Pointer) interface{}
 	// Type1 returns reflect.Type
 	Type1() reflect.Type
+	Implements(thatType Type) bool
+	String() string
 }
 
-type ArrayType interface {
+type ListType interface {
 	Type
 	Elem() Type
 	Set(obj interface{}, index int, elem interface{})
@@ -26,8 +28,13 @@ type ArrayType interface {
 	UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer
 }
 
+type ArrayType interface {
+	ListType
+	Len() int
+}
+
 type SliceType interface {
-	ArrayType
+	ListType
 	MakeSlice(length int, cap int) interface{}
 	UnsafeMakeSlice(length int, cap int) unsafe.Pointer
 	Append(obj interface{}, elem interface{}) interface{}
@@ -58,6 +65,7 @@ type StructField interface {
 
 type MapType interface {
 	Type
+	Key() Type
 	Elem() Type
 	MakeMap(cap int) interface{}
 	UnsafeMakeMap(cap int) unsafe.Pointer
@@ -74,6 +82,15 @@ type MapIterator interface {
 	HasNext() bool
 	Next() (key interface{}, elem interface{})
 	UnsafeNext() (key unsafe.Pointer, elem unsafe.Pointer)
+}
+
+type PointerType interface {
+	Type
+	Elem() Type
+}
+
+type InterfaceType interface {
+	NumMethod() int
 }
 
 type Config struct {
@@ -134,6 +151,10 @@ func (cfg *frozenConfig) Type2(type1 reflect.Type) Type {
 
 func TypeOf(obj interface{}) Type {
 	return ConfigUnsafe.TypeOf(obj)
+}
+
+func TypeOfPointer(obj interface{}) PointerType {
+	return TypeOf(obj).(PointerType)
 }
 
 func Type2(type1 reflect.Type) Type {

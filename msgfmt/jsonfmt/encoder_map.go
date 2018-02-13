@@ -2,7 +2,6 @@ package jsonfmt
 
 import (
 	"unsafe"
-	"reflect"
 	"context"
 	"github.com/v2pro/plz/reflect2"
 )
@@ -59,5 +58,5 @@ type mapInterfaceKeyEncoder struct {
 
 func (encoder *mapInterfaceKeyEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	keyObj := *(*interface{})(ptr)
-	return encoderOfMapKey(encoder.cfg, encoder.prefix, reflect.TypeOf(keyObj)).Encode(ctx, space, PtrOf(keyObj))
+	return encoderOfMapKey(encoder.cfg, encoder.prefix, reflect2.TypeOf(keyObj)).Encode(ctx, space, PtrOf(keyObj))
 }

@@ -29,3 +29,7 @@ func (type2 *safeType) Type1() reflect.Type {
 func (type2 *safeType) PackEFace(ptr unsafe.Pointer) interface{} {
 	panic("does not support unsafe operation")
 }
+
+func (type2 *safeType) Implements(thatType Type) bool {
+	return type2.Type.Implements(thatType.Type1())
+}
