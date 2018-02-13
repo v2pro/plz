@@ -2,7 +2,7 @@
 
 PLZ has three parts
 
-* plz: observability, message format, utility
+* plz: observability, test helper, message format, utility
 * plz.sql: use sql to query anything
 * plz.service: junction for distributed computing
 
