@@ -15,5 +15,5 @@ func (encoder *dynamicEncoder) Encode(ctx context.Context, space []byte, ptr uns
 	if obj == nil {
 		return append(space, 'n', 'u', 'l', 'l')
 	}
-	return EncoderOf(reflect2.TypeOf(obj)).Encode(ctx, space, PtrOf(obj))
+	return EncoderOf(reflect2.TypeOf(obj)).Encode(ctx, space, reflect2.PtrOf(obj))
 }

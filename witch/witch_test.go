@@ -50,7 +50,7 @@ func init() {
 	expvar.Publish("map before delete", dump.Snapshot(m))
 	delete(m, 2)
 	expvar.Publish("map after delete", dump.Snapshot(m))
-	//hm := (*hmap)(jsonfmt.PtrOf(m))
+	//hm := (*hmap)(reflect2.PtrOf(m))
 	//for i := 1; i < 30; i++ {
 	//	m[i] = i * i
 	//	expvar.Publish(fmt.Sprintf("map%v", i), dump.Snapshot(m))

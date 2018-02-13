@@ -15,7 +15,7 @@ import (
 func Test_map_of_number_key(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(map[int]int{1: 1}))
-	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, jsonfmt.PtrOf(map[int]int{
+	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, reflect2.PtrOf(map[int]int{
 		1: 1,
 	}))))
 }
@@ -23,7 +23,7 @@ func Test_map_of_number_key(t *testing.T) {
 func Test_map_of_string_key(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(map[string]int{"hello": 1}))
-	should.Equal(`{"hello":1}`, string(encoder.Encode(nil,nil, jsonfmt.PtrOf(map[string]int{
+	should.Equal(`{"hello":1}`, string(encoder.Encode(nil,nil, reflect2.PtrOf(map[string]int{
 		"hello": 1,
 	}))))
 }
@@ -32,7 +32,7 @@ func Test_map_of_ptr_elem(t *testing.T) {
 	should := require.New(t)
 	one := 1
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(map[int]*int{1: &one}))
-	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, jsonfmt.PtrOf(map[int]*int{
+	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, reflect2.PtrOf(map[int]*int{
 		1: &one,
 	}))))
 }
@@ -40,7 +40,7 @@ func Test_map_of_ptr_elem(t *testing.T) {
 func Test_map_of_interface_key(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(map[interface{}]int{1: 1}))
-	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, jsonfmt.PtrOf(map[interface{}]int{
+	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, reflect2.PtrOf(map[interface{}]int{
 		1: 1,
 	}))))
 }
@@ -48,7 +48,7 @@ func Test_map_of_interface_key(t *testing.T) {
 func Test_map_of_interface_elem(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(map[int]interface{}{1: 1}))
-	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, jsonfmt.PtrOf(map[int]interface{}{
+	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, reflect2.PtrOf(map[int]interface{}{
 		1: 1,
 	}))))
 }
@@ -56,7 +56,7 @@ func Test_map_of_interface_elem(t *testing.T) {
 func Test_map_of_non_empty_interface_value(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(map[int]io.Closer{1: nil}))
-	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, jsonfmt.PtrOf(map[int]io.Closer{
+	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, reflect2.PtrOf(map[int]io.Closer{
 		1: TestCloser(1),
 	}))))
 }
@@ -83,7 +83,7 @@ func Benchmark_map_unsafe(b *testing.B) {
 	b.ResetTimer()
 	space := []byte(nil)
 	for i := 0; i < b.N; i++ {
-		space = encoder.Encode(nil, space[:0], jsonfmt.PtrOf(m))
+		space = encoder.Encode(nil, space[:0], reflect2.PtrOf(m))
 	}
 }
 

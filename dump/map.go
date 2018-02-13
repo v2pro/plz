@@ -211,7 +211,7 @@ func (encoder *mapEncoder) encodeBuckets(ctx context.Context, space []byte, coun
 func (encoder *mapEncoder) encodeBucket(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	bmap := (*bmap)(ptr)
 	space = append(space, `{"tophash":`...)
-	space = topHashEncoder.Encode(ctx, space, jsonfmt.PtrOf(bmap.tophash))
+	space = topHashEncoder.Encode(ctx, space, reflect2.PtrOf(bmap.tophash))
 	space = append(space, `,"keys":`...)
 	keysPtr := uintptr(ptr) + bucketCnt
 	space = encoder.keysEncoder.Encode(ctx, space, unsafe.Pointer(keysPtr))

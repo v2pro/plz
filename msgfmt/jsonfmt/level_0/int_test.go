@@ -11,63 +11,63 @@ import (
 func Test_int8(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(int8(1)))
-	should.Equal("-1", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(int8(-1)))))
+	should.Equal("-1", string(encoder.Encode(nil,nil, reflect2.PtrOf(int8(-1)))))
 }
 
 func Test_uint8(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(uint8(1)))
-	should.Equal("222", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(uint8(222)))))
+	should.Equal("222", string(encoder.Encode(nil,nil, reflect2.PtrOf(uint8(222)))))
 }
 
 func Test_int16(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(int16(1)))
-	should.Equal("222", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(int16(222)))))
+	should.Equal("222", string(encoder.Encode(nil,nil, reflect2.PtrOf(int16(222)))))
 }
 
 func Test_uint16(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(uint16(1)))
-	should.Equal("222", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(uint16(222)))))
+	should.Equal("222", string(encoder.Encode(nil,nil, reflect2.PtrOf(uint16(222)))))
 }
 
 func Test_int32(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(int32(1)))
-	should.Equal("222", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(int32(222)))))
+	should.Equal("222", string(encoder.Encode(nil,nil, reflect2.PtrOf(int32(222)))))
 }
 
 func Test_uint32(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(uint32(1)))
-	should.Equal("222", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(uint32(222)))))
+	should.Equal("222", string(encoder.Encode(nil,nil, reflect2.PtrOf(uint32(222)))))
 }
 
 func Test_int64(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(int64(1)))
-	should.Equal("222", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(int64(222)))))
+	should.Equal("222", string(encoder.Encode(nil,nil, reflect2.PtrOf(int64(222)))))
 }
 
 func Test_uint64(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(uint64(1)))
-	should.Equal("222", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(uint64(222)))))
+	should.Equal("222", string(encoder.Encode(nil,nil, reflect2.PtrOf(uint64(222)))))
 }
 
 func Test_int(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(1))
-	should.Equal("1", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(1))))
-	should.Equal("998123123", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(998123123))))
-	should.Equal("-998123123", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(-998123123))))
+	should.Equal("1", string(encoder.Encode(nil,nil, reflect2.PtrOf(1))))
+	should.Equal("998123123", string(encoder.Encode(nil,nil, reflect2.PtrOf(998123123))))
+	should.Equal("-998123123", string(encoder.Encode(nil,nil, reflect2.PtrOf(-998123123))))
 }
 
 func Test_uint(t *testing.T) {
 	should := require.New(t)
 	encoder := jsonfmt.EncoderOf(reflect2.TypeOf(uint(1)))
-	should.Equal("222", string(encoder.Encode(nil,nil, jsonfmt.PtrOf(uint(222)))))
+	should.Equal("222", string(encoder.Encode(nil,nil, reflect2.PtrOf(uint(222)))))
 }
 
 func Benchmark_int(b *testing.B) {

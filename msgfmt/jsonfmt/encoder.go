@@ -85,7 +85,7 @@ func EncoderOfObject(obj interface{}) Encoder {
 
 func MarshalToString(obj interface{}) string {
 	encoder := EncoderOfObject(obj)
-	return string(encoder.Encode(nil, nil, PtrOf(obj)))
+	return string(encoder.Encode(nil, nil, reflect2.PtrOf(obj)))
 }
 
 func encoderOf(cfg *frozenConfig, prefix string, valType reflect2.Type) Encoder {
@@ -280,15 +280,4 @@ func getFieldName(cfg *frozenConfig, field reflect2.StructField) string {
 		return field.Name()
 	}
 	return parts[0]
-}
-
-// TODO: remove this
-func PtrOf(val interface{}) unsafe.Pointer {
-	return (*emptyInterface)(unsafe.Pointer(&val)).word
-}
-
-// emptyInterface is the header for an interface{} value.
-type emptyInterface struct {
-	typ  unsafe.Pointer
-	word unsafe.Pointer
 }

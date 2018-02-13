@@ -58,5 +58,6 @@ type mapInterfaceKeyEncoder struct {
 
 func (encoder *mapInterfaceKeyEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	keyObj := *(*interface{})(ptr)
-	return encoderOfMapKey(encoder.cfg, encoder.prefix, reflect2.TypeOf(keyObj)).Encode(ctx, space, PtrOf(keyObj))
+	keyEncoder := encoderOfMapKey(encoder.cfg, encoder.prefix, reflect2.TypeOf(keyObj))
+	return keyEncoder.Encode(ctx, space, reflect2.PtrOf(keyObj))
 }

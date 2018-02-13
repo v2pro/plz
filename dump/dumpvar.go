@@ -28,7 +28,7 @@ func (v Var) String() string {
 	rootPtr := unsafe.Pointer(&v.Object)
 	output := efaceEncoderInst.Encode(ctx, nil, rootPtr)
 	addrMap["__root__"] = json.RawMessage(output)
-	output = addrMapEncoderInst.Encode(nil, nil, jsonfmt.PtrOf(addrMap))
+	output = addrMapEncoderInst.Encode(nil, nil, reflect2.PtrOf(addrMap))
 	return string(output)
 }
 
