@@ -103,12 +103,11 @@ func encoderOf(cfg *frozenConfig, prefix string, valType reflect2.Type) Encoder 
 			valType: valType,
 		}
 	}
-	//if valType.Implements(jsonMarshalerType) && valType.Kind() != reflect.Ptr {
-	//	sampleObj := reflect.New(valType).Elem().Interface()
-	//	return &jsonMarshalerEncoder{
-	//		sampleInterface: *(*emptyInterface)(unsafe.Pointer(&sampleObj)),
-	//	}
-	//}
+	if valType.Implements(jsonMarshalerType) {
+		return &jsonMarshalerEncoder{
+			valType: valType,
+		}
+	}
 	switch valType.Kind() {
 	case reflect.Bool:
 		return &boolEncoder{}
