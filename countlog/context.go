@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/v2pro/plz/countlog/spi"
 	"unsafe"
-	"github.com/v2pro/plz/pickle"
 )
 
 func Ctx(ctx context.Context) *Context {
@@ -12,14 +11,13 @@ func Ctx(ctx context.Context) *Context {
 	if isWrapped {
 		return wrapped
 	}
-	return &Context{Context: ctx, logContext: &spi.LogContext{}, stream: pickle.NewStream(nil)}
+	return &Context{Context: ctx, logContext: &spi.LogContext{}}
 }
 
 type Context struct {
 	context.Context
 	logContext *spi.LogContext
 	suppressedMinLevel int
-	stream *pickle.Stream
 }
 
 func (ctx *Context) SuppressLevelsBelow(level int) {

@@ -5,11 +5,11 @@ import (
 	"reflect"
 	"strings"
 	"unicode"
-	"sync"
 	"fmt"
 	"encoding/json"
 	"context"
 	"github.com/v2pro/plz/reflect2"
+	"github.com/v2pro/plz/concurrent2"
 )
 
 var bytesType = reflect2.TypeOf([]byte(nil))
@@ -29,25 +29,28 @@ type Config struct {
 	Extensions         []Extension
 }
 
-func (cfg Config) Froze() API {
-	return &frozenConfig{
-		includesUnexported: cfg.IncludesUnexported,
-		extensions:         cfg.Extensions,
-		encoderCache:       &sync.Map{},
-		mapKeyEncoderCache: &sync.Map{},
-	}
-}
-
 type API interface {
 	EncoderOf(valType reflect2.Type) Encoder
 	EncoderOfObject(obj interface{}) Encoder
 }
 
+var ConfigDefault = Config{}.Froze()
+
+
 type frozenConfig struct {
 	includesUnexported bool
 	extensions         []Extension
-	encoderCache       *sync.Map
-	mapKeyEncoderCache *sync.Map
+	encoderCache       *concurrent2.Map
+	mapKeyEncoderCache *concurrent2.Map
+}
+
+func (cfg Config) Froze() API {
+	return &frozenConfig{
+		includesUnexported: cfg.IncludesUnexported,
+		extensions:         cfg.Extensions,
+		encoderCache:       concurrent2.NewMap(),
+		mapKeyEncoderCache: concurrent2.NewMap(),
+	}
 }
 
 func (cfg *frozenConfig) EncoderOfObject(obj interface{}) Encoder {
@@ -73,7 +76,16 @@ func (cfg *frozenConfig) EncoderOf(valType reflect2.Type) Encoder {
 	return encoder
 }
 
-var ConfigDefault = Config{}.Froze()
+func encoderOfMapKey(cfg *frozenConfig, prefix string, keyType reflect2.Type) Encoder {
+	cacheKey := keyType.RType()
+	encoderObj, found := cfg.mapKeyEncoderCache.Load(cacheKey)
+	if found {
+		return encoderObj.(Encoder)
+	}
+	encoder := _encoderOfMapKey(cfg, prefix, keyType)
+	cfg.mapKeyEncoderCache.Store(cacheKey, encoder)
+	return encoder
+}
 
 func EncoderOf(valType reflect2.Type) Encoder {
 	return ConfigDefault.EncoderOf(valType)
@@ -180,16 +192,6 @@ func encoderOfMap(cfg *frozenConfig, prefix string, valType reflect2.MapType) *m
 		elemEncoder: elemEncoder,
 		mapType:     valType.(*reflect2.UnsafeMapType),
 	}
-}
-
-func encoderOfMapKey(cfg *frozenConfig, prefix string, keyType reflect2.Type) Encoder {
-	encoderObj, found := cfg.mapKeyEncoderCache.Load(keyType)
-	if found {
-		return encoderObj.(Encoder)
-	}
-	encoder := _encoderOfMapKey(cfg, prefix, keyType)
-	cfg.mapKeyEncoderCache.Store(keyType, encoder)
-	return encoder
 }
 
 func _encoderOfMapKey(cfg *frozenConfig, prefix string, keyType reflect2.Type) Encoder {

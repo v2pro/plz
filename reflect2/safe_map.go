@@ -15,7 +15,7 @@ func (type2 *safeMapType) Key() Type {
 
 func (type2 *safeMapType) MakeMap(cap int) interface{} {
 	ptr := reflect.New(type2.Type)
-	ptr.Elem().Set(reflect.MakeMapWithSize(type2.Type, cap))
+	ptr.Elem().Set(reflect.MakeMap(type2.Type))
 	return ptr.Interface()
 }
 

@@ -9,6 +9,10 @@ type safeField struct {
 	reflect.StructField
 }
 
+func (field *safeField) Offset() uintptr {
+	return field.StructField.Offset
+}
+
 func (field *safeField) Name() string {
 	return field.StructField.Name
 }

@@ -38,7 +38,7 @@ func (type2 *UnsafeMapType) MakeMap(cap int) interface{} {
 }
 
 func (type2 *UnsafeMapType) UnsafeMakeMap(cap int) unsafe.Pointer {
-	m := makemap(type2.rtype, cap)
+	m := makeMapWithSize(type2.rtype, cap)
 	return unsafe.Pointer(&m)
 }
 

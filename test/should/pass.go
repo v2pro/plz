@@ -10,7 +10,7 @@ import (
 func Assert(result bool, kv ...interface{}) {
 	if !result {
 		t := test.CurrentT()
-		t.Helper()
+		test.Helper()()
 		_, file, line, ok := runtime.Caller(1)
 		if !ok {
 			t.Error("check failed")
@@ -28,7 +28,7 @@ func Assert(result bool, kv ...interface{}) {
 func Pass(result bool, kv ...interface{}) {
 	if !result {
 		t := test.CurrentT()
-		t.Helper()
+		test.Helper()()
 		_, file, line, ok := runtime.Caller(1)
 		if !ok {
 			t.Error("check failed")

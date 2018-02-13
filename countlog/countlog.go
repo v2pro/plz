@@ -1,13 +1,13 @@
 package countlog
 
 import (
-	"sync"
 	"unsafe"
 	"runtime"
 	"time"
 	"github.com/v2pro/plz/countlog/spi"
 	"github.com/v2pro/plz/msgfmt"
 	"errors"
+	"github.com/v2pro/plz/concurrent2"
 )
 
 const LevelTraceCall = spi.LevelTraceCall
@@ -136,7 +136,7 @@ func LogPanic(recovered interface{}, properties ...interface{}) interface{} {
 	return recovered
 }
 
-var handlerCache = &sync.Map{}
+var handlerCache = &concurrent2.Map{}
 
 func log(level int, eventName string, agg string, ctx *Context, err error, properties []interface{}) error {
 	handler := getHandler(eventName, agg, ctx, properties)
@@ -161,9 +161,6 @@ func log(level int, eventName string, agg string, ctx *Context, err error, prope
 }
 
 func addMemo(level int, eventName string, agg string, ctx *Context, err error, properties []interface{}) {
-	stream := ctx.stream
-	stream.Reset(stream.Buffer()[:0])
-	handler := getHandler(eventName, agg, ctx, properties)
 	event := &spi.Event{
 		Level:      level,
 		Context:    ctx,
@@ -180,15 +177,6 @@ func addMemo(level int, eventName string, agg string, ctx *Context, err error, p
 		errMsg = append(errMsg, castedEvent.Error.Error()...)
 		castedEvent.Error = errors.New(string(errMsg))
 	}
-	stream.Marshal(spi.Memo{
-		Event: event,
-		Site: handler.LogSite(),
-	})
-	if stream.Error != nil {
-		spi.OnError(stream.Error)
-		return
-	}
-	ctx.logContext.Memos = append(ctx.logContext.Memos, append([]byte(nil), stream.Buffer()...))
 }
 
 func castEmptyInterfaces(ptr uintptr) []interface{} {

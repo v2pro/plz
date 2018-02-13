@@ -3,7 +3,7 @@ package reflect2
 import (
 	"reflect"
 	"unsafe"
-	"sync"
+	"github.com/v2pro/plz/concurrent2"
 )
 
 type Type interface {
@@ -57,6 +57,7 @@ type StructType interface {
 }
 
 type StructField interface {
+	Offset() uintptr
 	Name() string
 	PkgPath() string
 	Type() Type
@@ -103,11 +104,6 @@ type Config struct {
 	UseSafeImplementation bool
 }
 
-type frozenConfig struct {
-	useSafeImplementation bool
-	cache *sync.Map
-}
-
 type API interface {
 	TypeOf(obj interface{}) Type
 	Type2(type1 reflect.Type) Type
@@ -116,10 +112,15 @@ type API interface {
 var ConfigUnsafe = Config{UseSafeImplementation: false}.Froze()
 var ConfigSafe = Config{UseSafeImplementation: true}.Froze()
 
+type frozenConfig struct {
+	useSafeImplementation bool
+	cache                 *concurrent2.Map
+}
+
 func (cfg Config) Froze() *frozenConfig {
 	return &frozenConfig{
 		useSafeImplementation: cfg.UseSafeImplementation,
-		cache: &sync.Map{},
+		cache:                 concurrent2.NewMap(),
 	}
 }
 

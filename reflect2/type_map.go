@@ -1,6 +1,4 @@
-//+build go1.5
-
-package gls
+package reflect2
 
 import (
 	"unsafe"
@@ -28,15 +26,6 @@ func init() {
 	} else {
 		loadGo17Types()
 	}
-	gType := TypeForName("runtime.g")
-	if gType == nil {
-		panic("failed to get runtime.g type")
-	}
-	goidField, found := gType.FieldByName("goid")
-	if !found {
-		panic("failed to get goid from runtime.g type")
-	}
-	goidOffset = goidField.Offset
 }
 
 func loadGo15Types() {
@@ -77,7 +66,7 @@ type emptyInterface struct {
 	word unsafe.Pointer
 }
 
-// TypeForName return the type by its name, just like Class.forName in java
-func TypeForName(typeName string) reflect.Type {
-	return types[typeName]
+// TypeByName return the type by its name, just like Class.forName in java
+func TypeByName(typeName string) Type {
+	return Type2(types[typeName])
 }

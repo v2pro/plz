@@ -1,7 +1,6 @@
 package msgfmt
 
 import (
-	"sync"
 	"fmt"
 	"github.com/v2pro/plz/msgfmt/jsonfmt"
 	"reflect"
@@ -9,7 +8,6 @@ import (
 	"github.com/v2pro/plz/reflect2"
 )
 
-var formatterCache = &sync.Map{}
 
 type Formatter interface {
 	Format(space []byte, kv []interface{}) []byte
@@ -22,16 +20,6 @@ func (formatters Formatters) Format(space []byte, kv []interface{}) []byte {
 		space = formatter.Format(space, kv)
 	}
 	return space
-}
-
-func FormatterOf(format string, sample []interface{}) Formatter {
-	formatterObj, found := formatterCache.Load(format)
-	if found {
-		return formatterObj.(Formatter)
-	}
-	formatter := compile(format, sample)
-	formatterCache.Store(format, formatter)
-	return formatter
 }
 
 type formatCompiler struct {

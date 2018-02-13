@@ -21,6 +21,10 @@ func newUnsafeStructField(structType *UnsafeStructType, structField reflect.Stru
 	}
 }
 
+func (field *UnsafeStructField) Offset() uintptr {
+	return field.StructField.Offset
+}
+
 func (field *UnsafeStructField) Name() string {
 	return field.StructField.Name
 }
@@ -54,7 +58,7 @@ func (field *UnsafeStructField) Set(obj interface{}, value interface{}) {
 }
 
 func (field *UnsafeStructField) UnsafeSet(obj unsafe.Pointer, value unsafe.Pointer) {
-	fieldPtr := add(obj, field.Offset, "same as non-reflect &v.field")
+	fieldPtr := add(obj, field.StructField.Offset, "same as non-reflect &v.field")
 	typedmemmove(field.rtype, fieldPtr, value)
 }
 
@@ -66,5 +70,5 @@ func (field *UnsafeStructField) Get(obj interface{}) interface{} {
 }
 
 func (field *UnsafeStructField) UnsafeGet(obj unsafe.Pointer) unsafe.Pointer {
-	return add(obj, field.Offset, "same as non-reflect &v.field")
+	return add(obj, field.StructField.Offset, "same as non-reflect &v.field")
 }

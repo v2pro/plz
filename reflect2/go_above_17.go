@@ -1,6 +1,6 @@
 //+build go1.7
 
-package gls
+package reflect2
 
 import "unsafe"
 

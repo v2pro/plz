@@ -12,7 +12,7 @@ func Equal(expected interface{}, actual interface{}) {
 	if assert.Equal(t, expected, actual) {
 		return
 	}
-	t.Helper()
+	test.Helper()()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Error("check failed")
@@ -27,7 +27,7 @@ func AssertEqual(expected interface{}, actual interface{}) {
 	if assert.Equal(t, expected, actual) {
 		return
 	}
-	t.Helper()
+	test.Helper()()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Error("check failed")

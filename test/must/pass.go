@@ -12,7 +12,7 @@ func Assert(result bool, kv ...interface{}) {
 		return
 	}
 	t := test.CurrentT()
-	t.Helper()
+	test.Helper()()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Fatal("check failed")
@@ -27,7 +27,7 @@ func Pass(result bool, kv ...interface{}) {
 		return
 	}
 	t := test.CurrentT()
-	t.Helper()
+	test.Helper()()
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		t.Fatal("check failed")

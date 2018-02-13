@@ -17,7 +17,7 @@ func newUnsafeStructType(cfg *frozenConfig, type1 reflect.Type) *UnsafeStructTyp
 func (type2 *UnsafeStructType) FieldByName(name string) StructField {
 	structField, found := type2.Type.FieldByName(name)
 	if !found {
-		panic("field " + name + " not found in " + type2.Type.String())
+		return nil
 	}
 	return newUnsafeStructField(type2, structField)
 }
