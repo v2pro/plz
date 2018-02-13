@@ -4,32 +4,28 @@ import (
 	"unsafe"
 	"reflect"
 	"context"
+	"github.com/v2pro/plz/reflect2"
 )
 
 type mapEncoder struct {
-	keyEncoder      Encoder
-	sampleInterface emptyInterface
+	keyEncoder  Encoder
+	elemEncoder Encoder
+	mapType     *reflect2.UnsafeMapType
 }
 
 func (encoder *mapEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	mapInterface := encoder.sampleInterface
-	mapInterface.word = ptr
-	mapObj := *(*interface{})(unsafe.Pointer(&mapInterface))
-	mapVal := reflect.ValueOf(mapObj)
-	if mapVal.IsNil() {
+	if *(*unsafe.Pointer)(ptr) == nil {
 		return append(space, 'n', 'u', 'l', 'l')
 	}
-	keys := mapVal.MapKeys()
+	iter := encoder.mapType.UnsafeIterate(ptr)
 	space = append(space, '{')
-	for i, key := range keys {
+	for i := 0; iter.HasNext(); i++ {
 		if i != 0 {
 			space = append(space, ',')
 		}
-		elem := mapVal.MapIndex(key)
-		keyObj := key.Interface()
-		space = encoder.keyEncoder.Encode(ctx, space, unsafe.Pointer(&keyObj))
-		elemObj := elem.Interface()
-		space = EncoderOf(reflect.TypeOf(elemObj)).Encode(ctx, space, PtrOf(elemObj))
+		key, elem := iter.UnsafeNext()
+		space = encoder.keyEncoder.Encode(ctx, space, key)
+		space = encoder.elemEncoder.Encode(ctx, space, elem)
 	}
 	space = append(space, '}')
 	return space
@@ -41,8 +37,7 @@ type mapNumberKeyEncoder struct {
 
 func (encoder *mapNumberKeyEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	space = append(space, '"')
-	keyObj := *(*interface{})(ptr)
-	space = encoder.valEncoder.Encode(ctx, space, PtrOf(keyObj))
+	space = encoder.valEncoder.Encode(ctx, space, ptr)
 	space = append(space, '"', ':')
 	return space
 }
@@ -52,18 +47,17 @@ type mapStringKeyEncoder struct {
 }
 
 func (encoder *mapStringKeyEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
-	keyObj := *(*interface{})(ptr)
-	space = encoder.valEncoder.Encode(ctx, space, PtrOf(keyObj))
+	space = encoder.valEncoder.Encode(ctx, space, ptr)
 	space = append(space, ':')
 	return space
 }
 
 type mapInterfaceKeyEncoder struct {
-	cfg *frozenConfig
+	cfg    *frozenConfig
 	prefix string
 }
 
 func (encoder *mapInterfaceKeyEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	keyObj := *(*interface{})(ptr)
-	return encoderOfMapKey(encoder.cfg, encoder.prefix, reflect.TypeOf(keyObj)).Encode(ctx, space, ptr)
+	return encoderOfMapKey(encoder.cfg, encoder.prefix, reflect.TypeOf(keyObj)).Encode(ctx, space, PtrOf(keyObj))
 }

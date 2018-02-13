@@ -66,6 +66,11 @@ func EncoderOf(valType reflect.Type) Encoder {
 	return ConfigDefault.EncoderOf(valType)
 }
 
+func MarshalToString(obj interface{}) string {
+	encoder := EncoderOf(reflect.TypeOf(obj))
+	return string(encoder.Encode(nil, nil, PtrOf(obj)))
+}
+
 func encoderOf(cfg *frozenConfig, prefix string, valType reflect.Type) Encoder {
 	for _, extension := range cfg.extensions {
 		encoder := extension.EncoderOf(prefix, valType)
@@ -120,7 +125,7 @@ func encoderOf(cfg *frozenConfig, prefix string, valType reflect.Type) Encoder {
 		elemEncoder := encoderOf(cfg, prefix+" [sliceElem]", valType.Elem())
 		return &sliceEncoder{
 			elemEncoder: elemEncoder,
-			sliceType:    reflect2.Type2(valType).(*reflect2.UnsafeSliceType),
+			sliceType:   reflect2.Type2(valType).(*reflect2.UnsafeSliceType),
 		}
 	case reflect.Array:
 		elemEncoder := encoderOf(cfg, prefix+" [sliceElem]", valType.Elem())
@@ -151,15 +156,12 @@ func (encoder *unsupportedEncoder) Encode(ctx context.Context, space []byte, ptr
 
 func encoderOfMap(cfg *frozenConfig, prefix string, valType reflect.Type) *mapEncoder {
 	keyEncoder := encoderOfMapKey(cfg, prefix, valType.Key())
-	sampleObj := reflect.MakeMap(valType).Interface()
 	elemType := valType.Elem()
 	elemEncoder := encoderOf(cfg, prefix+" [mapElem]", elemType)
-	if isOnePtr(elemType) {
-		elemEncoder = &onePtrInterfaceEncoder{elemEncoder}
-	}
 	return &mapEncoder{
-		keyEncoder:      keyEncoder,
-		sampleInterface: *(*emptyInterface)(unsafe.Pointer(&sampleObj)),
+		keyEncoder:  keyEncoder,
+		elemEncoder: elemEncoder,
+		mapType:     reflect2.Type2(valType).(*reflect2.UnsafeMapType),
 	}
 }
 
@@ -187,18 +189,22 @@ func _encoderOfMapKey(cfg *frozenConfig, prefix string, keyType reflect.Type) En
 }
 
 func isOnePtr(valType reflect.Type) bool {
-	if valType.Kind() == reflect.Ptr {
+	if reflect2.IsPointerKind(valType.Kind()) {
 		return true
 	}
 	if valType.Kind() == reflect.Struct &&
-		valType.NumField() == 1 &&
-		valType.Field(0).Type.Kind() == reflect.Ptr {
-		return true
+		valType.NumField() == 1 {
+		onlyFieldKind := valType.Field(0).Type.Kind()
+		if reflect2.IsPointerKind(onlyFieldKind) {
+			return true
+		}
 	}
 	if valType.Kind() == reflect.Array &&
-		valType.Len() == 1 &&
-		valType.Elem().Kind() == reflect.Ptr {
-		return true
+		valType.Len() == 1 {
+		onlyElemKind := valType.Elem().Kind()
+		if reflect2.IsPointerKind(onlyElemKind) {
+			return true
+		}
 	}
 	return false
 }
@@ -219,9 +225,9 @@ func encoderOfStruct(cfg *frozenConfig, prefix string, valType *reflect2.UnsafeS
 		prefix += name
 		prefix += `":`
 		fields = append(fields, structEncoderField{
-			structField:  field.(*reflect2.UnsafeStructField),
-			prefix:  prefix,
-			encoder: encoderOf(cfg, prefix+" ."+name, field.Type().Type1()),
+			structField: field.(*reflect2.UnsafeStructField),
+			prefix:      prefix,
+			encoder:     encoderOf(cfg, prefix+" ."+name, field.Type().Type1()),
 		})
 	}
 	return &structEncoder{

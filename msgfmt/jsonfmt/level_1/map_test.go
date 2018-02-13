@@ -6,6 +6,10 @@ import (
 	"reflect"
 	"io"
 	"github.com/v2pro/plz/msgfmt/jsonfmt"
+	"github.com/v2pro/plz/test"
+	"github.com/v2pro/plz/countlog"
+	"github.com/v2pro/plz/test/must"
+	"encoding/json"
 )
 
 func Test_map_of_number_key(t *testing.T) {
@@ -55,4 +59,42 @@ func Test_map_of_non_empty_interface_value(t *testing.T) {
 	should.Equal(`{"1":1}`, string(encoder.Encode(nil,nil, jsonfmt.PtrOf(map[int]io.Closer{
 		1: TestCloser(1),
 	}))))
+}
+
+func Test_map(t *testing.T) {
+	t.Run("map string to eface", test.Case(func(ctx *countlog.Context) {
+		must.JsonEqual(`{
+			"hello": 1,
+			"world": "yes"
+		}`, jsonfmt.MarshalToString(map[string]interface{}{
+			"hello": 1,
+			"world": "yes",
+		}))
+	}))
+}
+
+func Benchmark_map_unsafe(b *testing.B) {
+	encoder := jsonfmt.EncoderOf(reflect.TypeOf(map[string]int{}))
+	m := map[string]int {
+		"hello": 1,
+		"world": 3,
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	space := []byte(nil)
+	for i := 0; i < b.N; i++ {
+		space = encoder.Encode(nil, space[:0], jsonfmt.PtrOf(m))
+	}
+}
+
+func Benchmark_map_safe(b *testing.B) {
+	m := map[string]int {
+		"hello": 1,
+		"world": 3,
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		json.Marshal(m)
+	}
 }

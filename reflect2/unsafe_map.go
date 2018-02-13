@@ -73,7 +73,7 @@ func (type2 *UnsafeMapType) UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) un
 
 func (type2 *UnsafeMapType) Iterate(obj interface{}) MapIterator {
 	objEFace := unpackEFace(obj)
-	assertType("MapType.TryGet argument 1", type2.ptrRType, objEFace.rtype)
+	assertType("MapType.Iterate argument 1", type2.ptrRType, objEFace.rtype)
 	return type2.UnsafeIterate(objEFace.data)
 }
 

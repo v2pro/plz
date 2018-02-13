@@ -143,3 +143,11 @@ func Type2(type1 reflect.Type) Type {
 func PtrOf(obj interface{}) unsafe.Pointer {
 	return unpackEFace(obj).data
 }
+
+func IsPointerKind(kind reflect.Kind) bool {
+	switch kind {
+	case reflect.Ptr, reflect.Map, reflect.Chan, reflect.Func:
+		return true
+	}
+	return false
+}
