@@ -7,7 +7,7 @@ import (
 	"github.com/v2pro/plz/countlog/spi"
 	"github.com/v2pro/plz/msgfmt"
 	"errors"
-	"github.com/v2pro/plz/concurrent2"
+	"github.com/v2pro/plz/concurrent"
 )
 
 const LevelTraceCall = spi.LevelTraceCall
@@ -19,6 +19,11 @@ const LevelInfo = spi.LevelInfo
 const LevelWarn = spi.LevelWarn
 const LevelError = spi.LevelError
 const LevelFatal = spi.LevelFatal
+
+func init() {
+	concurrent.LogInfo = Info
+	concurrent.LogPanic = LogPanic
+}
 
 func SetMinLevel(level int) {
 	spi.MinLevel = level
@@ -136,7 +141,7 @@ func LogPanic(recovered interface{}, properties ...interface{}) interface{} {
 	return recovered
 }
 
-var handlerCache = &concurrent2.Map{}
+var handlerCache = concurrent.NewMap()
 
 func log(level int, eventName string, agg string, ctx *Context, err error, properties []interface{}) error {
 	handler := getHandler(eventName, agg, ctx, properties)

@@ -3,16 +3,25 @@ package concurrent
 import (
 	"context"
 	"fmt"
-	"github.com/v2pro/plz/countlog"
 	"runtime"
 	"sync"
 	"time"
+	"runtime/debug"
 )
+
+var LogInfo = func(event string, properties ...interface{}) {
+}
+
+var LogPanic = func(recovered interface{}, properties ...interface{}) interface{} {
+	fmt.Println(fmt.Sprintf("paniced: %v", recovered))
+	debug.PrintStack()
+	return recovered
+}
 
 const StopSignal = "STOP!"
 
 type UnboundedExecutor struct {
-	ctx                   *countlog.Context
+	ctx                   context.Context
 	cancel                context.CancelFunc
 	activeGoroutinesMutex *sync.Mutex
 	activeGoroutines      map[string]int
@@ -25,14 +34,14 @@ var GlobalUnboundedExecutor = NewUnboundedExecutor()
 func NewUnboundedExecutor() *UnboundedExecutor {
 	ctx, cancel := context.WithCancel(context.TODO())
 	return &UnboundedExecutor{
-		ctx:                   countlog.Ctx(ctx),
+		ctx:                   ctx,
 		cancel:                cancel,
 		activeGoroutinesMutex: &sync.Mutex{},
 		activeGoroutines:      map[string]int{},
 	}
 }
 
-func (executor *UnboundedExecutor) Go(handler func(ctx *countlog.Context)) {
+func (executor *UnboundedExecutor) Go(handler func(ctx context.Context)) {
 	_, file, line, _ := runtime.Caller(1)
 	executor.activeGoroutinesMutex.Lock()
 	defer executor.activeGoroutinesMutex.Unlock()
@@ -42,7 +51,7 @@ func (executor *UnboundedExecutor) Go(handler func(ctx *countlog.Context)) {
 		defer func() {
 			recovered := recover()
 			if recovered != nil && recovered != StopSignal {
-				countlog.LogPanic(recovered)
+				LogPanic(recovered)
 			}
 			executor.activeGoroutinesMutex.Lock()
 			defer executor.activeGoroutinesMutex.Unlock()
@@ -80,19 +89,11 @@ func (executor *UnboundedExecutor) checkGoroutines() bool {
 	defer executor.activeGoroutinesMutex.Unlock()
 	for startFrom, count := range executor.activeGoroutines {
 		if count > 0 {
-			countlog.Info("event!unbounded_executor.still waiting goroutines to quit",
+			LogInfo("event!unbounded_executor.still waiting goroutines to quit",
 				"startFrom", startFrom,
 				"count", count)
 			return false
 		}
 	}
 	return true
-}
-
-func (executor *UnboundedExecutor) Adapt() func(func(ctx context.Context)) {
-	return func(handler func(ctx context.Context)) {
-		executor.Go(func(ctx *countlog.Context) {
-			handler(ctx)
-		})
-	}
 }

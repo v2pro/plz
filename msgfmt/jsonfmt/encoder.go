@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"context"
 	"github.com/v2pro/plz/reflect2"
-	"github.com/v2pro/plz/concurrent2"
+	"github.com/v2pro/plz/concurrent"
 )
 
 var bytesType = reflect2.TypeOf([]byte(nil))
@@ -40,16 +40,16 @@ var ConfigDefault = Config{}.Froze()
 type frozenConfig struct {
 	includesUnexported bool
 	extensions         []Extension
-	encoderCache       *concurrent2.Map
-	mapKeyEncoderCache *concurrent2.Map
+	encoderCache       *concurrent.Map
+	mapKeyEncoderCache *concurrent.Map
 }
 
 func (cfg Config) Froze() API {
 	return &frozenConfig{
 		includesUnexported: cfg.IncludesUnexported,
 		extensions:         cfg.Extensions,
-		encoderCache:       concurrent2.NewMap(),
-		mapKeyEncoderCache: concurrent2.NewMap(),
+		encoderCache:       concurrent.NewMap(),
+		mapKeyEncoderCache: concurrent.NewMap(),
 	}
 }
 

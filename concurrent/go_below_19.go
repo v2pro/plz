@@ -1,6 +1,6 @@
 //+build !go1.9
 
-package concurrent2
+package concurrent
 
 import "sync"
 

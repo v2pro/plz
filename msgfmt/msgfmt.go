@@ -6,7 +6,7 @@ import (
 	"sync"
 	"unsafe"
 	"fmt"
-	"github.com/v2pro/plz/concurrent2"
+	"github.com/v2pro/plz/concurrent"
 )
 
 var bufPool = &sync.Pool{
@@ -86,7 +86,7 @@ type sliceHeader struct {
 	Cap  int
 }
 
-var formatterCache = concurrent2.NewMap()
+var formatterCache = concurrent.NewMap()
 
 func FormatterOf(format string, sample []interface{}) Formatter {
 	formatterObj, found := formatterCache.Load(format)

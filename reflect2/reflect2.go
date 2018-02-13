@@ -3,7 +3,7 @@ package reflect2
 import (
 	"reflect"
 	"unsafe"
-	"github.com/v2pro/plz/concurrent2"
+	"github.com/v2pro/plz/concurrent"
 )
 
 type Type interface {
@@ -114,13 +114,13 @@ var ConfigSafe = Config{UseSafeImplementation: true}.Froze()
 
 type frozenConfig struct {
 	useSafeImplementation bool
-	cache                 *concurrent2.Map
+	cache                 *concurrent.Map
 }
 
 func (cfg Config) Froze() *frozenConfig {
 	return &frozenConfig{
 		useSafeImplementation: cfg.UseSafeImplementation,
-		cache:                 concurrent2.NewMap(),
+		cache:                 concurrent.NewMap(),
 	}
 }
 

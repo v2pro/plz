@@ -6,19 +6,13 @@ import (
 	"github.com/v2pro/plz/countlog/spi"
 	"fmt"
 	"time"
+	"github.com/v2pro/plz/concurrent"
 )
-
-type Executor func(func(ctx context.Context))
-
-func DefaultExecutor(handler func(ctx context.Context)) {
-	go func() {
-		handler(context.Background())
-	}()
-}
 
 type blockingQueueWriter struct {
 	queue  chan []byte
 	writer io.Writer
+	executor *concurrent.UnboundedExecutor
 }
 
 type nonBlockingQueueWriter struct {
@@ -27,7 +21,6 @@ type nonBlockingQueueWriter struct {
 }
 
 type AsyncWriterConfig struct {
-	Executor         Executor
 	QueueLength      int
 	Writer           io.Writer
 	IsQueueBlocking  bool
@@ -40,10 +33,6 @@ type ClosableWriter interface {
 }
 
 func NewAsyncWriter(cfg AsyncWriterConfig) ClosableWriter {
-	executor := cfg.Executor
-	if executor == nil {
-		executor = DefaultExecutor
-	}
 	queueLength := cfg.QueueLength
 	if queueLength == 0 {
 		queueLength = 1024
@@ -58,22 +47,25 @@ func NewAsyncWriter(cfg AsyncWriterConfig) ClosableWriter {
 			}
 		}
 	}
+	executor := concurrent.NewUnboundedExecutor()
 	if cfg.IsQueueBlocking {
 		asyncWriter := &blockingQueueWriter{
 			queue:  make(chan []byte, queueLength),
 			writer: cfg.Writer,
+			executor: executor,
 		}
-		executor(asyncWriter.asyncWrite)
+		executor.Go(asyncWriter.asyncWrite)
 		return asyncWriter
 	}
 	asyncWriter := &nonBlockingQueueWriter{
 		blockingQueueWriter: blockingQueueWriter{
 			queue:  make(chan []byte, queueLength),
 			writer: cfg.Writer,
+			executor: executor,
 		},
 		onMessageDropped: onMessageDropped,
 	}
-	executor(asyncWriter.asyncWrite)
+	executor.Go(asyncWriter.asyncWrite)
 	return asyncWriter
 }
 
@@ -123,6 +115,7 @@ func (writer *nonBlockingQueueWriter) Write(buf []byte) (int, error) {
 }
 
 func (writer *blockingQueueWriter) Close() error {
+	writer.executor.StopAndWaitForever()
 	closer, _ := writer.writer.(io.Closer)
 	if closer == nil {
 		return nil
