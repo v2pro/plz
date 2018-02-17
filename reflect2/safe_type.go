@@ -45,3 +45,7 @@ func (type2 *safeType) Indirect(obj interface{}) interface{} {
 func (type2 *safeType) UnsafeIndirect(ptr unsafe.Pointer) interface{} {
 	panic("does not support unsafe operation")
 }
+
+func (type2 *safeType) LikePtr() bool {
+	panic("does not support unsafe operation")
+}

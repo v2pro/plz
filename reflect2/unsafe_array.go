@@ -7,18 +7,37 @@ import (
 
 type UnsafeArrayType struct {
 	unsafeType
-	elemRType unsafe.Pointer
+	elemRType  unsafe.Pointer
 	pElemRType unsafe.Pointer
-	elemSize uintptr
+	elemSize   uintptr
+	likePtr    bool
 }
 
 func newUnsafeArrayType(cfg *frozenConfig, type1 reflect.Type) *UnsafeArrayType {
 	return &UnsafeArrayType{
 		unsafeType: *newUnsafeType(cfg, type1),
 		elemRType:  unpackEFace(type1.Elem()).data,
-		pElemRType:  unpackEFace(reflect.PtrTo(type1.Elem())).data,
+		pElemRType: unpackEFace(reflect.PtrTo(type1.Elem())).data,
 		elemSize:   type1.Elem().Size(),
+		likePtr:    likePtrType(type1),
 	}
+}
+
+func (type2 *UnsafeArrayType) LikePtr() bool {
+	return type2.likePtr
+}
+
+func (type2 *UnsafeArrayType) Indirect(obj interface{}) interface{} {
+	objEFace := unpackEFace(obj)
+	assertType("Type.Indirect argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIndirect(objEFace.data)
+}
+
+func (type2 *UnsafeArrayType) UnsafeIndirect(ptr unsafe.Pointer) interface{} {
+	if type2.likePtr {
+		return packEFace(type2.rtype, *(*unsafe.Pointer)(ptr))
+	}
+	return packEFace(type2.rtype, ptr)
 }
 
 func (type2 *UnsafeArrayType) Set(obj interface{}, index int, elem interface{}) {

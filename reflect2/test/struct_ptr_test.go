@@ -17,4 +17,8 @@ func Test_struct_ptr(t *testing.T) {
 		ptr := valType.UnsafeNew()
 		must.Equal(&TestObject{}, valType.PackEFace(ptr))
 	}))
+	t.Run("Indirect", test.Case(func(ctx *countlog.Context) {
+		valType := reflect2.TypeOf(TestObject{})
+		must.Equal(TestObject{}, valType.Indirect(&TestObject{}))
+	}))
 }

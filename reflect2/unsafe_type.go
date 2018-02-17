@@ -48,6 +48,10 @@ func (type2 *unsafeType) UnsafeIndirect(obj unsafe.Pointer) interface{} {
 	return packEFace(type2.rtype, obj)
 }
 
+func (type2 *unsafeType) LikePtr() bool {
+	return false
+}
+
 func assertType(where string, expectRType unsafe.Pointer, actualRType unsafe.Pointer) {
 	if expectRType != actualRType {
 		expectType := reflect.TypeOf(0)

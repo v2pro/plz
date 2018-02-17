@@ -29,6 +29,10 @@ func Test_struct(t *testing.T) {
 		ptr := valType.UnsafeNew()
 		must.Equal(&TestObject{}, valType.PackEFace(ptr))
 	}))
+	t.Run("Indirect", test.Case(func(ctx *countlog.Context) {
+		valType := reflect2.TypeOf(TestObject{})
+		must.Equal(TestObject{}, valType.Indirect(&TestObject{}))
+	}))
 	t.Run("Set", testOp(func(api reflect2.API) interface{} {
 		valType := api.TypeOf(TestObject{}).(reflect2.StructType)
 		field1 := valType.FieldByName("Field1")

@@ -19,6 +19,10 @@ func newUnsafeMapType(cfg *frozenConfig, type1 reflect.Type) MapType {
 	}
 }
 
+func (type2 *UnsafeMapType) LikePtr() bool {
+	return true
+}
+
 func (type2 *UnsafeMapType) Indirect(obj interface{}) interface{} {
 	objEFace := unpackEFace(obj)
 	assertType("MapType.Indirect argument 1", type2.ptrRType, objEFace.rtype)

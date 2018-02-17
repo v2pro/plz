@@ -23,6 +23,8 @@ type Type interface {
 	Implements(thatType Type) bool
 	String() string
 	RType() uintptr
+	// interface{} of this type has pointer like behavior
+	LikePtr() bool
 }
 
 type ListType interface {
@@ -208,10 +210,36 @@ func RTypeOf(obj interface{}) uintptr {
 	return uintptr(unpackEFace(obj).rtype)
 }
 
-func IsPtrKind(kind reflect.Kind) bool {
+func IsNil(obj interface{}) bool {
+	if obj == nil {
+		return true
+	}
+	return unpackEFace(obj).data == nil
+}
+
+func likePtrKind(kind reflect.Kind) bool {
 	switch kind {
 	case reflect.Ptr, reflect.Map, reflect.Chan, reflect.Func:
 		return true
+	}
+	return false
+}
+
+func likePtrType(typ reflect.Type) bool {
+	if likePtrKind(typ.Kind()) {
+		return true
+	}
+	if typ.Kind() == reflect.Struct {
+		if typ.NumField() != 1 {
+			return false
+		}
+		return likePtrType(typ.Field(0).Type)
+	}
+	if typ.Kind() == reflect.Array {
+		if typ.Len() != 1 {
+			return false
+		}
+		return likePtrType(typ.Elem())
 	}
 	return false
 }

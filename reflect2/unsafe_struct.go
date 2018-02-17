@@ -2,16 +2,36 @@ package reflect2
 
 import (
 	"reflect"
+	"unsafe"
 )
 
 type UnsafeStructType struct {
 	unsafeType
+	likePtr bool
 }
 
 func newUnsafeStructType(cfg *frozenConfig, type1 reflect.Type) *UnsafeStructType {
 	return &UnsafeStructType{
 		unsafeType: *newUnsafeType(cfg, type1),
+		likePtr:    likePtrType(type1),
 	}
+}
+
+func (type2 *UnsafeStructType) LikePtr() bool {
+	return type2.likePtr
+}
+
+func (type2 *UnsafeStructType) Indirect(obj interface{}) interface{} {
+	objEFace := unpackEFace(obj)
+	assertType("Type.Indirect argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIndirect(objEFace.data)
+}
+
+func (type2 *UnsafeStructType) UnsafeIndirect(ptr unsafe.Pointer) interface{} {
+	if type2.likePtr {
+		return packEFace(type2.rtype, *(*unsafe.Pointer)(ptr))
+	}
+	return packEFace(type2.rtype, ptr)
 }
 
 func (type2 *UnsafeStructType) FieldByName(name string) StructField {

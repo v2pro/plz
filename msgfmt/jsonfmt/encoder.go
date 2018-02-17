@@ -69,7 +69,7 @@ func (cfg *frozenConfig) EncoderOf(valType reflect2.Type) Encoder {
 		return encoderObj.(Encoder)
 	}
 	encoder := encoderOf(cfg, "", valType)
-	if isOnePtr(valType) {
+	if valType.LikePtr() {
 		encoder = &onePtrInterfaceEncoder{encoder}
 	}
 	cfg.encoderCache.Store(cacheKey, encoder)
@@ -211,27 +211,6 @@ type onePtrInterfaceEncoder struct {
 
 func (encoder *onePtrInterfaceEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	return encoder.valEncoder.Encode(ctx, space, unsafe.Pointer(&ptr))
-}
-
-func isOnePtr(valType reflect2.Type) bool {
-	if reflect2.IsPtrKind(valType.Kind()) {
-		return true
-	}
-	if valType.Kind() == reflect.Struct {
-		structType := valType.(reflect2.StructType)
-		onlyFieldKind := structType.Field(0).Type().Kind()
-		if structType.NumField() == 1 && reflect2.IsPtrKind(onlyFieldKind) {
-			return true
-		}
-	}
-	if valType.Kind() == reflect.Array {
-		arrayType := valType.(reflect2.ArrayType)
-		onlyElemKind := arrayType.Elem().Kind()
-		if arrayType.Len() == 1 && reflect2.IsPtrKind(onlyElemKind) {
-			return true
-		}
-	}
-	return false
 }
 
 func encoderOfStruct(cfg *frozenConfig, prefix string, valType reflect2.StructType) *structEncoder {

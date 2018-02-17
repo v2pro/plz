@@ -15,6 +15,10 @@ func newUnsafePtrType(cfg *frozenConfig, type1 reflect.Type) *UnsafePtrType {
 	}
 }
 
+func (type2 *UnsafePtrType) LikePtr() bool {
+	return true
+}
+
 func (type2 *UnsafePtrType) Indirect(obj interface{}) interface{} {
 	objEFace := unpackEFace(obj)
 	assertType("Type.Indirect argument 1", type2.ptrRType, objEFace.rtype)
