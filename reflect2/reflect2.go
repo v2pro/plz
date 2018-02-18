@@ -25,6 +25,7 @@ type Type interface {
 	RType() uintptr
 	// interface{} of this type has pointer like behavior
 	LikePtr() bool
+	IsNullable() bool
 }
 
 type ListType interface {
@@ -215,6 +216,14 @@ func IsNil(obj interface{}) bool {
 		return true
 	}
 	return unpackEFace(obj).data == nil
+}
+
+func IsNullable(kind reflect.Kind) bool {
+	switch kind {
+	case reflect.Ptr, reflect.Map, reflect.Chan, reflect.Func, reflect.Slice, reflect.Interface:
+		return true
+	}
+	return false
 }
 
 func likePtrKind(kind reflect.Kind) bool {

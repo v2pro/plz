@@ -49,3 +49,7 @@ func (type2 *safeType) UnsafeIndirect(ptr unsafe.Pointer) interface{} {
 func (type2 *safeType) LikePtr() bool {
 	panic("does not support unsafe operation")
 }
+
+func (type2 *safeType) IsNullable() bool {
+	return IsNullable(type2.Kind())
+}
