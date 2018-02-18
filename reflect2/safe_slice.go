@@ -54,3 +54,20 @@ func (type2 *safeSliceType) Append(obj interface{}, elem interface{}) interface{
 func (type2 *safeSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
 	panic("does not support unsafe operation")
 }
+
+func (type2 *safeSliceType) SetNil(obj interface{}) {
+	val := reflect.ValueOf(obj).Elem()
+	val.Set(reflect.Zero(val.Type()))
+}
+
+func (type2 *safeSliceType) UnsafeSetNil(ptr unsafe.Pointer) {
+	panic("does not support unsafe operation")
+}
+
+func (type2 *safeSliceType) LengthOf(obj interface{}) int {
+	return reflect.ValueOf(obj).Elem().Len()
+}
+
+func (type2 *safeSliceType) UnsafeLengthOf(ptr unsafe.Pointer) int {
+	panic("does not support unsafe operation")
+}

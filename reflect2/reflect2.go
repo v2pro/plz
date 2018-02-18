@@ -50,6 +50,10 @@ type SliceType interface {
 	UnsafeMakeSlice(length int, cap int) unsafe.Pointer
 	Append(obj interface{}, elem interface{}) interface{}
 	UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer
+	LengthOf(obj interface{}) int
+	UnsafeLengthOf(ptr unsafe.Pointer) int
+	SetNil(obj interface{})
+	UnsafeSetNil(ptr unsafe.Pointer)
 }
 
 type StructType interface {

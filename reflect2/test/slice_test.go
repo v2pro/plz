@@ -28,6 +28,12 @@ func Test_slice(t *testing.T) {
 			valType.IsNil(nil),
 		}
 	}))
+	t.Run("SetNil", testOp(func(api reflect2.API) interface{} {
+		valType := api.TypeOf([]int{}).(reflect2.SliceType)
+		s := []int{1}
+		valType.SetNil(&s)
+		return s
+	}))
 	t.Run("MakeSlice", testOp(func(api reflect2.API) interface{} {
 		valType := api.TypeOf([]int{}).(reflect2.SliceType)
 		obj := *(valType.MakeSlice(5, 10).(*[]int))

@@ -45,6 +45,19 @@ func (type2 *UnsafeSliceType) UnsafeIsNil(ptr unsafe.Pointer) bool {
 	return (*sliceHeader)(ptr).Data == nil
 }
 
+func (type2 *UnsafeSliceType) SetNil(obj interface{}) {
+	objEFace := unpackEFace(obj)
+	assertType("SliceType.SetNil argument 1", type2.ptrRType, objEFace.rtype)
+	type2.UnsafeSetNil(objEFace.data)
+}
+
+func (type2 *UnsafeSliceType) UnsafeSetNil(ptr unsafe.Pointer) {
+	header := (*sliceHeader)(ptr)
+	header.Len = 0
+	header.Cap = 0
+	header.Data = nil
+}
+
 func (type2 *UnsafeSliceType) MakeSlice(length int, cap int) interface{} {
 	return packEFace(type2.ptrRType, type2.UnsafeMakeSlice(length, cap))
 }
@@ -54,13 +67,13 @@ func (type2 *UnsafeSliceType) UnsafeMakeSlice(length int, cap int) unsafe.Pointe
 	return unsafe.Pointer(header)
 }
 
-func (type2 *UnsafeSliceType) Len(obj interface{}) int {
+func (type2 *UnsafeSliceType) LengthOf(obj interface{}) int {
 	objEFace := unpackEFace(obj)
 	assertType("SliceType.Len argument 1", type2.ptrRType, objEFace.rtype)
-	return type2.UnsafeLen(objEFace.data)
+	return type2.UnsafeLengthOf(objEFace.data)
 }
 
-func (type2 *UnsafeSliceType) UnsafeLen(obj unsafe.Pointer) int {
+func (type2 *UnsafeSliceType) UnsafeLengthOf(obj unsafe.Pointer) int {
 	header := (*sliceHeader)(obj)
 	return header.Len
 }

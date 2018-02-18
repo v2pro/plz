@@ -14,7 +14,7 @@ type sliceEncoder struct {
 func (encoder *sliceEncoder) Encode(ctx context.Context, space []byte, ptr unsafe.Pointer) []byte {
 	sliceType := encoder.sliceType
 	space = append(space, '[')
-	length := sliceType.UnsafeLen(ptr)
+	length := sliceType.UnsafeLengthOf(ptr)
 	for i := 0; i < length; i++ {
 		if i != 0 {
 			space = append(space, ',')
