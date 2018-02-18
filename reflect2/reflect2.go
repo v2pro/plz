@@ -26,6 +26,8 @@ type Type interface {
 	// interface{} of this type has pointer like behavior
 	LikePtr() bool
 	IsNullable() bool
+	IsNil(obj interface{}) bool
+	UnsafeIsNil(ptr unsafe.Pointer) bool
 }
 
 type ListType interface {

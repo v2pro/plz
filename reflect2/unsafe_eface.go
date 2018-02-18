@@ -32,6 +32,22 @@ func newUnsafeEFaceType(cfg *frozenConfig, type1 reflect.Type) *UnsafeEFaceType 
 	}
 }
 
+func (type2 *UnsafeEFaceType) IsNil(obj interface{}) bool {
+	if obj == nil {
+		return true
+	}
+	objEFace := unpackEFace(obj)
+	assertType("Type.IsNil argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIsNil(objEFace.data)
+}
+
+func (type2 *UnsafeEFaceType) UnsafeIsNil(ptr unsafe.Pointer) bool {
+	if ptr == nil {
+		return true
+	}
+	return unpackEFace(*(*interface{})(ptr)).data == nil
+}
+
 func (type2 *UnsafeEFaceType) Indirect(obj interface{}) interface{} {
 	objEFace := unpackEFace(obj)
 	assertType("Type.Indirect argument 1", type2.ptrRType, objEFace.rtype)

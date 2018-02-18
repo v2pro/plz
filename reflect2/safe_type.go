@@ -53,3 +53,14 @@ func (type2 *safeType) LikePtr() bool {
 func (type2 *safeType) IsNullable() bool {
 	return IsNullable(type2.Kind())
 }
+
+func (type2 *safeType) IsNil(obj interface{}) bool {
+	if obj == nil {
+		return true
+	}
+	return reflect.ValueOf(obj).Elem().IsNil()
+}
+
+func (type2 *safeType) UnsafeIsNil(ptr unsafe.Pointer) bool {
+	panic("does not support unsafe operation")
+}

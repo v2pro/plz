@@ -22,6 +22,17 @@ func newUnsafeType(cfg *frozenConfig, type1 reflect.Type) *unsafeType {
 	}
 }
 
+
+func (type2 *unsafeType) IsNil(obj interface{}) bool {
+	objEFace := unpackEFace(obj)
+	assertType("Type.IsNil argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIsNil(objEFace.data)
+}
+
+func (type2 *unsafeType) UnsafeIsNil(ptr unsafe.Pointer) bool {
+	return ptr == nil
+}
+
 func (type2 *unsafeType) UnsafeNew() unsafe.Pointer {
 	return unsafe_New(type2.rtype)
 }

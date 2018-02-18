@@ -15,6 +15,22 @@ func newUnsafePtrType(cfg *frozenConfig, type1 reflect.Type) *UnsafePtrType {
 	}
 }
 
+func (type2 *UnsafePtrType) IsNil(obj interface{}) bool {
+	if obj == nil {
+		return true
+	}
+	objEFace := unpackEFace(obj)
+	assertType("Type.IsNil argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIsNil(objEFace.data)
+}
+
+func (type2 *UnsafePtrType) UnsafeIsNil(ptr unsafe.Pointer) bool {
+	if ptr == nil {
+		return true
+	}
+	return *(*unsafe.Pointer)(ptr) == nil
+}
+
 func (type2 *UnsafePtrType) LikePtr() bool {
 	return true
 }

@@ -42,3 +42,23 @@ func (type2 *UnsafeIFaceType) Indirect(obj interface{}) interface{} {
 func (type2 *UnsafeIFaceType) UnsafeIndirect(ptr unsafe.Pointer) interface{} {
 	return IFaceToEFace(ptr)
 }
+
+func (type2 *UnsafeIFaceType) IsNil(obj interface{}) bool {
+	if obj == nil {
+		return true
+	}
+	objEFace := unpackEFace(obj)
+	assertType("Type.IsNil argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIsNil(objEFace.data)
+}
+
+func (type2 *UnsafeIFaceType) UnsafeIsNil(ptr unsafe.Pointer) bool {
+	if ptr == nil {
+		return true
+	}
+	iface := (*iface)(ptr)
+	if iface.itab == nil {
+		return true
+	}
+	return false
+}

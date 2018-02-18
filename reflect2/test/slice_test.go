@@ -13,10 +13,20 @@ func Test_slice(t *testing.T) {
 		return &val
 	}
 	t.Run("New", testOp(func(api reflect2.API) interface{} {
-		valType := reflect2.TypeOf([]int{})
+		valType := api.TypeOf([]int{})
 		obj := *valType.New().(*[]int)
 		obj = append(obj, 1)
 		return obj
+	}))
+	t.Run("IsNil", testOp(func(api reflect2.API) interface{} {
+		valType := api.TypeOf([]int{})
+		var nilSlice []int
+		s := []int{}
+		return []interface{}{
+			valType.IsNil(&nilSlice),
+			valType.IsNil(&s),
+			valType.IsNil(nil),
+		}
 	}))
 	t.Run("MakeSlice", testOp(func(api reflect2.API) interface{} {
 		valType := api.TypeOf([]int{}).(reflect2.SliceType)

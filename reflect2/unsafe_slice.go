@@ -29,6 +29,22 @@ func newUnsafeSliceType(cfg *frozenConfig, type1 reflect.Type) SliceType {
 	}
 }
 
+func (type2 *UnsafeSliceType) IsNil(obj interface{}) bool {
+	if obj == nil {
+		return true
+	}
+	objEFace := unpackEFace(obj)
+	assertType("Type.IsNil argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIsNil(objEFace.data)
+}
+
+func (type2 *UnsafeSliceType) UnsafeIsNil(ptr unsafe.Pointer) bool {
+	if ptr == nil {
+		return true
+	}
+	return (*sliceHeader)(ptr).Data == nil
+}
+
 func (type2 *UnsafeSliceType) MakeSlice(length int, cap int) interface{} {
 	return packEFace(type2.ptrRType, type2.UnsafeMakeSlice(length, cap))
 }

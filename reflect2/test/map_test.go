@@ -19,6 +19,15 @@ func Test_map(t *testing.T) {
 		m := valType.New().(*map[int]int)
 		return m
 	}))
+	t.Run("IsNil", testOp(func(api reflect2.API) interface{} {
+		valType := api.TypeOf(map[int]int{})
+		var nilMap map[int]int
+		m := map[int]int{}
+		return []interface{}{
+			valType.IsNil(&nilMap),
+			valType.IsNil(&m),
+		}
+	}))
 	t.Run("MakeMap", testOp(func(api reflect2.API) interface{} {
 		valType := api.TypeOf(map[int]int{}).(reflect2.MapType)
 		m := *(valType.MakeMap(0).(*map[int]int))

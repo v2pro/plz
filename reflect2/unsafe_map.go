@@ -19,6 +19,22 @@ func newUnsafeMapType(cfg *frozenConfig, type1 reflect.Type) MapType {
 	}
 }
 
+func (type2 *UnsafeMapType) IsNil(obj interface{}) bool {
+	if obj == nil {
+		return true
+	}
+	objEFace := unpackEFace(obj)
+	assertType("Type.IsNil argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeIsNil(objEFace.data)
+}
+
+func (type2 *UnsafeMapType) UnsafeIsNil(ptr unsafe.Pointer) bool {
+	if ptr == nil {
+		return true
+	}
+	return *(*unsafe.Pointer)(ptr) == nil
+}
+
 func (type2 *UnsafeMapType) LikePtr() bool {
 	return true
 }
