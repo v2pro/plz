@@ -103,4 +103,12 @@ func Test_slice(t *testing.T) {
 		ptr = valType.UnsafeAppend(ptr, reflect2.PtrOf(4))
 		must.Equal(&[]int{1, 2, 3, 4}, valType.PackEFace(ptr))
 	}))
+	t.Run("Grow", testOp(func(api reflect2.API) interface{} {
+		obj := make([]int, 2, 3)
+		obj[0] = 1
+		obj[1] = 2
+		valType := reflect2.TypeOf(obj).(reflect2.SliceType)
+		obj = *valType.Grow(&obj, 4).(*[]int)
+		return obj
+	}))
 }

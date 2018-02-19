@@ -115,19 +115,40 @@ func (type2 *UnsafeSliceType) Append(obj interface{}, elem interface{}) interfac
 
 func (type2 *UnsafeSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
 	header := (*sliceHeader)(obj)
-	if header.Cap == header.Len {
-		header = type2.grow(header, header.Len+1)
-	}
-	type2.UnsafeSetIndex(unsafe.Pointer(header), header.Len, elem)
-	header.Len += 1
+	oldLen := header.Len
+	header = (*sliceHeader)(type2.UnsafeGrow(obj, oldLen+1))
+	type2.UnsafeSetIndex(unsafe.Pointer(header), oldLen, elem)
 	return unsafe.Pointer(header)
 }
 
-func (type2 *UnsafeSliceType) grow(header *sliceHeader, expectedCap int) *sliceHeader {
-	newCap := calcNewCap(header.Cap, expectedCap)
+func (type2 *UnsafeSliceType) Cap(obj interface{}) int {
+	objEFace := unpackEFace(obj)
+	assertType("SliceType.Cap argument 1", type2.ptrRType, objEFace.rtype)
+	return type2.UnsafeCap(objEFace.data)
+}
+
+func (type2 *UnsafeSliceType) UnsafeCap(ptr unsafe.Pointer) int {
+	return (*sliceHeader)(ptr).Cap
+}
+
+func (type2 *UnsafeSliceType) Grow(obj interface{}, newLength int) interface{} {
+	objEFace := unpackEFace(obj)
+	assertType("SliceType.Grow argument 1", type2.ptrRType, objEFace.rtype)
+	newData := type2.UnsafeGrow(objEFace.data, newLength)
+	return type2.PackEFace(newData)
+}
+
+func (type2 *UnsafeSliceType) UnsafeGrow(obj unsafe.Pointer, newLength int) unsafe.Pointer {
+	header := (*sliceHeader)(obj)
+	if newLength <= header.Cap {
+		header.Len = newLength
+		return obj
+	}
+	newCap := calcNewCap(header.Cap, newLength)
 	newHeader := (*sliceHeader)(type2.UnsafeMakeSlice(header.Len, newCap))
 	typedslicecopy(type2.elemRType, *newHeader, *header)
-	return newHeader
+	newHeader.Len = newLength
+	return unsafe.Pointer(newHeader)
 }
 
 func calcNewCap(cap int, expectedCap int) int {

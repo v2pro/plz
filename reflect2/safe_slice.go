@@ -71,3 +71,26 @@ func (type2 *safeSliceType) LengthOf(obj interface{}) int {
 func (type2 *safeSliceType) UnsafeLengthOf(ptr unsafe.Pointer) int {
 	panic("does not support unsafe operation")
 }
+
+func (type2 *safeSliceType) Cap(obj interface{}) int {
+	return reflect.ValueOf(obj).Elem().Cap()
+}
+
+func (type2 *safeSliceType) UnsafeCap(ptr unsafe.Pointer) int {
+	panic("does not support unsafe operation")
+}
+
+func (type2 *safeSliceType) Grow(obj interface{}, newLength int) interface{} {
+	oldCap := type2.Cap(obj)
+	oldSlice := reflect.ValueOf(obj).Elem()
+	delta := newLength - oldCap
+	deltaVals := make([]reflect.Value, delta)
+	newSlice := reflect.Append(oldSlice, deltaVals...)
+	ptr := reflect.New(newSlice.Type())
+	ptr.Elem().Set(newSlice)
+	return ptr.Interface()
+}
+
+func (type2 *safeSliceType) UnsafeGrow(ptr unsafe.Pointer, newLength int) unsafe.Pointer {
+	panic("does not support unsafe operation")
+}
