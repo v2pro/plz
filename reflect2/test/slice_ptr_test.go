@@ -20,28 +20,28 @@ func Test_slice_ptr(t *testing.T) {
 		obj.([]*int)[4] = pInt(5)
 		return obj
 	}))
-	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+	t.Run("SetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := []*int{pInt(1), nil}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		valType.Set(obj, 0, pInt(2))
-		valType.Set(obj, 1, pInt(3))
+		valType.SetIndex(obj, 0, pInt(2))
+		valType.SetIndex(obj, 1, pInt(3))
 		return obj
 	}))
-	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {
+	t.Run("UnsafeSetIndex", test.Case(func(ctx *countlog.Context) {
 		obj := []*int{pInt(1), nil}
 		valType := reflect2.TypeOf(obj).(reflect2.SliceType)
-		valType.UnsafeSet(reflect2.PtrOf(obj), 0, unsafe.Pointer(pInt(2)))
-		valType.UnsafeSet(reflect2.PtrOf(obj), 1, unsafe.Pointer(pInt(1)))
+		valType.UnsafeSetIndex(reflect2.PtrOf(obj), 0, unsafe.Pointer(pInt(2)))
+		valType.UnsafeSetIndex(reflect2.PtrOf(obj), 1, unsafe.Pointer(pInt(1)))
 		must.Equal([]*int{pInt(2), pInt(1)}, obj)
 	}))
-	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+	t.Run("GetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := []*int{pInt(1), nil}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
 		return []interface{}{
-			valType.Get(&obj, 0),
-			valType.Get(&obj, 1),
-			valType.Get(obj, 0),
-			valType.Get(obj, 1),
+			valType.GetIndex(&obj, 0),
+			valType.GetIndex(&obj, 1),
+			valType.GetIndex(obj, 0),
+			valType.GetIndex(obj, 1),
 		}
 	}))
 	t.Run("Append", testOp(func(api reflect2.API) interface{} {

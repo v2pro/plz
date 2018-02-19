@@ -50,32 +50,32 @@ func Test_map(t *testing.T) {
 		valType := reflect2.TypeOf(map[int]int{})
 		return valType.Indirect(&map[int]int{})
 	}))
-	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+	t.Run("SetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := map[int]int{}
 		valType := api.TypeOf(obj).(reflect2.MapType)
-		valType.Set(&obj, pInt(2), pInt(4))
-		valType.Set(&obj, pInt(3), pInt(9))
+		valType.SetIndex(&obj, pInt(2), pInt(4))
+		valType.SetIndex(&obj, pInt(3), pInt(9))
 		must.Equal(4, obj[2])
 		return obj
 	}))
-	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {
+	t.Run("UnsafeSetIndex", test.Case(func(ctx *countlog.Context) {
 		obj := map[int]int{}
 		valType := reflect2.TypeOf(obj).(reflect2.MapType)
-		valType.UnsafeSet(unsafe.Pointer(&obj), reflect2.PtrOf(2), reflect2.PtrOf(4))
+		valType.UnsafeSetIndex(unsafe.Pointer(&obj), reflect2.PtrOf(2), reflect2.PtrOf(4))
 		must.Equal(map[int]int{2: 4}, obj)
 	}))
-	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+	t.Run("GetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := map[int]int{3: 9, 2: 4}
 		valType := api.TypeOf(obj).(reflect2.MapType)
 		return []interface{}{
-			*valType.Get(&obj, pInt(3)).(*int),
-			valType.Get(&obj, pInt(0)).(*int),
+			*valType.GetIndex(&obj, pInt(3)).(*int),
+			valType.GetIndex(&obj, pInt(0)).(*int),
 		}
 	}))
-	t.Run("UnsafeGet", test.Case(func(ctx *countlog.Context) {
+	t.Run("UnsafeGetIndex", test.Case(func(ctx *countlog.Context) {
 		obj := map[int]int{3: 9, 2: 4}
 		valType := reflect2.TypeOf(obj).(reflect2.MapType)
-		elem := valType.UnsafeGet(unsafe.Pointer(&obj), reflect2.PtrOf(3))
+		elem := valType.UnsafeGetIndex(unsafe.Pointer(&obj), reflect2.PtrOf(3))
 		must.Equal(9, *(*int)(elem))
 	}))
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {
@@ -105,7 +105,7 @@ func Benchmark_map_unsafe(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		valType.UnsafeSet(m, reflect2.PtrOf(2), reflect2.PtrOf(4))
+		valType.UnsafeSetIndex(m, reflect2.PtrOf(2), reflect2.PtrOf(4))
 	}
 }
 

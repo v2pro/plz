@@ -11,7 +11,7 @@ func Test_map(t *testing.T) {
 	}
 	valType := reflect2.TypeOf(map[int]int{}).(reflect2.MapType)
 	m := map[int]int{}
-	valType.Set(&m, pInt(1), pInt(1))
+	valType.SetIndex(&m, pInt(1), pInt(1))
 	if m[1] != 1 {
 		t.Fail()
 	}

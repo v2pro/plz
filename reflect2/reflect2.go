@@ -33,10 +33,10 @@ type Type interface {
 type ListType interface {
 	Type
 	Elem() Type
-	Set(obj interface{}, index int, elem interface{})
-	UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer)
-	Get(obj interface{}, index int) interface{}
-	UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer
+	SetIndex(obj interface{}, index int, elem interface{})
+	UnsafeSetIndex(obj unsafe.Pointer, index int, elem unsafe.Pointer)
+	GetIndex(obj interface{}, index int) interface{}
+	UnsafeGetIndex(obj unsafe.Pointer, index int) unsafe.Pointer
 }
 
 type ArrayType interface {
@@ -85,11 +85,11 @@ type MapType interface {
 	Elem() Type
 	MakeMap(cap int) interface{}
 	UnsafeMakeMap(cap int) unsafe.Pointer
-	Set(obj interface{}, key interface{}, elem interface{})
-	UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer)
-	TryGet(obj interface{}, key interface{}) (interface{}, bool)
-	Get(obj interface{}, key interface{}) interface{}
-	UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer
+	SetIndex(obj interface{}, key interface{}, elem interface{})
+	UnsafeSetIndex(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer)
+	TryGetIndex(obj interface{}, key interface{}) (interface{}, bool)
+	GetIndex(obj interface{}, key interface{}) interface{}
+	UnsafeGetIndex(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer
 	Iterate(obj interface{}) MapIterator
 	UnsafeIterate(obj unsafe.Pointer) MapIterator
 }

@@ -62,42 +62,42 @@ func (type2 *UnsafeMapType) UnsafeMakeMap(cap int) unsafe.Pointer {
 	return unsafe.Pointer(&m)
 }
 
-func (type2 *UnsafeMapType) Set(obj interface{}, key interface{}, elem interface{}) {
+func (type2 *UnsafeMapType) SetIndex(obj interface{}, key interface{}, elem interface{}) {
 	objEFace := unpackEFace(obj)
-	assertType("MapType.Set argument 1", type2.ptrRType, objEFace.rtype)
+	assertType("MapType.SetIndex argument 1", type2.ptrRType, objEFace.rtype)
 	keyEFace := unpackEFace(key)
-	assertType("MapType.Set argument 2", type2.pKeyRType, keyEFace.rtype)
+	assertType("MapType.SetIndex argument 2", type2.pKeyRType, keyEFace.rtype)
 	elemEFace := unpackEFace(elem)
-	assertType("MapType.Set argument 3", type2.pElemRType, elemEFace.rtype)
-	type2.UnsafeSet(objEFace.data, keyEFace.data, elemEFace.data)
+	assertType("MapType.SetIndex argument 3", type2.pElemRType, elemEFace.rtype)
+	type2.UnsafeSetIndex(objEFace.data, keyEFace.data, elemEFace.data)
 }
 
-func (type2 *UnsafeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
+func (type2 *UnsafeMapType) UnsafeSetIndex(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
 	mapassign(type2.rtype, *(*unsafe.Pointer)(obj), key, elem)
 }
 
-func (type2 *UnsafeMapType) TryGet(obj interface{}, key interface{}) (interface{}, bool) {
+func (type2 *UnsafeMapType) TryGetIndex(obj interface{}, key interface{}) (interface{}, bool) {
 	objEFace := unpackEFace(obj)
-	assertType("MapType.TryGet argument 1", type2.ptrRType, objEFace.rtype)
+	assertType("MapType.TryGetIndex argument 1", type2.ptrRType, objEFace.rtype)
 	keyEFace := unpackEFace(key)
-	assertType("MapType.TryGet argument 2", type2.pKeyRType, keyEFace.rtype)
-	elemPtr := type2.UnsafeGet(objEFace.data, keyEFace.data)
+	assertType("MapType.TryGetIndex argument 2", type2.pKeyRType, keyEFace.rtype)
+	elemPtr := type2.UnsafeGetIndex(objEFace.data, keyEFace.data)
 	if elemPtr == nil {
 		return nil, false
 	}
 	return packEFace(type2.pElemRType, elemPtr), true
 }
 
-func (type2 *UnsafeMapType) Get(obj interface{}, key interface{}) interface{} {
+func (type2 *UnsafeMapType) GetIndex(obj interface{}, key interface{}) interface{} {
 	objEFace := unpackEFace(obj)
-	assertType("MapType.TryGet argument 1", type2.ptrRType, objEFace.rtype)
+	assertType("MapType.GetIndex argument 1", type2.ptrRType, objEFace.rtype)
 	keyEFace := unpackEFace(key)
-	assertType("MapType.TryGet argument 2", type2.pKeyRType, keyEFace.rtype)
-	elemPtr := type2.UnsafeGet(objEFace.data, keyEFace.data)
+	assertType("MapType.GetIndex argument 2", type2.pKeyRType, keyEFace.rtype)
+	elemPtr := type2.UnsafeGetIndex(objEFace.data, keyEFace.data)
 	return packEFace(type2.pElemRType, elemPtr)
 }
 
-func (type2 *UnsafeMapType) UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer {
+func (type2 *UnsafeMapType) UnsafeGetIndex(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer {
 	return mapaccess(type2.rtype, *(*unsafe.Pointer)(obj), key)
 }
 

@@ -13,29 +13,29 @@ func Test_map_key_ptr(t *testing.T) {
 	var pInt = func(val int) *int {
 		return &val
 	}
-	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+	t.Run("SetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := map[*int]int{}
 		valType := api.TypeOf(obj).(reflect2.MapType)
 		key := pInt(2)
-		valType.Set(obj, &key, 4)
-		valType.Set(obj, &key, 9)
-		//valType.Set(obj, nil, 9)
+		valType.SetIndex(obj, &key, 4)
+		valType.SetIndex(obj, &key, 9)
+		//valType.SetIndex(obj, nil, 9)
 		return obj[pInt(2)]
 	}))
-	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {
+	t.Run("UnsafeSetIndex", test.Case(func(ctx *countlog.Context) {
 		obj := map[*int]int{}
 		valType := reflect2.TypeOf(obj).(reflect2.MapType)
 		v := pInt(2)
-		valType.UnsafeSet(reflect2.PtrOf(obj), unsafe.Pointer(v), reflect2.PtrOf(4))
+		valType.UnsafeSetIndex(reflect2.PtrOf(obj), unsafe.Pointer(v), reflect2.PtrOf(4))
 		must.Equal(4, obj[v])
 	}))
-	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+	t.Run("GetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := map[*int]int{pInt(3): 9, pInt(2): 4}
 		valType := api.TypeOf(obj).(reflect2.MapType)
 		return []interface{}{
-			valType.Get(obj, pInt(3)),
-			valType.Get(obj, pInt(2)),
-			valType.Get(obj, nil),
+			valType.GetIndex(obj, pInt(3)),
+			valType.GetIndex(obj, pInt(2)),
+			valType.GetIndex(obj, nil),
 		}
 	}))
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {

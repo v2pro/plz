@@ -20,19 +20,19 @@ func Test_array(t *testing.T) {
 		valType := api.TypeOf([2]int{})
 		return valType.Indirect(&[2]int{})
 	}))
-	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+	t.Run("SetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := [2]int{}
 		valType := api.TypeOf(obj).(reflect2.ArrayType)
-		valType.Set(&obj, 0, pInt(100))
-		valType.Set(&obj, 1, pInt(200))
+		valType.SetIndex(&obj, 0, pInt(100))
+		valType.SetIndex(&obj, 1, pInt(200))
 		return obj
 	}))
-	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+	t.Run("GetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := [2]int{1, 2}
 		valType := api.TypeOf(obj).(reflect2.ArrayType)
 		return []interface{} {
-			valType.Get(&obj, 0),
-			valType.Get(&obj, 1),
+			valType.GetIndex(&obj, 0),
+			valType.GetIndex(&obj, 1),
 		}
 	}))
 }

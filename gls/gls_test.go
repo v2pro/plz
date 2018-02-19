@@ -28,7 +28,7 @@ func TestGls(t *testing.T) {
 	if nil != Get("hello") {
 		t.Fail()
 	}
-	//Set("hello", "world") // will panic
+	//SetIndex("hello", "world") // will panic
 }
 
 func TestNestedGls(t *testing.T) {

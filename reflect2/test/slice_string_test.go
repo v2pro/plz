@@ -6,11 +6,11 @@ import (
 )
 
 func Test_slice_string(t *testing.T) {
-	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+	t.Run("SetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := []string{"hello", "world"}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		valType.Set(&obj, 0, "hi")
-		valType.Set(&obj, 1, "there")
+		valType.SetIndex(&obj, 0, "hi")
+		valType.SetIndex(&obj, 1, "there")
 		return obj
 	}))
 }

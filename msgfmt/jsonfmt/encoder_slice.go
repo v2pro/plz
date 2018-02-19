@@ -19,7 +19,7 @@ func (encoder *sliceEncoder) Encode(ctx context.Context, space []byte, ptr unsaf
 		if i != 0 {
 			space = append(space, ',')
 		}
-		elemPtr := sliceType.UnsafeGet(ptr, i)
+		elemPtr := sliceType.UnsafeGetIndex(ptr, i)
 		space = encoder.elemEncoder.Encode(ctx, space, elemPtr)
 	}
 	space = append(space, ']')

@@ -22,34 +22,34 @@ func Test_slice_iface(t *testing.T) {
 		obj[4] = errors.New("world")
 		return obj
 	}))
-	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+	t.Run("SetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := []error{errors.New("hello"), nil}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		valType.Set(&obj, 0, pError("hi"))
-		valType.Set(&obj, 1, pError("world"))
+		valType.SetIndex(&obj, 0, pError("hi"))
+		valType.SetIndex(&obj, 1, pError("world"))
 		return obj
 	}))
-	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {
+	t.Run("UnsafeSetIndex", test.Case(func(ctx *countlog.Context) {
 		obj := []error{errors.New("hello"), nil}
 		valType := reflect2.TypeOf(obj).(reflect2.SliceType)
 		elem0 := errors.New("hi")
-		valType.UnsafeSet(reflect2.PtrOf(obj), 0, unsafe.Pointer(&elem0))
+		valType.UnsafeSetIndex(reflect2.PtrOf(obj), 0, unsafe.Pointer(&elem0))
 		elem1 := errors.New("world")
-		valType.UnsafeSet(reflect2.PtrOf(obj), 1, unsafe.Pointer(&elem1))
+		valType.UnsafeSetIndex(reflect2.PtrOf(obj), 1, unsafe.Pointer(&elem1))
 		must.Equal([]error{elem0, elem1}, obj)
 	}))
-	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+	t.Run("GetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := []error{errors.New("hello"), nil}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
 		return []interface{}{
-			valType.Get(&obj, 0),
-			valType.Get(&obj, 1),
+			valType.GetIndex(&obj, 0),
+			valType.GetIndex(&obj, 1),
 		}
 	}))
-	t.Run("UnsafeGet", test.Case(func(ctx *countlog.Context) {
+	t.Run("UnsafeGetIndex", test.Case(func(ctx *countlog.Context) {
 		obj := []error{errors.New("hello"), nil}
 		valType := reflect2.TypeOf(obj).(reflect2.SliceType)
-		elem0 := valType.UnsafeGet(reflect2.PtrOf(obj), 0)
+		elem0 := valType.UnsafeGetIndex(reflect2.PtrOf(obj), 0)
 		must.Equal(errors.New("hello"), *(*error)(elem0))
 	}))
 	t.Run("Append", testOp(func(api reflect2.API) interface{} {

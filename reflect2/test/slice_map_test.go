@@ -13,21 +13,21 @@ func Test_slice_map(t *testing.T) {
 		obj.([]map[int]int)[4] = map[int]int{2:2}
 		return obj
 	}))
-	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+	t.Run("SetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := []map[int]int{{1: 1}, nil}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		valType.Set(obj, 0, &map[int]int{10:10})
-		valType.Set(obj, 1, &map[int]int{2:2})
+		valType.SetIndex(obj, 0, &map[int]int{10:10})
+		valType.SetIndex(obj, 1, &map[int]int{2:2})
 		return obj
 	}))
-	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+	t.Run("GetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := []map[int]int{{1:1}, nil}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
 		return []interface{}{
-			valType.Get(&obj, 0),
-			valType.Get(&obj, 1),
-			valType.Get(obj, 0),
-			valType.Get(obj, 1),
+			valType.GetIndex(&obj, 0),
+			valType.GetIndex(&obj, 1),
+			valType.GetIndex(obj, 0),
+			valType.GetIndex(obj, 1),
 		}
 	}))
 	t.Run("Append", testOp(func(api reflect2.API) interface{} {

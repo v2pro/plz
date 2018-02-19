@@ -13,22 +13,22 @@ func Test_map_key_eface(t *testing.T) {
 	var pInt = func(val int) *int {
 		return &val
 	}
-	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+	t.Run("SetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := map[interface{}]int{}
 		valType := api.TypeOf(obj).(reflect2.MapType)
-		valType.Set(&obj, pEFace(2), pInt(4))
-		valType.Set(&obj, pEFace(3), pInt(9))
-		valType.Set(&obj, pEFace(nil), pInt(9))
+		valType.SetIndex(&obj, pEFace(2), pInt(4))
+		valType.SetIndex(&obj, pEFace(3), pInt(9))
+		valType.SetIndex(&obj, pEFace(nil), pInt(9))
 		return obj
 	}))
-	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+	t.Run("GetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := map[interface{}]int{3: 9, 2: 4}
 		valType := api.TypeOf(obj).(reflect2.MapType)
 		return []interface{}{
-			valType.Get(&obj, pEFace(3)),
-			valType.Get(&obj, pEFace(0)),
-			valType.Get(&obj, pEFace(nil)),
-			valType.Get(&obj, pEFace("")),
+			valType.GetIndex(&obj, pEFace(3)),
+			valType.GetIndex(&obj, pEFace(0)),
+			valType.GetIndex(&obj, pEFace(nil)),
+			valType.GetIndex(&obj, pEFace("")),
 		}
 	}))
 	t.Run("Iterate", testOp(func(api reflect2.API) interface{} {

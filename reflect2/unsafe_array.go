@@ -40,26 +40,26 @@ func (type2 *UnsafeArrayType) UnsafeIndirect(ptr unsafe.Pointer) interface{} {
 	return packEFace(type2.rtype, ptr)
 }
 
-func (type2 *UnsafeArrayType) Set(obj interface{}, index int, elem interface{}) {
+func (type2 *UnsafeArrayType) SetIndex(obj interface{}, index int, elem interface{}) {
 	objEFace := unpackEFace(obj)
-	assertType("ArrayType.Set argument 1", type2.ptrRType, objEFace.rtype)
+	assertType("ArrayType.SetIndex argument 1", type2.ptrRType, objEFace.rtype)
 	elemEFace := unpackEFace(elem)
-	assertType("ArrayType.Set argument 3", type2.pElemRType, elemEFace.rtype)
-	type2.UnsafeSet(objEFace.data, index, elemEFace.data)
+	assertType("ArrayType.SetIndex argument 3", type2.pElemRType, elemEFace.rtype)
+	type2.UnsafeSetIndex(objEFace.data, index, elemEFace.data)
 }
 
-func (type2 *UnsafeArrayType) UnsafeSet(obj unsafe.Pointer, index int, elem unsafe.Pointer) {
+func (type2 *UnsafeArrayType) UnsafeSetIndex(obj unsafe.Pointer, index int, elem unsafe.Pointer) {
 	elemPtr := arrayAt(obj, index, type2.elemSize, "i < s.Len")
 	typedmemmove(type2.elemRType, elemPtr, elem)
 }
 
-func (type2 *UnsafeArrayType) Get(obj interface{}, index int) interface{} {
+func (type2 *UnsafeArrayType) GetIndex(obj interface{}, index int) interface{} {
 	objEFace := unpackEFace(obj)
-	assertType("ArrayType.Set argument 1", type2.ptrRType, objEFace.rtype)
-	elemPtr := type2.UnsafeGet(objEFace.data, index)
+	assertType("ArrayType.GetIndex argument 1", type2.ptrRType, objEFace.rtype)
+	elemPtr := type2.UnsafeGetIndex(objEFace.data, index)
 	return packEFace(type2.pElemRType, elemPtr)
 }
 
-func (type2 *UnsafeArrayType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {
+func (type2 *UnsafeArrayType) UnsafeGetIndex(obj unsafe.Pointer, index int) unsafe.Pointer {
 	return arrayAt(obj, index, type2.elemSize, "i < s.Len")
 }

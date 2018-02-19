@@ -18,7 +18,7 @@ func (encoder *arrayEncoder) Encode(ctx context.Context, space []byte, ptr unsaf
 		if i != 0 {
 			space = append(space, ',')
 		}
-		elemPtr := arrayType.UnsafeGet(ptr, i)
+		elemPtr := arrayType.UnsafeGetIndex(ptr, i)
 		space = encoder.elemEncoder.Encode(ctx, space, elemPtr)
 	}
 	space = append(space, ']')

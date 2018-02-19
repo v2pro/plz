@@ -9,17 +9,17 @@ type safeSliceType struct {
 	safeType
 }
 
-func (type2 *safeSliceType) Set(obj interface{}, index int, value interface{}) {
+func (type2 *safeSliceType) SetIndex(obj interface{}, index int, value interface{}) {
 	val := reflect.ValueOf(obj).Elem()
 	elem := reflect.ValueOf(value).Elem()
 	val.Index(index).Set(elem)
 }
 
-func (type2 *safeSliceType) UnsafeSet(obj unsafe.Pointer, index int, value unsafe.Pointer) {
+func (type2 *safeSliceType) UnsafeSetIndex(obj unsafe.Pointer, index int, value unsafe.Pointer) {
 	panic("does not support unsafe operation")
 }
 
-func (type2 *safeSliceType) Get(obj interface{}, index int) interface{} {
+func (type2 *safeSliceType) GetIndex(obj interface{}, index int) interface{} {
 	val := reflect.ValueOf(obj).Elem()
 	elem := val.Index(index)
 	ptr := reflect.New(elem.Type())
@@ -27,7 +27,7 @@ func (type2 *safeSliceType) Get(obj interface{}, index int) interface{} {
 	return ptr.Interface()
 }
 
-func (type2 *safeSliceType) UnsafeGet(obj unsafe.Pointer, index int) unsafe.Pointer {
+func (type2 *safeSliceType) UnsafeGetIndex(obj unsafe.Pointer, index int) unsafe.Pointer {
 	panic("does not support unsafe operation")
 }
 

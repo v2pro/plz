@@ -46,33 +46,33 @@ func Test_slice(t *testing.T) {
 		obj := valType.UnsafeMakeSlice(5, 10)
 		must.Equal(&[]int{0, 0, 0, 0, 0}, valType.PackEFace(obj))
 	}))
-	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+	t.Run("SetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := []int{1, 2}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		valType.Set(&obj, 0, pInt(100))
-		valType.Set(&obj, 1, pInt(20))
+		valType.SetIndex(&obj, 0, pInt(100))
+		valType.SetIndex(&obj, 1, pInt(20))
 		return obj
 	}))
-	t.Run("UnsafeSet", test.Case(func(ctx *countlog.Context) {
+	t.Run("UnsafeSetIndex", test.Case(func(ctx *countlog.Context) {
 		obj := []int{1, 2}
 		valType := reflect2.TypeOf(obj).(reflect2.SliceType)
-		valType.UnsafeSet(reflect2.PtrOf(obj), 0, reflect2.PtrOf(100))
-		valType.UnsafeSet(reflect2.PtrOf(obj), 1, reflect2.PtrOf(10))
+		valType.UnsafeSetIndex(reflect2.PtrOf(obj), 0, reflect2.PtrOf(100))
+		valType.UnsafeSetIndex(reflect2.PtrOf(obj), 1, reflect2.PtrOf(10))
 		must.Equal([]int{100, 10}, obj)
 	}))
-	t.Run("Get", testOp(func(api reflect2.API) interface{} {
+	t.Run("GetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := []int{1, 2}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
 		return []interface{}{
-			valType.Get(&obj, 1).(*int),
+			valType.GetIndex(&obj, 1).(*int),
 		}
 	}))
-	t.Run("UnsafeGet", test.Case(func(ctx *countlog.Context) {
+	t.Run("UnsafeGetIndex", test.Case(func(ctx *countlog.Context) {
 		obj := []int{1, 2}
 		valType := reflect2.TypeOf(obj).(reflect2.SliceType)
-		elem0 := valType.UnsafeGet(reflect2.PtrOf(obj), 0)
+		elem0 := valType.UnsafeGetIndex(reflect2.PtrOf(obj), 0)
 		must.Equal(1, *(*int)(elem0))
-		elem1 := valType.UnsafeGet(reflect2.PtrOf(obj), 1)
+		elem1 := valType.UnsafeGetIndex(reflect2.PtrOf(obj), 1)
 		must.Equal(2, *(*int)(elem1))
 	}))
 	t.Run("Append", testOp(func(api reflect2.API) interface{} {

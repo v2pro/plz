@@ -12,12 +12,12 @@ func Test_map_elem_map(t *testing.T) {
 	var pMap = func(val map[int]int) *map[int]int {
 		return &val
 	}
-	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+	t.Run("SetIndex", testOp(func(api reflect2.API) interface{} {
 		obj := map[int]map[int]int{}
 		valType := api.TypeOf(obj).(reflect2.MapType)
-		valType.Set(&obj, pInt(2), pMap(map[int]int{4:4}))
-		valType.Set(&obj, pInt(3), pMap(map[int]int{9:9}))
-		valType.Set(&obj, pInt(3), pMap(nil))
+		valType.SetIndex(&obj, pInt(2), pMap(map[int]int{4:4}))
+		valType.SetIndex(&obj, pInt(3), pMap(map[int]int{9:9}))
+		valType.SetIndex(&obj, pInt(3), pMap(nil))
 		return obj
 	}))
 }
