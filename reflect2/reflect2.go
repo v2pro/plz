@@ -50,16 +50,16 @@ type SliceType interface {
 	ListType
 	MakeSlice(length int, cap int) interface{}
 	UnsafeMakeSlice(length int, cap int) unsafe.Pointer
-	Append(obj interface{}, elem interface{}) interface{}
-	UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer
+	Grow(obj interface{}, newLength int)
+	UnsafeGrow(ptr unsafe.Pointer, newLength int)
+	Append(obj interface{}, elem interface{})
+	UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer)
 	LengthOf(obj interface{}) int
 	UnsafeLengthOf(ptr unsafe.Pointer) int
 	SetNil(obj interface{})
 	UnsafeSetNil(ptr unsafe.Pointer)
 	Cap(obj interface{}) int
 	UnsafeCap(ptr unsafe.Pointer) int
-	Grow(obj interface{}, newLength int) interface{}
-	UnsafeGrow(ptr unsafe.Pointer, newLength int) unsafe.Pointer
 }
 
 type StructType interface {

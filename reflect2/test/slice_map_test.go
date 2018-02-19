@@ -35,9 +35,9 @@ func Test_slice_map(t *testing.T) {
 		obj[0] = map[int]int{1:1}
 		obj[1] = map[int]int{2:2}
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		obj = valType.Append(obj, map[int]int{3:3}).([]map[int]int)
+		valType.Append(obj, map[int]int{3:3})
 		// will trigger grow
-		obj = valType.Append(obj, map[int]int{4:4}).([]map[int]int)
+		valType.Append(obj, map[int]int{4:4})
 		return obj
 	}))
 }

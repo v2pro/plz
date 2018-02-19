@@ -49,9 +49,9 @@ func Test_slice_ptr(t *testing.T) {
 		obj[0] = pInt(1)
 		obj[1] = pInt(2)
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		obj = valType.Append(obj, pInt(3)).([]*int)
+		valType.Append(obj, pInt(3))
 		// will trigger grow
-		obj = valType.Append(obj, pInt(4)).([]*int)
+		valType.Append(obj, pInt(4))
 		return obj
 	}))
 }

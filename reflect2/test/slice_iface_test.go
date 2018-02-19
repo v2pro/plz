@@ -58,9 +58,9 @@ func Test_slice_iface(t *testing.T) {
 		obj[1] = errors.New("2")
 		valType := api.TypeOf(obj).(reflect2.SliceType)
 		ptr := &obj
-		ptr = valType.Append(ptr, pError("3")).(*[]error)
+		valType.Append(ptr, pError("3"))
 		// will trigger grow
-		ptr = valType.Append(ptr, pError("4")).(*[]error)
+		valType.Append(ptr, pError("4"))
 		return ptr
 	}))
 	t.Run("UnsafeAppend", test.Case(func(ctx *countlog.Context) {
@@ -70,9 +70,9 @@ func Test_slice_iface(t *testing.T) {
 		valType := reflect2.TypeOf(obj).(reflect2.SliceType)
 		ptr := reflect2.PtrOf(obj)
 		elem2 := errors.New("3")
-		ptr = valType.UnsafeAppend(ptr, unsafe.Pointer(&elem2))
+		valType.UnsafeAppend(ptr, unsafe.Pointer(&elem2))
 		elem3 := errors.New("4")
-		ptr = valType.UnsafeAppend(ptr, unsafe.Pointer(&elem3))
+		valType.UnsafeAppend(ptr, unsafe.Pointer(&elem3))
 		must.Equal(&[]error{
 			obj[0], obj[1], elem2, elem3,
 		}, valType.PackEFace(ptr))

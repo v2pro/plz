@@ -57,9 +57,9 @@ func Test_slice_eface(t *testing.T) {
 		obj[0] = 1
 		obj[1] = 2
 		valType := api.TypeOf(obj).(reflect2.SliceType)
-		obj = valType.Append(obj, 3).([]interface{})
+		valType.Append(&obj, 3)
 		// will trigger grow
-		obj = valType.Append(obj, 4).([]interface{})
+		valType.Append(&obj, 4)
 		return obj
 	}))
 	t.Run("UnsafeAppend", test.Case(func(ctx *countlog.Context) {
@@ -69,9 +69,9 @@ func Test_slice_eface(t *testing.T) {
 		valType := reflect2.TypeOf(obj).(reflect2.SliceType)
 		ptr := reflect2.PtrOf(obj)
 		var elem2 interface{} = 3
-		ptr = valType.UnsafeAppend(ptr, unsafe.Pointer(&elem2))
+		valType.UnsafeAppend(ptr, unsafe.Pointer(&elem2))
 		var elem3 interface{} = 4
-		ptr = valType.UnsafeAppend(ptr, unsafe.Pointer(&elem3))
+		valType.UnsafeAppend(ptr, unsafe.Pointer(&elem3))
 		should.Equal([]interface{}{1, 2, 3, 4}, valType.PackEFace(ptr))
 	}))
 }

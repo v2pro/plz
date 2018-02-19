@@ -42,16 +42,27 @@ func (type2 *safeSliceType) UnsafeMakeSlice(length int, cap int) unsafe.Pointer 
 	panic("does not support unsafe operation")
 }
 
-func (type2 *safeSliceType) Append(obj interface{}, elem interface{}) interface{} {
-	val := reflect.ValueOf(obj).Elem()
-	elemVal := reflect.ValueOf(elem).Elem()
-	val = reflect.Append(val, elemVal)
-	ptr := reflect.New(val.Type())
-	ptr.Elem().Set(val)
-	return ptr.Interface()
+func (type2 *safeSliceType) Grow(obj interface{}, newLength int) {
+	oldCap := type2.Cap(obj)
+	oldSlice := reflect.ValueOf(obj).Elem()
+	delta := newLength - oldCap
+	deltaVals := make([]reflect.Value, delta)
+	newSlice := reflect.Append(oldSlice, deltaVals...)
+	oldSlice.Set(newSlice)
 }
 
-func (type2 *safeSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) unsafe.Pointer {
+func (type2 *safeSliceType) UnsafeGrow(ptr unsafe.Pointer, newLength int) {
+	panic("does not support unsafe operation")
+}
+
+func (type2 *safeSliceType) Append(obj interface{}, elem interface{}) {
+	val := reflect.ValueOf(obj).Elem()
+	elemVal := reflect.ValueOf(elem).Elem()
+	newVal := reflect.Append(val, elemVal)
+	val.Set(newVal)
+}
+
+func (type2 *safeSliceType) UnsafeAppend(obj unsafe.Pointer, elem unsafe.Pointer) {
 	panic("does not support unsafe operation")
 }
 
@@ -77,20 +88,5 @@ func (type2 *safeSliceType) Cap(obj interface{}) int {
 }
 
 func (type2 *safeSliceType) UnsafeCap(ptr unsafe.Pointer) int {
-	panic("does not support unsafe operation")
-}
-
-func (type2 *safeSliceType) Grow(obj interface{}, newLength int) interface{} {
-	oldCap := type2.Cap(obj)
-	oldSlice := reflect.ValueOf(obj).Elem()
-	delta := newLength - oldCap
-	deltaVals := make([]reflect.Value, delta)
-	newSlice := reflect.Append(oldSlice, deltaVals...)
-	ptr := reflect.New(newSlice.Type())
-	ptr.Elem().Set(newSlice)
-	return ptr.Interface()
-}
-
-func (type2 *safeSliceType) UnsafeGrow(ptr unsafe.Pointer, newLength int) unsafe.Pointer {
 	panic("does not support unsafe operation")
 }

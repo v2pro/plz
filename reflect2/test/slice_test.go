@@ -88,9 +88,9 @@ func Test_slice(t *testing.T) {
 		obj[1] = 2
 		valType := api.TypeOf(obj).(reflect2.SliceType)
 		ptr := &obj
-		ptr = valType.Append(ptr, pInt(3)).(*[]int)
+		valType.Append(ptr, pInt(3))
 		// will trigger grow
-		ptr = valType.Append(ptr, pInt(4)).(*[]int)
+		valType.Append(ptr, pInt(4))
 		return ptr
 	}))
 	t.Run("UnsafeAppend", test.Case(func(ctx *countlog.Context) {
@@ -99,8 +99,8 @@ func Test_slice(t *testing.T) {
 		obj[1] = 2
 		valType := reflect2.TypeOf(obj).(reflect2.SliceType)
 		ptr := reflect2.PtrOf(obj)
-		ptr = valType.UnsafeAppend(ptr, reflect2.PtrOf(3))
-		ptr = valType.UnsafeAppend(ptr, reflect2.PtrOf(4))
+		valType.UnsafeAppend(ptr, reflect2.PtrOf(3))
+		valType.UnsafeAppend(ptr, reflect2.PtrOf(4))
 		must.Equal(&[]int{1, 2, 3, 4}, valType.PackEFace(ptr))
 	}))
 	t.Run("Grow", testOp(func(api reflect2.API) interface{} {
@@ -108,7 +108,7 @@ func Test_slice(t *testing.T) {
 		obj[0] = 1
 		obj[1] = 2
 		valType := reflect2.TypeOf(obj).(reflect2.SliceType)
-		obj = *valType.Grow(&obj, 4).(*[]int)
+		valType.Grow(&obj, 4)
 		return obj
 	}))
 }
