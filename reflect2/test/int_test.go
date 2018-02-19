@@ -31,4 +31,11 @@ func Test_int(t *testing.T) {
 		hundred := 100
 		must.Equal(100, valType.UnsafeIndirect(unsafe.Pointer(&hundred)))
 	}))
+	t.Run("Set", testOp(func(api reflect2.API) interface{} {
+		valType := api.TypeOf(1)
+		i := 1
+		j := 10
+		valType.Set(&i, &j)
+		return i
+	}))
 }

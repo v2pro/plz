@@ -28,6 +28,8 @@ type Type interface {
 	IsNullable() bool
 	IsNil(obj interface{}) bool
 	UnsafeIsNil(ptr unsafe.Pointer) bool
+	Set(obj interface{}, val interface{})
+	UnsafeSet(ptr unsafe.Pointer, val unsafe.Pointer)
 }
 
 type ListType interface {

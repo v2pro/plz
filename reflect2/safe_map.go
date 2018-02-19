@@ -23,18 +23,18 @@ func (type2 *safeMapType) UnsafeMakeMap(cap int) unsafe.Pointer {
 	panic("does not support unsafe operation")
 }
 
-func (type2 *safeMapType) Set(obj interface{}, key interface{}, elem interface{}) {
+func (type2 *safeMapType) SetIndex(obj interface{}, key interface{}, elem interface{}) {
 	keyVal := reflect.ValueOf(key)
 	elemVal := reflect.ValueOf(elem)
 	val := reflect.ValueOf(obj)
 	val.Elem().SetMapIndex(keyVal.Elem(), elemVal.Elem())
 }
 
-func (type2 *safeMapType) UnsafeSet(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
+func (type2 *safeMapType) UnsafeSetIndex(obj unsafe.Pointer, key unsafe.Pointer, elem unsafe.Pointer) {
 	panic("does not support unsafe operation")
 }
 
-func (type2 *safeMapType) TryGet(obj interface{}, key interface{}) (interface{}, bool) {
+func (type2 *safeMapType) TryGetIndex(obj interface{}, key interface{}) (interface{}, bool) {
 	keyVal := reflect.ValueOf(key)
 	if key == nil {
 		keyVal = reflect.New(type2.Type.Key()).Elem()
@@ -46,7 +46,7 @@ func (type2 *safeMapType) TryGet(obj interface{}, key interface{}) (interface{},
 	return val.Interface(), true
 }
 
-func (type2 *safeMapType) Get(obj interface{}, key interface{}) interface{} {
+func (type2 *safeMapType) GetIndex(obj interface{}, key interface{}) interface{} {
 	val := reflect.ValueOf(obj).Elem()
 	keyVal := reflect.ValueOf(key).Elem()
 	elemVal := val.MapIndex(keyVal)
@@ -59,7 +59,7 @@ func (type2 *safeMapType) Get(obj interface{}, key interface{}) interface{} {
 	return ptr.Interface()
 }
 
-func (type2 *safeMapType) UnsafeGet(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer {
+func (type2 *safeMapType) UnsafeGetIndex(obj unsafe.Pointer, key unsafe.Pointer) unsafe.Pointer {
 	panic("does not support unsafe operation")
 }
 

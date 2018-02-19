@@ -64,3 +64,11 @@ func (type2 *safeType) IsNil(obj interface{}) bool {
 func (type2 *safeType) UnsafeIsNil(ptr unsafe.Pointer) bool {
 	panic("does not support unsafe operation")
 }
+
+func (type2 *safeType) Set(obj interface{}, val interface{}) {
+	reflect.ValueOf(obj).Elem().Set(reflect.ValueOf(val).Elem())
+}
+
+func (type2 *safeType) UnsafeSet(ptr unsafe.Pointer, val unsafe.Pointer) {
+	panic("does not support unsafe operation")
+}

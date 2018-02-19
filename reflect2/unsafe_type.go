@@ -22,6 +22,17 @@ func newUnsafeType(cfg *frozenConfig, type1 reflect.Type) *unsafeType {
 	}
 }
 
+func (type2 *unsafeType) Set(obj interface{}, val interface{}) {
+	objEFace := unpackEFace(obj)
+	assertType("Type.Set argument 1", type2.ptrRType, objEFace.rtype)
+	valEFace := unpackEFace(val)
+	assertType("Type.Set argument 2", type2.ptrRType, valEFace.rtype)
+	type2.UnsafeSet(objEFace.data, valEFace.data)
+}
+
+func (type2 *unsafeType) UnsafeSet(ptr unsafe.Pointer, val unsafe.Pointer) {
+	typedmemmove(type2.rtype, ptr, val)
+}
 
 func (type2 *unsafeType) IsNil(obj interface{}) bool {
 	objEFace := unpackEFace(obj)
