@@ -29,6 +29,18 @@ func newUnsafeSliceType(cfg *frozenConfig, type1 reflect.Type) SliceType {
 	}
 }
 
+func (type2 *UnsafeSliceType) Set(obj interface{}, val interface{}) {
+	objEFace := unpackEFace(obj)
+	assertType("Type.Set argument 1", type2.ptrRType, objEFace.rtype)
+	valEFace := unpackEFace(val)
+	assertType("Type.Set argument 2", type2.ptrRType, valEFace.rtype)
+	type2.UnsafeSet(objEFace.data, valEFace.data)
+}
+
+func (type2 *UnsafeSliceType) UnsafeSet(ptr unsafe.Pointer, val unsafe.Pointer) {
+	*(*sliceHeader)(ptr) = *(*sliceHeader)(val)
+}
+
 func (type2 *UnsafeSliceType) IsNil(obj interface{}) bool {
 	if obj == nil {
 		return true
