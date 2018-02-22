@@ -72,3 +72,7 @@ func (type2 *safeType) Set(obj interface{}, val interface{}) {
 func (type2 *safeType) UnsafeSet(ptr unsafe.Pointer, val unsafe.Pointer) {
 	panic("does not support unsafe operation")
 }
+
+func (type2 *safeType) AssignableTo(anotherType Type) bool {
+	return type2.Type1().AssignableTo(anotherType.Type1())
+}

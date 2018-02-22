@@ -30,6 +30,7 @@ type Type interface {
 	UnsafeIsNil(ptr unsafe.Pointer) bool
 	Set(obj interface{}, val interface{})
 	UnsafeSet(ptr unsafe.Pointer, val unsafe.Pointer)
+	AssignableTo(anotherType Type) bool
 }
 
 type ListType interface {
@@ -213,6 +214,10 @@ func TypeOfPtr(obj interface{}) PtrType {
 
 func Type2(type1 reflect.Type) Type {
 	return ConfigUnsafe.Type2(type1)
+}
+
+func PtrTo(typ Type) Type {
+	return Type2(reflect.PtrTo(typ.Type1()))
 }
 
 func PtrOf(obj interface{}) unsafe.Pointer {
