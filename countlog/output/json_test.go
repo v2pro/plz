@@ -1,4 +1,4 @@
-package json
+package output
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 
 func Test_event(t *testing.T) {
 	should := require.New(t)
-	format := &Format{}
+	format := &JsonFormat{}
 	formatter := format.FormatterOf(&spi.LogSite{
 		Sample: []interface{}{
 			"k1", "v",

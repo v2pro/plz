@@ -1,4 +1,4 @@
-package json
+package output
 
 import (
 	"github.com/v2pro/plz/countlog/output"
@@ -7,18 +7,18 @@ import (
 	"github.com/v2pro/plz/reflect2"
 )
 
-type Format struct {
+type JsonFormat struct {
 }
 
-func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
-	formatter := &formatter{
+func (format *JsonFormat) FormatterOf(site *spi.LogSite) output.Formatter {
+	formatter := &jsonFormatter{
 		prefix:           `{"event":"` + site.Event + `"`,
 		suffix:           `,location:"` + site.Location() + `"}` + "\n",
 		timestampEncoder: jsonfmt.EncoderOf(reflect2.TypeOf(int64(0))),
 	}
 	for i := 0; i < len(site.Sample); i += 2 {
 		prefix := `"` + site.Sample[i].(string) + `":`
-		formatter.props = append(formatter.props, formatterProp{
+		formatter.props = append(formatter.props, jsonFormatterProp{
 			prefix:  prefix,
 			idx:     i + 1,
 			encoder: jsonfmt.EncoderOf(reflect2.TypeOf(site.Sample[i+1])),
@@ -27,20 +27,20 @@ func (format *Format) FormatterOf(site *spi.LogSite) output.Formatter {
 	return formatter
 }
 
-type formatter struct {
+type jsonFormatter struct {
 	prefix           string
 	suffix           string
-	props            []formatterProp
+	props            []jsonFormatterProp
 	timestampEncoder jsonfmt.Encoder
 }
 
-type formatterProp struct {
+type jsonFormatterProp struct {
 	prefix  string
 	idx     int
 	encoder jsonfmt.Encoder
 }
 
-func (formatter *formatter) Format(space []byte, event *spi.Event) []byte {
+func (formatter *jsonFormatter) Format(space []byte, event *spi.Event) []byte {
 	space = append(space, formatter.prefix...)
 	for _, prop := range formatter.props {
 		space = append(space, ',')
