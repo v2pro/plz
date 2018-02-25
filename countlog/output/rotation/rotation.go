@@ -84,13 +84,15 @@ func NewWriter(cfg Config) (*Writer, error) {
 		fileMode = 0644
 	}
 	file, err := os.OpenFile(cfg.WritePath, os.O_WRONLY|os.O_APPEND, fileMode)
-	if err != nil && !os.IsNotExist(err) {
-		return nil, err
-	}
-	file, err = os.OpenFile(cfg.WritePath,
-		os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fileMode)
 	if err != nil {
-		return nil, err
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+		file, err = os.OpenFile(cfg.WritePath,
+			os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fileMode)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &Writer{file: file}, nil
 }

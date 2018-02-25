@@ -10,16 +10,31 @@ import (
 	"io/ioutil"
 )
 
+func resetTestLogDir() {
+	os.RemoveAll("/tmp/testlog")
+	os.Mkdir("/tmp/testlog", 0744)
+}
+
 func Test_rotation(t *testing.T) {
+	t.Run("write to existing file", test.Case(func(ctx *countlog.Context) {
+		resetTestLogDir()
+		ioutil.WriteFile("/tmp/testlog/test.log", []byte("hello\n"), 0644)
+		writer := must.Call(rotation.NewWriter, rotation.Config{
+			WritePath: "/tmp/testlog/test.log",
+		})[0].(*rotation.Writer)
+		must.Call(writer.Write, []byte("world"))
+		must.Call(writer.Close)
+		content := must.Call(ioutil.ReadFile, "/tmp/testlog/test.log")[0].([]byte)
+		must.Equal("hello\nworld", string(content))
+	}))
 	t.Run("write to new file", test.Case(func(ctx *countlog.Context) {
-		os.RemoveAll("/tmp/testlog")
-		os.Mkdir("/tmp/testlog", 0744)
+		resetTestLogDir()
 		writer := must.Call(rotation.NewWriter, rotation.Config{
 			WritePath: "/tmp/testlog/test.log",
 		})[0].(*rotation.Writer)
 		must.Call(writer.Write, []byte("hello"))
 		must.Call(writer.Close)
-		content := must.Call(ioutil.ReadFile, "/tmp/testlog/test.log")[0]
-		must.Equal([]byte("hello"), content)
+		content := must.Call(ioutil.ReadFile, "/tmp/testlog/test.log")[0].([]byte)
+		must.Equal("hello", string(content))
 	}))
 }
