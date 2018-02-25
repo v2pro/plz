@@ -12,11 +12,17 @@ type ReturnValue []interface{}
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 func Call(f interface{}, argObjs ...interface{}) ReturnValue {
+	fVal := reflect.ValueOf(f)
+	fType := fVal.Type()
 	argVals := make([]reflect.Value, len(argObjs))
 	for i := 0; i < len(argObjs); i++ {
-		argVals[i] = reflect.ValueOf(argObjs[i])
+		if argObjs[i] == nil {
+			argVals[i] = reflect.New(fType.In(i)).Elem()
+		} else {
+			argVals[i] = reflect.ValueOf(argObjs[i])
+		}
 	}
-	retVals := reflect.ValueOf(f).Call(argVals)
+	retVals := fVal.Call(argVals)
 	retObjs := make([]interface{}, len(retVals))
 	for i := 0; i < len(retVals); i++ {
 		retObjs[i] = retVals[i].Interface()
