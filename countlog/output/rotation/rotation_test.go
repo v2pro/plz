@@ -37,4 +37,14 @@ func Test_rotation(t *testing.T) {
 		content := must.Call(ioutil.ReadFile, "/tmp/testlog/test.log")[0].([]byte)
 		must.Equal("hello", string(content))
 	}))
+	t.Run("write to new dir", test.Case(func(ctx *countlog.Context) {
+		resetTestLogDir()
+		writer := must.Call(rotation.NewWriter, rotation.Config{
+			WritePath: "/tmp/testlog/newdir/test.log",
+		})[0].(*rotation.Writer)
+		must.Call(writer.Write, []byte("hello"))
+		must.Call(writer.Close)
+		content := must.Call(ioutil.ReadFile, "/tmp/testlog/newdir/test.log")[0].([]byte)
+		must.Equal("hello", string(content))
+	}))
 }

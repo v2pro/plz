@@ -3,6 +3,7 @@ package rotation
 import (
 	"os"
 	"time"
+	"path"
 )
 
 type Writer struct {
@@ -72,6 +73,7 @@ type PurgeByDeletion struct {
 type Config struct {
 	WritePath string
 	FileMode  os.FileMode
+	DirectoryMode os.FileMode
 	Trigger   TriggerStrategy
 	Archive   ArchiveStrategy
 	Retention RetentionStrategy
@@ -83,11 +85,16 @@ func NewWriter(cfg Config) (*Writer, error) {
 	if fileMode == 0 {
 		fileMode = 0644
 	}
+	dirMode := cfg.DirectoryMode
+	if dirMode == 0 {
+		dirMode = 0755
+	}
 	file, err := os.OpenFile(cfg.WritePath, os.O_WRONLY|os.O_APPEND, fileMode)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
 		}
+		os.MkdirAll(path.Dir(cfg.WritePath), dirMode)
 		file, err = os.OpenFile(cfg.WritePath,
 			os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fileMode)
 		if err != nil {
