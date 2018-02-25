@@ -6,7 +6,7 @@ import (
 )
 
 type Writer struct {
-	f *os.File
+	file *os.File
 }
 
 type NamingStrategy interface {
@@ -71,16 +71,34 @@ type PurgeByDeletion struct {
 
 type Config struct {
 	WritePath string
+	FileMode  os.FileMode
 	Trigger   TriggerStrategy
 	Archive   ArchiveStrategy
 	Retention RetentionStrategy
 	Purge     PurgeStrategy
 }
 
-func NewWriter(cfg Config) *Writer {
-	return &Writer{}
+func NewWriter(cfg Config) (*Writer, error) {
+	fileMode := cfg.FileMode
+	if fileMode == 0 {
+		fileMode = 0644
+	}
+	file, err := os.OpenFile(cfg.WritePath, os.O_WRONLY|os.O_APPEND, fileMode)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+	file, err = os.OpenFile(cfg.WritePath,
+		os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fileMode)
+	if err != nil {
+		return nil, err
+	}
+	return &Writer{file: file}, nil
 }
 
 func (writer *Writer) Write(buf []byte) (int, error) {
-	return writer.f.Write(buf)
+	return writer.file.Write(buf)
+}
+
+func (writer *Writer) Close() error {
+	return writer.file.Close()
 }
