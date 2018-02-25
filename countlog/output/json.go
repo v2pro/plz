@@ -1,7 +1,6 @@
 package output
 
 import (
-	"github.com/v2pro/plz/countlog/output"
 	"github.com/v2pro/plz/countlog/spi"
 	"github.com/v2pro/plz/msgfmt/jsonfmt"
 	"github.com/v2pro/plz/reflect2"
@@ -10,7 +9,7 @@ import (
 type JsonFormat struct {
 }
 
-func (format *JsonFormat) FormatterOf(site *spi.LogSite) output.Formatter {
+func (format *JsonFormat) FormatterOf(site *spi.LogSite) Formatter {
 	formatter := &jsonFormatter{
 		prefix:           `{"event":"` + site.Event + `"`,
 		suffix:           `,location:"` + site.Location() + `"}` + "\n",
