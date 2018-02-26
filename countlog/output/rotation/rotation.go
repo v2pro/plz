@@ -11,20 +11,26 @@ import (
 	"github.com/v2pro/plz/countlog/spi"
 )
 
+// normal => triggered => opened new => normal
 const statusNormal = 0
-const statusRotate = 1
-const statusRotated = 2
+const statusTriggered = 1
+const statusOpenedNew = 2
 
 type Writer struct {
 	cfg         *Config
-	file        unsafe.Pointer
-	fileStatus  int32
+	// file is owned by the write goroutine
+	file        *os.File
+	// newFile and status shared between write and rotate goroutine
+	newFile     unsafe.Pointer
+	status      int32
 	stat        interface{}
 	executor    *concurrent.UnboundedExecutor
 	archiveChan chan struct{}
 }
 
 type NamingStrategy interface {
+	ListFiles() ([]string, error)
+	NextFile() (string, error)
 }
 
 type NameByTime struct {
@@ -32,16 +38,8 @@ type NameByTime struct {
 	Pattern   string
 }
 
-type NameByIndex struct {
-	Directory string
-	Pattern   string
-}
-
 type ArchiveStrategy interface {
-}
-
-type ArchiveByMove struct {
-	Naming NamingStrategy
+	Archive(oldFile *os.File)
 }
 
 type Compressor interface {
@@ -117,16 +115,15 @@ func NewWriter(cfg Config) (*Writer, error) {
 		}
 	}
 	executor := concurrent.NewUnboundedExecutor()
-	writer := &Writer{executor: executor}
-	atomic.StorePointer(&writer.file, unsafe.Pointer(file))
+	writer := &Writer{executor: executor, file:file}
 	executor.Go(writer.rotateInBackground)
 	return writer, nil
 }
 
 func (writer *Writer) Write(buf []byte) (int, error) {
-	file := writer.getFile()
+	file := writer.file
 	n, err := file.Write(buf)
-	if atomic.LoadInt32(&writer.fileStatus) == statusNormal {
+	if atomic.LoadInt32(&writer.status) == statusNormal {
 		var triggered bool
 		var err error
 		trigger := writer.cfg.Trigger
@@ -136,7 +133,7 @@ func (writer *Writer) Write(buf []byte) (int, error) {
 			return n, err
 		}
 		if triggered {
-			atomic.StoreInt32(&writer.fileStatus, statusRotate)
+			atomic.StoreInt32(&writer.status, statusTriggered)
 		}
 	}
 	return n, err
@@ -144,11 +141,7 @@ func (writer *Writer) Write(buf []byte) (int, error) {
 
 func (writer *Writer) Close() error {
 	writer.executor.StopAndWaitForever()
-	return writer.getFile().Close()
-}
-
-func (writer *Writer) getFile() *os.File {
-	return (*os.File)(atomic.LoadPointer(&writer.file))
+	return writer.file.Close()
 }
 
 func (writer *Writer) rotateInBackground(ctx context.Context) {
