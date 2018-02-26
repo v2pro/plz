@@ -8,6 +8,7 @@ import (
 	"github.com/v2pro/plz/test/must"
 	"os"
 	"io/ioutil"
+	"time"
 )
 
 func resetTestLogDir() {
@@ -57,10 +58,22 @@ func Test_rotation(t *testing.T) {
 	t.Run("rotate by size", test.Case(func(ctx *countlog.Context) {
 		writer := reset(rotation.Config{
 			WritePath: "/tmp/testlog/test.log",
-			Trigger: &rotation.TriggerBySize{
-				SizeInKB: 1,
+			TriggerStrategy: &rotation.TriggerByInterval{
+				Interval: time.Second,
 			},
+			ArchiveStrategy: &rotation.ArchiveByMove{
+				NamingStrategy: &rotation.NameByTime{
+					Directory: "/tmp/testlog",
+					Pattern:   "test-2006-01-02T15-04-05.log",
+				},
+			},
+			RetainStrategy: &rotation.RetainByCount{3},
+			PurgeStrategy: &rotation.PurgeByDelete{},
 		})
 		defer must.Call(writer.Close)
+		for i := 0; i < 60; i++ {
+			writer.Write([]byte("hello\n"))
+			time.Sleep(time.Second)
+		}
 	}))
 }

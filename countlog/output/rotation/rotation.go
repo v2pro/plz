@@ -9,17 +9,18 @@ import (
 	"unsafe"
 	"sync/atomic"
 	"github.com/v2pro/plz/countlog/spi"
+	"math/rand"
 )
 
 // normal => triggered => opened new => normal
 const statusNormal = 0
 const statusTriggered = 1
-const statusOpenedNew = 2
+const statusArchived = 2
 
 type Writer struct {
-	cfg         *Config
+	cfg *Config
 	// file is owned by the write goroutine
-	file        *os.File
+	file *os.File
 	// newFile and status shared between write and rotate goroutine
 	newFile     unsafe.Pointer
 	status      int32
@@ -29,17 +30,12 @@ type Writer struct {
 }
 
 type NamingStrategy interface {
-	ListFiles() ([]string, error)
+	ListFiles() ([]Archive, error)
 	NextFile() (string, error)
 }
 
-type NameByTime struct {
-	Directory string
-	Pattern   string
-}
-
 type ArchiveStrategy interface {
-	Archive(oldFile *os.File)
+	Archive(path string) ([]Archive, error)
 }
 
 type Compressor interface {
@@ -47,7 +43,7 @@ type Compressor interface {
 
 type ArchiveByCompression struct {
 	RawArchive ArchiveStrategy
-	Retention  RetentionStrategy
+	Retention  RetainStrategy
 	Naming     NamingStrategy
 	Compressor Compressor
 }
@@ -58,76 +54,79 @@ type Archive struct {
 	Size       int64
 }
 
-type RetentionStrategy interface {
-}
-
-type RetainByCount struct {
-	MaxArchivesCount int
+type RetainStrategy interface {
+	PurgeSet(archives []Archive) []Archive
 }
 
 type TriggerStrategy interface {
 	UpdateStat(stat interface{}, file *os.File, buf []byte) (interface{}, bool, error)
-}
-
-type TriggerByInterval struct {
-	Hourly   bool
-	Daily    bool
-	Weekly   bool
-	Monthly  bool
-	Location *time.Location
+	TimeToTrigger() time.Duration
 }
 
 type PurgeStrategy interface {
-}
-
-type PurgeByDeletion struct {
+	Purge(purgeSet []Archive) error
 }
 
 type Config struct {
-	WritePath     string
-	FileMode      os.FileMode
-	DirectoryMode os.FileMode
-	Trigger       TriggerStrategy
-	Archive       ArchiveStrategy
-	Retention     RetentionStrategy
-	Purge         PurgeStrategy
+	WritePath       string
+	FileMode        os.FileMode
+	DirectoryMode   os.FileMode
+	TriggerStrategy TriggerStrategy
+	ArchiveStrategy ArchiveStrategy
+	RetainStrategy  RetainStrategy
+	PurgeStrategy   PurgeStrategy
 }
 
 func NewWriter(cfg Config) (*Writer, error) {
-	fileMode := cfg.FileMode
-	if fileMode == 0 {
-		fileMode = 0644
+	if cfg.FileMode == 0 {
+		cfg.FileMode = 0644
 	}
-	dirMode := cfg.DirectoryMode
-	if dirMode == 0 {
-		dirMode = 0755
-	}
-	file, err := os.OpenFile(cfg.WritePath, os.O_WRONLY|os.O_APPEND, fileMode)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return nil, err
-		}
-		os.MkdirAll(path.Dir(cfg.WritePath), dirMode)
-		file, err = os.OpenFile(cfg.WritePath,
-			os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fileMode)
-		if err != nil {
-			return nil, err
-		}
+	if cfg.DirectoryMode == 0 {
+		cfg.DirectoryMode = 0755
 	}
 	executor := concurrent.NewUnboundedExecutor()
-	writer := &Writer{executor: executor, file:file}
+	writer := &Writer{executor: executor, cfg: &cfg}
+	err := writer.reopen()
+	if err != nil {
+		return nil, err
+	}
 	executor.Go(writer.rotateInBackground)
 	return writer, nil
 }
 
+func (writer *Writer) reopen() error {
+	cfg := writer.cfg
+	file, err := os.OpenFile(cfg.WritePath, os.O_WRONLY|os.O_APPEND, cfg.FileMode)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		os.MkdirAll(path.Dir(cfg.WritePath), cfg.DirectoryMode)
+		file, err = os.OpenFile(cfg.WritePath,
+			os.O_CREATE|os.O_WRONLY|os.O_TRUNC, cfg.FileMode)
+		if err != nil {
+			return err
+		}
+	}
+	writer.file = file
+	return nil
+}
+
 func (writer *Writer) Write(buf []byte) (int, error) {
+	if atomic.LoadInt32(&writer.status) == statusArchived {
+		err := writer.file.Close()
+		if err != nil {
+			spi.OnError(err)
+		}
+		writer.reopen()
+	}
 	file := writer.file
+	triggerStrategy := writer.cfg.TriggerStrategy
 	n, err := file.Write(buf)
 	if atomic.LoadInt32(&writer.status) == statusNormal {
 		var triggered bool
 		var err error
-		trigger := writer.cfg.Trigger
-		writer.stat, triggered, err = trigger.UpdateStat(writer.stat, file, buf[:n])
+		writer.stat, triggered, err = triggerStrategy.UpdateStat(writer.stat, file, buf[:n])
 		if err != nil {
 			spi.OnError(err)
 			return n, err
@@ -145,12 +144,35 @@ func (writer *Writer) Close() error {
 }
 
 func (writer *Writer) rotateInBackground(ctx context.Context) {
+	triggerStrategy := writer.cfg.TriggerStrategy
+	archiveStrategy := writer.cfg.ArchiveStrategy
+	retainStrategy := writer.cfg.RetainStrategy
+	purgeStrategy := writer.cfg.PurgeStrategy
+	var timer <-chan time.Time
 	for {
+		duration := triggerStrategy.TimeToTrigger()
+		if duration > 0 {
+			duration += time.Duration(rand.Int63n(int64(duration)))
+			timer = time.NewTimer(duration).C
+		}
 		select {
 		case <-ctx.Done():
 			return
 		case <-writer.archiveChan:
-			return
+		case <-timer:
+		}
+		archives, err := archiveStrategy.Archive(writer.cfg.WritePath)
+		if err != nil {
+			spi.OnError(err)
+			// retry after one minute
+			timer = time.NewTimer(time.Minute).C
+			continue
+		}
+		atomic.StoreInt32(&writer.status, statusArchived)
+		purgeSet := retainStrategy.PurgeSet(archives)
+		err = purgeStrategy.Purge(purgeSet)
+		if err != nil {
+			spi.OnError(err)
 		}
 	}
 }
