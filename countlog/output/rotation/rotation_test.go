@@ -55,7 +55,7 @@ func Test_write(t *testing.T) {
 }
 
 func Test_rotation(t *testing.T) {
-	t.Run("rotate by size", test.Case(func(ctx *countlog.Context) {
+	t.Run("rotate by time interval", test.Case(func(ctx *countlog.Context) {
 		writer := reset(rotation.Config{
 			WritePath: "/tmp/testlog/test.log",
 			TriggerStrategy: &rotation.TriggerByInterval{
