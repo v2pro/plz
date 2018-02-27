@@ -10,31 +10,37 @@ import (
 )
 
 func Test(t *testing.T) {
-	t.Run("one plus one", test.Case(func(ctx *countlog.Context) {
+	t.Run("1＋1", test.Case(func(ctx *countlog.Context) {
 		src := parse.NewSourceString(`1+1`)
 		dst := expr.Parse(src)
 		must.Equal(io.EOF, src.Error())
 		must.Equal(2, dst)
 	}))
-	t.Run("one plus one minus one", test.Case(func(ctx *countlog.Context) {
+	t.Run("1＋1－1", test.Case(func(ctx *countlog.Context) {
 		src := parse.NewSourceString(`1+1-1`)
 		must.Equal(1, expr.Parse(src))
+	}))
+	t.Run("2×3＋1", test.Case(func(ctx *countlog.Context) {
+		src := parse.NewSourceString(`2*3+1`)
+		must.Equal(7, expr.Parse(src))
 	}))
 }
 
 type exprLexer struct {
-	value *valueToken
-	plus  *plusToken
-	minus *minusToken
+	value    *valueToken
+	plus     *plusToken
+	minus    *minusToken
+	multiply *multiplyToken
 }
 
 var expr = newExprLexer()
 
 func newExprLexer() *exprLexer {
 	return &exprLexer{
-		value: &valueToken{},
-		plus:  &plusToken{},
-		minus: &minusToken{},
+		value:    &valueToken{},
+		plus:     &plusToken{},
+		minus:    &minusToken{},
+		multiply: &multiplyToken{},
 	}
 }
 
@@ -48,6 +54,8 @@ func (lexer *exprLexer) TokenOf(src *parse.Source) parse.Token {
 		return lexer.plus
 	case '-':
 		return lexer.minus
+	case '*':
+		return lexer.multiply
 	default:
 		return lexer.value
 	}
@@ -114,4 +122,26 @@ func (token *minusToken) Precedence() int {
 
 func (token *minusToken) String() string {
 	return "-"
+}
+
+type multiplyToken struct {
+}
+
+func (token *multiplyToken) ParsePrefix(src *parse.Source) interface{} {
+	return nil
+}
+
+func (token *multiplyToken) ParseInfix(src *parse.Source, left interface{}) interface{} {
+	leftValue := left.(int)
+	src.ConsumeN(1)
+	rightValue := expr.Parse(src).(int)
+	return leftValue * rightValue
+}
+
+func (token *multiplyToken) Precedence() int {
+	return 0
+}
+
+func (token *multiplyToken) String() string {
+	return "*"
 }

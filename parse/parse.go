@@ -3,6 +3,7 @@ package parse
 import (
 	"io"
 	"github.com/v2pro/plz/countlog"
+	"fmt"
 )
 
 func Parse(src *Source, lexer Lexer) interface{} {
@@ -85,6 +86,7 @@ func (src *Source) Error() error {
 }
 
 type Token interface {
+	fmt.Stringer
 	ParsePrefix(src *Source) interface{}
 	ParseInfix(src *Source, left interface{}) interface{}
 	Precedence() int
