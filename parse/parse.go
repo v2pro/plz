@@ -4,20 +4,31 @@ import (
 	"io"
 	"github.com/v2pro/plz/countlog"
 	"fmt"
+	"errors"
 )
 
-func Parse(src *Source, lexer Lexer) interface{} {
+func Parse(src *Source, lexer Lexer, precedence int) interface{} {
 	token := lexer.TokenOf(src)
-	left := token.ParsePrefix(src)
-	countlog.Trace("prefix", "token", token)
-	if src.Error() != nil {
-		return left
+	if token == nil || token.PrefixPrecedence() == NotPrefix {
+		src.ReportError(errors.New("can not parse"))
+		return nil
 	}
-	token = lexer.TokenOf(src)
-	countlog.Trace("infix", "token", token)
-	newLeft := token.ParseInfix(src, left)
-	if newLeft != nil {
-		left = newLeft
+	left := token.PrefixParse(src)
+	countlog.Trace("prefix", "token", token)
+	for {
+		if src.Error() != nil {
+			return left
+		}
+		token = lexer.TokenOf(src)
+		tokenPrecedence := token.InfixPrecedence()
+		if token == nil || tokenPrecedence == NotInfix {
+			return left
+		}
+		if precedence >= tokenPrecedence {
+			return left
+		}
+		countlog.Trace("infix", "token", token)
+		left = token.InfixParse(src, left)
 	}
 	return left
 }
@@ -85,11 +96,34 @@ func (src *Source) Error() error {
 	return src.err
 }
 
+const NotPrefix = 0
+const NotInfix = 0
+
 type Token interface {
 	fmt.Stringer
-	ParsePrefix(src *Source) interface{}
-	ParseInfix(src *Source, left interface{}) interface{}
-	Precedence() int
+	PrefixParse(src *Source) interface{}
+	InfixParse(src *Source, left interface{}) interface{}
+	PrefixPrecedence() int
+	InfixPrecedence() int
+}
+
+type DummyToken struct {
+}
+
+func (token DummyToken) PrefixParse(src *Source) interface{} {
+	panic("not prefix")
+}
+
+func (token DummyToken) PrefixPrecedence() int {
+	return NotPrefix
+}
+
+func (token DummyToken) InfixParse(src *Source, left interface{}) interface{} {
+	panic("not infix")
+}
+
+func (token DummyToken) InfixPrecedence() int {
+	return NotInfix
 }
 
 type Lexer interface {
