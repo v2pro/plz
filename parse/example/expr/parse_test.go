@@ -16,11 +16,16 @@ func Test(t *testing.T) {
 		must.Equal(io.EOF, src.Error())
 		must.Equal(2, dst)
 	}))
+	t.Run("one plus one minus one", test.Case(func(ctx *countlog.Context) {
+		src := parse.NewSourceString(`1+1-1`)
+		must.Equal(1, expr.Parse(src))
+	}))
 }
 
 type exprLexer struct {
 	value *valueToken
 	plus  *plusToken
+	minus *minusToken
 }
 
 var expr = newExprLexer()
@@ -29,6 +34,7 @@ func newExprLexer() *exprLexer {
 	return &exprLexer{
 		value: &valueToken{},
 		plus:  &plusToken{},
+		minus: &minusToken{},
 	}
 }
 
@@ -37,10 +43,14 @@ func (lexer *exprLexer) Parse(src *parse.Source) interface{} {
 }
 
 func (lexer *exprLexer) TokenOf(src *parse.Source) parse.Token {
-	if src.Current()[0] == '+' {
+	switch src.Current()[0] {
+	case '+':
 		return lexer.plus
+	case '-':
+		return lexer.minus
+	default:
+		return lexer.value
 	}
-	return lexer.value
 }
 
 type valueToken struct {
@@ -56,6 +66,10 @@ func (token *valueToken) ParseInfix(src *parse.Source, left interface{}) interfa
 
 func (token *valueToken) Precedence() int {
 	return 0
+}
+
+func (token *valueToken) String() string {
+	return "val"
 }
 
 type plusToken struct {
@@ -74,4 +88,30 @@ func (token *plusToken) ParseInfix(src *parse.Source, left interface{}) interfac
 
 func (token *plusToken) Precedence() int {
 	return 0
+}
+
+func (token *plusToken) String() string {
+	return "+"
+}
+
+type minusToken struct {
+}
+
+func (token *minusToken) ParsePrefix(src *parse.Source) interface{} {
+	return nil
+}
+
+func (token *minusToken) ParseInfix(src *parse.Source, left interface{}) interface{} {
+	leftValue := left.(int)
+	src.ConsumeN(1)
+	rightValue := expr.Parse(src).(int)
+	return leftValue - rightValue
+}
+
+func (token *minusToken) Precedence() int {
+	return 0
+}
+
+func (token *minusToken) String() string {
+	return "-"
 }

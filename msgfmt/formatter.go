@@ -79,16 +79,21 @@ func (compiler *formatCompiler) afterLeftCurlyBrace(i int, b byte) {
 			return
 		}
 		sampleValue := compiler.sample[idx]
-		switch sampleValue.(type) {
-		case string:
-			compiler.formatters = append(compiler.formatters, strFormatter(idx))
-		case []byte:
-			compiler.formatters = append(compiler.formatters, bytesFormatter(idx))
-		default:
-			compiler.formatters = append(compiler.formatters, &jsonFormatter{
-				idx:     idx,
-				encoder: jsonfmt.EncoderOf(reflect2.TypeOf(sampleValue)),
-			})
+		stringer, _ := sampleValue.(fmt.Stringer)
+		if stringer != nil {
+			compiler.formatters = append(compiler.formatters, stringerFormatter(idx))
+		} else {
+			switch sampleValue.(type) {
+			case string:
+				compiler.formatters = append(compiler.formatters, strFormatter(idx))
+			case []byte:
+				compiler.formatters = append(compiler.formatters, bytesFormatter(idx))
+			default:
+				compiler.formatters = append(compiler.formatters, &jsonFormatter{
+					idx:     idx,
+					encoder: jsonfmt.EncoderOf(reflect2.TypeOf(sampleValue)),
+				})
+			}
 		}
 		compiler.start = i + 1
 		compiler.onByte = compiler.normal

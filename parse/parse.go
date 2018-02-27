@@ -2,16 +2,22 @@ package parse
 
 import (
 	"io"
+	"github.com/v2pro/plz/countlog"
 )
 
 func Parse(src *Source, lexer Lexer) interface{} {
 	token := lexer.TokenOf(src)
 	left := token.ParsePrefix(src)
+	countlog.Trace("prefix", "token", token)
 	if src.Error() != nil {
 		return left
 	}
 	token = lexer.TokenOf(src)
-	left = token.ParseInfix(src, left)
+	countlog.Trace("infix", "token", token)
+	newLeft := token.ParseInfix(src, left)
+	if newLeft != nil {
+		left = newLeft
+	}
 	return left
 }
 
