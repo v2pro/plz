@@ -63,6 +63,16 @@ var toFormatter = newLexer(func(l *lexer) {
 		}
 		return formatter
 	}
+	l.parseLiteral = func(src *parse.Source, literal string) interface{} {
+		return fixedFormatter(literal)
+	}
+	l.merge = func(left interface{}, right interface{}) interface{} {
+		formatters, isFormatters := left.(Formatters)
+		if isFormatters {
+			return formatters.Append(right.(Formatter))
+		}
+		return Formatters{[]Formatter{left.(Formatter), right.(Formatter)}}
+	}
 })
 
 func findValueIndex(sample []interface{}, target string) int {
@@ -78,12 +88,12 @@ func findValueIndex(sample []interface{}, target string) int {
 func compile(format string, sample []interface{}) Formatter {
 	src := parse.NewSourceString(format)
 	src.Attachment = sample
-	formatter := parse.Parse(src, toFormatter, 0)
+	formatter := toFormatter.Parse(src, 0)
 	if src.Error() != nil {
 		if src.Error() == io.EOF {
 			return formatter.(Formatter)
 		}
 		return invalidFormatter(src.Error().Error())
 	}
-	return formatter.(Formatter)
+	return invalidFormatter("format not parsed completely")
 }

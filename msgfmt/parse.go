@@ -9,12 +9,14 @@ import (
 )
 
 type lexer struct {
-	leftCurly *leftCurlyToken
-	literal   *literalToken
-	variable  *variableLexer
-	formatter *formatterLexer
+	leftCurly     *leftCurlyToken
+	literal       *literalToken
+	variable      *variableLexer
+	formatter     *formatterLexer
+	merge         func(left interface{}, right interface{}) interface{}
+	parseLiteral  func(src *parse.Source, literal string) interface{}
 	parseVariable func(src *parse.Source, id string) interface{}
-	parseFunc func(src *parse.Source, id string, funcName string, funcArgs []string) interface{}
+	parseFunc     func(src *parse.Source, id string, funcName string, funcArgs []string) interface{}
 }
 
 func newLexer(initLexer func(l *lexer)) *lexer {
@@ -24,10 +26,23 @@ func newLexer(initLexer func(l *lexer)) *lexer {
 		variable:  newVariableLexer(),
 		formatter: newFormatterLexer(),
 	}
+	l.literal.lexer = l
 	l.leftCurly.lexer = l
 	l.variable.comma.lexer = l
 	initLexer(l)
 	return l
+}
+
+func (lexer *lexer) Parse(src *parse.Source, precedence int) interface{} {
+	var left interface{}
+	for src.Error() == nil {
+		if left == nil {
+			left = parse.Parse(src, lexer, precedence)
+		} else {
+			left = lexer.merge(left, parse.Parse(src, lexer, precedence))
+		}
+	}
+	return left
 }
 
 func (lexer *lexer) PrefixToken(src *parse.Source) parse.PrefixToken {
@@ -40,23 +55,14 @@ func (lexer *lexer) PrefixToken(src *parse.Source) parse.PrefixToken {
 }
 
 func (lexer *lexer) InfixToken(src *parse.Source) (parse.InfixToken, int) {
-	switch src.Peek()[0] {
-	case '{':
-		return lexer.leftCurly, parse.DefaultPrecedence
-	default:
-		return lexer.literal, parse.DefaultPrecedence
-	}
+	return nil, 0
 }
 
 type leftCurlyToken struct {
-	lexer         *lexer
+	lexer *lexer
 }
 
 func (token *leftCurlyToken) PrefixParse(src *parse.Source) interface{} {
-	return token.InfixParse(src, nil)
-}
-
-func (token *leftCurlyToken) InfixParse(src *parse.Source, left interface{}) interface{} {
 	src.Consume1('{')
 	obj := parse.Parse(src, token.lexer.variable, 0)
 	if src.Error() != nil {
@@ -68,31 +74,15 @@ func (token *leftCurlyToken) InfixParse(src *parse.Source, left interface{}) int
 	}
 	rightFormatter := obj.(Formatter)
 	src.Consume1('}')
-	if left == nil {
-		return rightFormatter
-	}
-	formatters, isFormatters := left.(Formatters)
-	if isFormatters {
-		return formatters.Append(rightFormatter)
-	}
-	return Formatters{[]Formatter{left.(Formatter), rightFormatter}}
+	return rightFormatter
 }
 
 type literalToken struct {
-}
-
-func (token *literalToken) InfixParse(src *parse.Source, left interface{}) interface{} {
-	rightFormatter := fixedFormatter(read.AnyExcept1(src, nil, '{'))
-	leftFormatter := left.(Formatter)
-	formatters, isFormatters := leftFormatter.(Formatters)
-	if isFormatters {
-		return formatters.Append(rightFormatter)
-	}
-	return Formatters{[]Formatter{leftFormatter, rightFormatter}}
+	lexer *lexer
 }
 
 func (token *literalToken) PrefixParse(src *parse.Source) interface{} {
-	return fixedFormatter(read.AnyExcept1(src, nil, '{'))
+	return token.lexer.parseLiteral(src, string(read.AnyExcept1(src, nil, '{')))
 }
 
 // {VAR,
