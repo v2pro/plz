@@ -3,34 +3,29 @@ package msgfmt
 import (
 	"fmt"
 	"time"
+	"strings"
 )
 
 var Formats = map[string]Format{
 	"goTime": &GoTimeFormat{},
 }
 
-type varExpr struct {
-	key        string
-	formatName string
-	formatArgs []string
-}
-
 type Format interface {
 	FormatterOf(targetKey string, formatArgs []string, sample []interface{}) (Formatter, error)
 }
 
-func (expr varExpr) newFormatter(sample []interface{}) (ret Formatter, err error) {
+func newFuncFormatter(key string, funcName string, funcArgs []string, sample []interface{}) (ret Formatter, err error) {
 	defer func() {
 		recovered := recover()
 		if recovered != nil {
 			err = fmt.Errorf("newFormatter panic: %v", recovered)
 		}
 	}()
-	format := Formats[expr.formatName]
+	format := Formats[funcName]
 	if format == nil {
-		return nil, fmt.Errorf("format %s is not supported", expr.formatName)
+		return nil, fmt.Errorf("format %s is not supported", funcName)
 	}
-	return format.FormatterOf(expr.key, expr.formatArgs, sample)
+	return format.FormatterOf(key, funcArgs, sample)
 }
 
 type GoTimeFormat struct {
@@ -47,7 +42,7 @@ func (format *GoTimeFormat) FormatterOf(targetKey string, formatArgs []string, s
 			if !isTime {
 				return nil, fmt.Errorf("%s is not time.Time", targetKey)
 			}
-			layout := formatArgs[0]
+			layout := strings.TrimSpace(formatArgs[0])
 			return &goTimeFormatter{
 				idx: i+1,
 				layout: layout,

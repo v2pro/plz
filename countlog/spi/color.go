@@ -1,7 +1,5 @@
 package spi
 
-import "github.com/v2pro/plz/msgfmt"
-
 var coloredNames = map[int]string{}
 
 func init() {
@@ -17,8 +15,9 @@ func init() {
 		LevelFatal,
 	}
 	for _, level := range levels {
-		coloredNames[level] = msgfmt.Sprintf("\x1b[{color};1m[{level}]\x1b[0m ",
-			"color", getColor(level), "level", LevelName(level))
+		coloredNames[level] = ColoredLevelName(level)
+		//coloredNames[level] = msgfmt.Sprintf("\x1b[{color};1m[{level}]\x1b[0m ",
+		//	"color", getColor(level), "level", LevelName(level))
 	}
 }
 

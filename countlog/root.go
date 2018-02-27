@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"fmt"
 	"runtime/debug"
+	"github.com/v2pro/plz/countlog/loglog"
 )
 
 type panicHandler func(recovered interface{}, event *spi.Event, site *spi.LogSite)
@@ -83,7 +84,7 @@ func nomalModeOnPanic(recovered interface{}, event *spi.Event, site *spi.LogSite
 }
 
 func fallbackModeOnPanic(recovered interface{}, event *spi.Event, site *spi.LogSite) {
-	spi.OnError(fmt.Errorf("%v", recovered))
+	loglog.Error(fmt.Errorf("%v", recovered))
 	if spi.MinLevel <= spi.LevelDebug {
 		debug.PrintStack()
 	}

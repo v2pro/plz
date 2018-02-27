@@ -1,9 +1,10 @@
-package parse
+package read
 
 import (
 	"strconv"
 	"errors"
 	"math"
+	"github.com/v2pro/plz/parse"
 )
 
 var intDigits []int8
@@ -21,15 +22,15 @@ func init() {
 	}
 }
 
-func Int(src *Source) int {
+func Int(src *parse.Source) int {
 	if strconv.IntSize == 32 {
 		return int(Int32(src))
 	}
 	return int(Int64(src))
 }
 
-func Int32(src *Source) int32 {
-	c := src.current[0]
+func Int32(src *parse.Source) int32 {
+	c := src.Peek()[0]
 	if c == '-' {
 		src.ConsumeN(1)
 		val := Uint64(src)
@@ -47,8 +48,8 @@ func Int32(src *Source) int32 {
 	return int32(val)
 }
 
-func Int64(src *Source) int64 {
-	c := src.current[0]
+func Int64(src *parse.Source) int64 {
+	c := src.Peek()[0]
 	if c == '-' {
 		src.ConsumeN(1)
 		val := Uint64(src)
@@ -66,10 +67,10 @@ func Int64(src *Source) int64 {
 	return int64(val)
 }
 
-func Uint64(src *Source) uint64 {
+func Uint64(src *parse.Source) uint64 {
 	value := uint64(0)
 	for src.Error() == nil {
-		buf := src.Current()
+		buf := src.Peek()
 		for i, c := range buf {
 			ind := intDigits[c]
 			if ind == invalidCharForNumber {

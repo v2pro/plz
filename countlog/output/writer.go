@@ -5,6 +5,7 @@ import (
 	"io"
 	"sync"
 	"os"
+	"github.com/v2pro/plz/countlog/loglog"
 )
 
 type EventWriter struct {
@@ -49,7 +50,7 @@ func (handler *writeEvent) Handle(event *spi.Event) {
 	formatted := handler.formatter.Format(space, event)
 	_, err := handler.writer.Write(formatted)
 	if err != nil {
-		spi.OnError(err)
+		loglog.Error(err)
 	}
 }
 

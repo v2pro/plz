@@ -1,4 +1,4 @@
-package parse_test
+package read_test
 
 import (
 	"testing"
@@ -8,6 +8,7 @@ import (
 	"io"
 	"strings"
 	"github.com/v2pro/plz/parse"
+	"github.com/v2pro/plz/parse/read"
 )
 
 func Test_ConsumeUint64_from_string(t *testing.T) {
@@ -26,15 +27,15 @@ func Test_ConsumeUint64_from_string(t *testing.T) {
 		testCase := tmp
 		t.Run(testCase.Input, test.Case(func(ctx *countlog.Context) {
 			src := parse.NewSourceString(testCase.Input)
-			must.Equal(testCase.Output, parse.Uint64(src))
+			must.Equal(testCase.Output, read.Uint64(src))
 		}))
 	}
 	t.Run("Overflow", test.Case(func(ctx *countlog.Context) {
 		src := parse.NewSourceString("18446744073709551615")
-		must.Equal(uint64(18446744073709551615), parse.Uint64(src))
+		must.Equal(uint64(18446744073709551615), read.Uint64(src))
 		must.Equal(io.EOF, src.Error())
 		src = parse.NewSourceString("18446744073709551616")
-		must.Equal(uint64(0), parse.Uint64(src))
+		must.Equal(uint64(0), read.Uint64(src))
 		must.NotNil(src.Error())
 		must.Pass(io.EOF != src.Error())
 	}))
@@ -68,7 +69,7 @@ func Test_ConsumeUint64_from_reader(t *testing.T) {
 		t.Run(testCase.Input, test.Case(func(ctx *countlog.Context) {
 			src := must.Call(parse.NewSource,
 				strings.NewReader(testCase.Input), make([]byte, 2))[0].(*parse.Source)
-			must.Equal(testCase.Output, parse.Uint64(src))
+			must.Equal(testCase.Output, read.Uint64(src))
 		}))
 	}
 }

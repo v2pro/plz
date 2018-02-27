@@ -3,10 +3,10 @@ package output
 import (
 	"context"
 	"io"
-	"github.com/v2pro/plz/countlog/spi"
 	"fmt"
 	"time"
 	"github.com/v2pro/plz/concurrent"
+	"github.com/v2pro/plz/countlog/loglog"
 )
 
 type blockingQueueWriter struct {
@@ -43,7 +43,7 @@ func NewAsyncWriter(cfg AsyncWriterConfig) ClosableWriter {
 		onMessageDropped = func(msg []byte) {
 			droppedCount++
 			if droppedCount%1000 == 1 {
-				spi.OnError(fmt.Errorf("countlog async writer congestion, dropped %v messages so far", droppedCount))
+				loglog.Error(fmt.Errorf("countlog async writer congestion, dropped %v messages so far", droppedCount))
 			}
 		}
 	}
@@ -83,7 +83,7 @@ func (writer *blockingQueueWriter) asyncWrite(ctx context.Context) {
 				case buf := <-writer.queue:
 					_, err := writer.writer.Write(buf)
 					if err != nil {
-						spi.OnError(err)
+						loglog.Error(err)
 					}
 				default:
 					// all written out
@@ -94,7 +94,7 @@ func (writer *blockingQueueWriter) asyncWrite(ctx context.Context) {
 		case buf := <-writer.queue:
 			_, err := writer.writer.Write(buf)
 			if err != nil {
-				spi.OnError(err)
+				loglog.Error(err)
 			}
 		}
 	}

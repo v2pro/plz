@@ -7,6 +7,7 @@ import (
 	"github.com/v2pro/plz/test/must"
 	"github.com/v2pro/plz/parse"
 	"io"
+	"github.com/v2pro/plz/parse/read"
 )
 
 func Test(t *testing.T) {
@@ -57,88 +58,56 @@ func (lexer *exprLexer) Parse(src *parse.Source, precedence int) interface{} {
 	return parse.Parse(src, lexer, precedence)
 }
 
-func (lexer *exprLexer) TokenOf(src *parse.Source) parse.Token {
-	switch src.Current()[0] {
+func (lexer *exprLexer) InfixToken(src *parse.Source) (parse.InfixToken, int) {
+	switch src.Peek()[0] {
 	case '+':
-		return lexer.plus
+		return lexer.plus, precedenceSum
 	case '-':
-		return lexer.minus
+		return lexer.minus, precedenceSum
 	case '*':
-		return lexer.multiply
+		return lexer.multiply, precedenceProduct
 	default:
-		return lexer.value
+		return nil, 0
 	}
 }
 
+func (lexer *exprLexer) PrefixToken(src *parse.Source) parse.PrefixToken {
+	return lexer.value
+}
+
 type valueToken struct {
-	parse.DummyToken
 }
 
 func (token *valueToken) PrefixParse(src *parse.Source) interface{} {
-	return parse.Int(src)
-}
-
-func (token *valueToken) PrefixPrecedence() int {
-	return 1
-}
-
-func (token *valueToken) String() string {
-	return "val"
+	return read.Int(src)
 }
 
 type plusToken struct {
-	parse.DummyToken
 }
 
 func (token *plusToken) InfixParse(src *parse.Source, left interface{}) interface{} {
 	leftValue := left.(int)
 	src.ConsumeN(1)
-	rightValue := expr.Parse(src, token.InfixPrecedence()).(int)
+	rightValue := expr.Parse(src, precedenceSum).(int)
 	return leftValue + rightValue
 }
 
-func (token *plusToken) InfixPrecedence() int {
-	return precedenceSum
-}
-
-func (token *plusToken) String() string {
-	return "+"
-}
-
 type minusToken struct {
-	parse.DummyToken
 }
 
 func (token *minusToken) InfixParse(src *parse.Source, left interface{}) interface{} {
 	leftValue := left.(int)
 	src.ConsumeN(1)
-	rightValue := expr.Parse(src, token.InfixPrecedence()).(int)
+	rightValue := expr.Parse(src, precedenceSum).(int)
 	return leftValue - rightValue
 }
 
-func (token *minusToken) InfixPrecedence() int {
-	return precedenceSum
-}
-
-func (token *minusToken) String() string {
-	return "-"
-}
-
 type multiplyToken struct {
-	parse.DummyToken
 }
 
 func (token *multiplyToken) InfixParse(src *parse.Source, left interface{}) interface{} {
 	leftValue := left.(int)
 	src.ConsumeN(1)
-	rightValue := expr.Parse(src, token.InfixPrecedence()).(int)
+	rightValue := expr.Parse(src, precedenceProduct).(int)
 	return leftValue * rightValue
-}
-
-func (token *multiplyToken) InfixPrecedence() int {
-	return precedenceProduct
-}
-
-func (token *multiplyToken) String() string {
-	return "*"
 }

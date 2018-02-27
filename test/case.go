@@ -6,7 +6,6 @@ import (
 	"context"
 	"github.com/v2pro/plz/gls"
 	"reflect"
-	"errors"
 )
 
 var testingTType = reflect.TypeOf((*testing.T)(nil))
@@ -20,9 +19,9 @@ func Case(testCase func(ctx *countlog.Context)) func(t *testing.T) {
 		ctx := countlog.Ctx(context.Background())
 		defer func() {
 			gls.DeleteGls(goid)
-			if t.Failed() {
-				ctx.LogAccess("test failed", errors.New(""))
-			}
+			//if t.Failed() {
+			//	ctx.LogAccess("test failed", errors.New(""))
+			//}
 		}()
 		testCase(ctx)
 	}

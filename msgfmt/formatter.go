@@ -1,170 +1,89 @@
 package msgfmt
 
 import (
+	"io"
+	"github.com/v2pro/plz/parse"
 	"fmt"
 	"github.com/v2pro/plz/msgfmt/jsonfmt"
-	"reflect"
-	"strings"
 	"github.com/v2pro/plz/reflect2"
 )
-
 
 type Formatter interface {
 	Format(space []byte, kv []interface{}) []byte
 }
 
-type Formatters []Formatter
+type Formatters struct {
+	formatters []Formatter
+}
+
+func (formatters Formatters) Append(formatter Formatter) Formatters {
+	return Formatters{
+		append(formatters.formatters, formatter),
+	}
+}
 
 func (formatters Formatters) Format(space []byte, kv []interface{}) []byte {
-	for _, formatter := range formatters {
+	for _, formatter := range formatters.formatters {
 		space = formatter.Format(space, kv)
 	}
 	return space
 }
 
-type formatCompiler struct {
-	sample     []interface{}
-	format     string
-	start      int
-	levels     int
-	varExpr    varExpr
-	onByte     func(int, byte)
-	formatters []Formatter
-}
-
-func compile(format string, sample []interface{}) Formatter {
-	compiler := &formatCompiler{
-		sample: sample,
-		format: format,
-	}
-	compiler.onByte = compiler.normal
-	compiler.compile()
-	return Formatters(compiler.formatters)
-}
-
-func (compiler *formatCompiler) compile() {
-	format := compiler.format
-	for i := 0; i < len(format); i++ {
-		compiler.onByte(i, format[i])
-	}
-	if reflect.ValueOf(compiler.onByte).Pointer() == reflect.ValueOf(compiler.endState).Pointer() {
-		return
-	}
-	if reflect.ValueOf(compiler.onByte).Pointer() == reflect.ValueOf(compiler.normal).Pointer() {
-		compiler.formatters = append(compiler.formatters,
-			fixedFormatter(compiler.format[compiler.start:len(format)]))
-	} else {
-		compiler.invalidFormat(len(format)-1, "verb not properly ended")
-	}
-}
-
-func (compiler *formatCompiler) normal(i int, b byte) {
-	format := compiler.format
-	if format[i] == '{' {
-		compiler.formatters = append(compiler.formatters,
-			fixedFormatter(format[compiler.start:i]))
-		compiler.start = i + 1
-		compiler.onByte = compiler.afterLeftCurlyBrace
-	}
-}
-
-func (compiler *formatCompiler) afterLeftCurlyBrace(i int, b byte) {
-	switch b {
-	case '}':
-		key := compiler.format[compiler.start:i]
-		compiler.varExpr.key = key
-		idx := compiler.findVarExprKey()
+var toFormatter = newLexer(func(l *lexer) {
+	l.parseVariable = func(src *parse.Source, id string) interface{} {
+		sample := src.Attachment.([]interface{})
+		idx := findValueIndex(sample, id)
 		if idx == -1 {
-			compiler.invalidFormat(i, compiler.varExpr.key+" not found in args")
-			return
+			src.ReportError(fmt.Errorf("%s not found in args", id))
+			return nil
 		}
-		sampleValue := compiler.sample[idx]
+		sampleValue := sample[idx]
 		stringer, _ := sampleValue.(fmt.Stringer)
 		if stringer != nil {
-			compiler.formatters = append(compiler.formatters, stringerFormatter(idx))
-		} else {
-			switch sampleValue.(type) {
-			case string:
-				compiler.formatters = append(compiler.formatters, strFormatter(idx))
-			case []byte:
-				compiler.formatters = append(compiler.formatters, bytesFormatter(idx))
-			default:
-				compiler.formatters = append(compiler.formatters, &jsonFormatter{
-					idx:     idx,
-					encoder: jsonfmt.EncoderOf(reflect2.TypeOf(sampleValue)),
-				})
+			return stringerFormatter(idx)
+		}
+		switch sampleValue.(type) {
+		case string:
+			return strFormatter(idx)
+		case []byte:
+			return bytesFormatter(idx)
+		default:
+			return &jsonFormatter{
+				idx:     idx,
+				encoder: jsonfmt.EncoderOf(reflect2.TypeOf(sampleValue)),
 			}
 		}
-		compiler.start = i + 1
-		compiler.onByte = compiler.normal
-	case ',':
-		key := compiler.format[compiler.start:i]
-		compiler.varExpr.key = key
-		compiler.start = i + 1
-		compiler.onByte = compiler.afterKey
-	default:
-		// nothing
 	}
-}
-
-func (compiler *formatCompiler) afterKey(i int, b byte) {
-	switch b {
-	case ',':
-		compiler.varExpr.formatName = strings.TrimSpace(compiler.format[compiler.start:i])
-		compiler.start = i + 1
-		compiler.onByte = compiler.afterFormatterName
-	case '}':
-		compiler.varExpr.formatName = strings.TrimSpace(compiler.format[compiler.start:i])
-		compiler.start = i + 1
-		formatter, err := compiler.varExpr.newFormatter(compiler.sample)
+	l.parseFunc = func(src *parse.Source, id string, funcName string, funcArgs []string) interface{} {
+		sample := src.Attachment.([]interface{})
+		formatter, err := newFuncFormatter(id, funcName, funcArgs, sample)
 		if err != nil {
-			compiler.invalidFormat(i, err.Error())
-			return
+			src.ReportError(err)
+			return nil
 		}
-		compiler.formatters = append(compiler.formatters, formatter)
-		compiler.onByte = compiler.normal
-	default:
-		// nothing
+		return formatter
 	}
-}
+})
 
-func (compiler *formatCompiler) afterFormatterName(i int, b byte) {
-	switch b {
-	case ',':
-		argName := strings.TrimSpace(compiler.format[compiler.start:i])
-		compiler.start = i + 1
-		compiler.varExpr.formatArgs = append(compiler.varExpr.formatArgs, argName)
-	case '}':
-		argName := strings.TrimSpace(compiler.format[compiler.start:i])
-		compiler.varExpr.formatArgs = append(compiler.varExpr.formatArgs, argName)
-		compiler.start = i + 1
-		formatter, err := compiler.varExpr.newFormatter(compiler.sample)
-		if err != nil {
-			compiler.invalidFormat(i, err.Error())
-			return
-		}
-		compiler.formatters = append(compiler.formatters, formatter)
-		compiler.onByte = compiler.normal
-	default:
-		// nothing
-	}
-}
-
-func (compiler *formatCompiler) findVarExprKey() int {
-	for i := 0; i < len(compiler.sample); i += 2 {
-		key := compiler.sample[i].(string)
-		if key == compiler.varExpr.key {
+func findValueIndex(sample []interface{}, target string) int {
+	for i := 0; i < len(sample); i += 2 {
+		key := sample[i].(string)
+		if key == target {
 			return i + 1
 		}
 	}
 	return -1
 }
 
-func (compiler *formatCompiler) invalidFormat(i int, err string) {
-	compiler.onByte = compiler.endState
-	compiler.formatters = []Formatter{invalidFormatter(fmt.Sprintf(
-		"%s at %d %s", err, i, compiler.format))}
-}
-
-func (compiler *formatCompiler) endState(i int, b byte) {
+func compile(format string, sample []interface{}) Formatter {
+	src := parse.NewSourceString(format)
+	src.Attachment = sample
+	formatter := parse.Parse(src, toFormatter, 0)
+	if src.Error() != nil {
+		if src.Error() == io.EOF {
+			return formatter.(Formatter)
+		}
+		return invalidFormatter(src.Error().Error())
+	}
+	return formatter.(Formatter)
 }

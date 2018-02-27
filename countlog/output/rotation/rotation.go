@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"github.com/v2pro/plz/countlog/spi"
 	"math/rand"
+	"github.com/v2pro/plz/countlog/loglog"
 )
 
 // normal => triggered => opened new => normal
@@ -116,7 +117,7 @@ func (writer *Writer) Write(buf []byte) (int, error) {
 	if atomic.LoadInt32(&writer.status) == statusArchived {
 		err := writer.file.Close()
 		if err != nil {
-			spi.OnError(err)
+			loglog.Error(err)
 		}
 		writer.reopen()
 	}
@@ -128,7 +129,7 @@ func (writer *Writer) Write(buf []byte) (int, error) {
 		var err error
 		writer.stat, triggered, err = triggerStrategy.UpdateStat(writer.stat, file, buf[:n])
 		if err != nil {
-			spi.OnError(err)
+			loglog.Error(err)
 			return n, err
 		}
 		if triggered {
@@ -163,7 +164,7 @@ func (writer *Writer) rotateInBackground(ctx context.Context) {
 		}
 		archives, err := archiveStrategy.Archive(writer.cfg.WritePath)
 		if err != nil {
-			spi.OnError(err)
+			loglog.Error(err)
 			// retry after one minute
 			timer = time.NewTimer(time.Minute).C
 			continue
@@ -172,7 +173,7 @@ func (writer *Writer) rotateInBackground(ctx context.Context) {
 		purgeSet := retainStrategy.PurgeSet(archives)
 		err = purgeStrategy.Purge(purgeSet)
 		if err != nil {
-			spi.OnError(err)
+			loglog.Error(err)
 		}
 	}
 }
