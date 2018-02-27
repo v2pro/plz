@@ -1,4 +1,4 @@
-package parsing
+package parse_test
 
 import (
 	"testing"
@@ -7,6 +7,7 @@ import (
 	"github.com/v2pro/plz/test/must"
 	"io"
 	"strings"
+	"github.com/v2pro/plz/parse"
 )
 
 func Test_ConsumeUint64_from_string(t *testing.T) {
@@ -23,21 +24,19 @@ func Test_ConsumeUint64_from_string(t *testing.T) {
 	}}
 	for _, tmp := range testCases {
 		testCase := tmp
-		t.Run(testCase.Input, test.Case(func(ctxObj *countlog.Context) {
-			ctx := WithErrorReporter(ctxObj)
-			src := NewSourceString(testCase.Input)
-			must.Equal(testCase.Output, src.ConsumeUint64(ctx))
+		t.Run(testCase.Input, test.Case(func(ctx *countlog.Context) {
+			src := parse.NewSourceString(testCase.Input)
+			must.Equal(testCase.Output, parse.Uint64(src))
 		}))
 	}
-	t.Run("Overflow", test.Case(func(ctxObj *countlog.Context) {
-		ctx := WithErrorReporter(ctxObj)
-		src := NewSourceString("18446744073709551615")
-		must.Equal(uint64(18446744073709551615), src.ConsumeUint64(ctx))
-		must.Equal(io.EOF, GetReportedError(ctx))
-		ctx = WithErrorReporter(ctxObj)
-		src = NewSourceString("18446744073709551616")
-		must.Equal(uint64(0), src.ConsumeUint64(ctx))
-		must.Pass(io.EOF != GetReportedError(ctx))
+	t.Run("Overflow", test.Case(func(ctx *countlog.Context) {
+		src := parse.NewSourceString("18446744073709551615")
+		must.Equal(uint64(18446744073709551615), parse.Uint64(src))
+		must.Equal(io.EOF, src.Error())
+		src = parse.NewSourceString("18446744073709551616")
+		must.Equal(uint64(0), parse.Uint64(src))
+		must.NotNil(src.Error())
+		must.Pass(io.EOF != src.Error())
 	}))
 }
 
@@ -66,10 +65,10 @@ func Test_ConsumeUint64_from_reader(t *testing.T) {
 	}
 	for _, tmp := range testCases {
 		testCase := tmp
-		t.Run(testCase.Input, test.Case(func(ctxObj *countlog.Context) {
-			ctx := WithErrorReporter(ctxObj)
-			src := must.Call(NewSource, strings.NewReader(testCase.Input), 2)[0].(*Source)
-			must.Equal(testCase.Output, src.ConsumeUint64(ctx))
+		t.Run(testCase.Input, test.Case(func(ctx *countlog.Context) {
+			src := must.Call(parse.NewSource,
+				strings.NewReader(testCase.Input), make([]byte, 2))[0].(*parse.Source)
+			must.Equal(testCase.Output, parse.Uint64(src))
 		}))
 	}
 }
