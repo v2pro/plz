@@ -2,7 +2,6 @@ package stats
 
 import (
 	"testing"
-	"github.com/v2pro/plz/countlog/core"
 	"github.com/stretchr/testify/require"
 	"time"
 )

@@ -11,13 +11,9 @@ import (
 	"os"
 	"github.com/v2pro/plz/countlog/output/lumberjack"
 	"github.com/v2pro/plz/countlog/spi"
-	"github.com/v2pro/plz/countlog/output/json"
 )
 
 func Test_trace(t *testing.T) {
-	EventWriter = output.NewEventWriter(output.EventWriterConfig{
-		Format: &json.Format{},
-	})
 	Trace("hello", "a", "b", "int", 100)
 }
 
