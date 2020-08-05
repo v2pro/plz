@@ -1,22 +1,24 @@
 package countlog
 
 import (
-	"testing"
-	"time"
 	"context"
 	"errors"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/require"
 	"github.com/v2pro/plz/countlog/output"
+	"github.com/v2pro/plz/countlog/output/async"
 	"github.com/v2pro/plz/countlog/output/compact"
-	"os"
+	"github.com/v2pro/plz/countlog/output/json"
 	"github.com/v2pro/plz/countlog/output/lumberjack"
 	"github.com/v2pro/plz/countlog/spi"
-	"github.com/v2pro/plz/countlog/output/json"
 )
 
 func Test_trace(t *testing.T) {
 	EventWriter = output.NewEventWriter(output.EventWriterConfig{
-		Format: &json.Format{},
+		Format: &json.JsonFormat{},
 	})
 	Trace("hello", "a", "b", "int", 100)
 }
@@ -43,7 +45,7 @@ func Test_log_file(t *testing.T) {
 	defer logFile.Close()
 	EventWriter = output.NewEventWriter(output.EventWriterConfig{
 		Format: &compact.Format{},
-		Writer: output.NewAsyncWriter(output.AsyncWriterConfig{
+		Writer: async.NewAsyncWriter(async.AsyncWriterConfig{
 			QueueLength:     1024,
 			IsQueueBlocking: false,
 			Writer:          logFile,
