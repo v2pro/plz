@@ -1,17 +1,19 @@
 package main
 
 import (
-	. "github.com/v2pro/plz/countlog"
-	"github.com/v2pro/plz/countlog/output"
-	"github.com/v2pro/plz/countlog/output/hrf"
 	"os"
 	"time"
+
+	. "github.com/v2pro/plz/countlog"
+	"github.com/v2pro/plz/countlog/output"
+	"github.com/v2pro/plz/countlog/output/async"
+	"github.com/v2pro/plz/countlog/output/hrf"
 )
 
 func main() {
 	EventWriter = output.NewEventWriter(output.EventWriterConfig{
 		Format: &hrf.Format{ShowTimestamp: true},
-		Writer: output.NewAsyncWriter(output.AsyncWriterConfig{
+		Writer: async.NewAsyncWriter(async.AsyncWriterConfig{
 			Writer: os.Stderr,
 		}),
 	})

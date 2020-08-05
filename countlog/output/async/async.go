@@ -1,17 +1,18 @@
-package output
+package async
 
 import (
 	"context"
-	"io"
 	"fmt"
+	"io"
 	"time"
+
 	"github.com/v2pro/plz/concurrent"
 	"github.com/v2pro/plz/countlog/loglog"
 )
 
 type blockingQueueWriter struct {
-	queue  chan []byte
-	writer io.Writer
+	queue    chan []byte
+	writer   io.Writer
 	executor *concurrent.UnboundedExecutor
 }
 
@@ -50,8 +51,8 @@ func NewAsyncWriter(cfg AsyncWriterConfig) ClosableWriter {
 	executor := concurrent.NewUnboundedExecutor()
 	if cfg.IsQueueBlocking {
 		asyncWriter := &blockingQueueWriter{
-			queue:  make(chan []byte, queueLength),
-			writer: cfg.Writer,
+			queue:    make(chan []byte, queueLength),
+			writer:   cfg.Writer,
 			executor: executor,
 		}
 		executor.Go(asyncWriter.asyncWrite)
@@ -59,8 +60,8 @@ func NewAsyncWriter(cfg AsyncWriterConfig) ClosableWriter {
 	}
 	asyncWriter := &nonBlockingQueueWriter{
 		blockingQueueWriter: blockingQueueWriter{
-			queue:  make(chan []byte, queueLength),
-			writer: cfg.Writer,
+			queue:    make(chan []byte, queueLength),
+			writer:   cfg.Writer,
 			executor: executor,
 		},
 		onMessageDropped: onMessageDropped,
